@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documentación e Identidad · SIMH</title>
+<link rel="icon" href="assets/img/simh-isotipo-96.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/simh.css">
+<style>
+  /* ======================================================================
+     DOCUMENTACIÓN E IDENTIDAD
+     Qué documento le falta a cada expediente y qué trámite detiene.
+     Las piezas compartidas están en simh.css: `.filtros-fila` (§20),
+     `.accion` (§21), `.oficio-hoja` (§22) y el bloque de módulo (§23) con
+     `.sec-tit`, `.vacio`, `.cartera`, `.req-item` y el piso de foco.
+     ================================================================== */
+  /* --- Documentación e identidad ------------------------------------------
+     Matriz de personas por documento. Se toma prestado el lenguaje de la
+     matriz de permisos de Administración —glifo, color y nombre accesible en
+     cada celda— porque ya está probado y la pregunta es la misma: qué hay y
+     qué falta, de un vistazo.                                            */
+  .matriz-doc{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+  .matriz-doc col.c-per{width:26%}
+  .matriz-doc thead th{background:var(--hueso-claro);color:var(--gris);font-size:10.5px;
+    letter-spacing:.06em;text-transform:uppercase;padding:9px 6px;text-align:center;
+    border-bottom:1px solid var(--linea);white-space:normal;line-height:1.35}
+  .matriz-doc thead th:first-child{text-align:left;padding-left:14px}
+  .matriz-doc tbody td{padding:10px 6px;border-bottom:1px solid var(--linea-suave);text-align:center}
+  .matriz-doc tbody td:first-child{text-align:left;padding-left:14px}
+  .matriz-doc tbody tr{cursor:pointer}
+  .matriz-doc tbody tr:hover{background:var(--jade-020)}
+  .matriz-doc tbody tr.activo{background:var(--jade-050)}
+  .matriz-doc tbody tr:last-child td{border-bottom:0}
+  .matriz-doc .d-nom{display:block;font-weight:700;font-size:13px;line-height:1.3;word-break:break-word}
+  .matriz-doc .d-fol{display:block;font-size:11.5px;color:var(--gris);margin-top:2px;
+    font-variant-numeric:tabular-nums;word-break:break-word}
+
+  .dcel{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:6px;
+    border:1px solid transparent}
+  .dcel svg{width:15px;height:15px;stroke-width:2;fill:none}
+  .dcel.si{background:var(--jade-050);border-color:rgba(0,152,135,.28)}
+  .dcel.si svg{stroke:var(--jade-900)}
+  .dcel.tramite{background:var(--rosa-050);border-color:rgba(201,1,102,.3)}
+  .dcel.tramite svg{stroke:var(--rosa)}
+  .dcel.falta{background:var(--guinda-050);border-color:rgba(174,25,45,.3)}
+  .dcel.falta svg{stroke:var(--guinda)}
+  .dcel.na{color:var(--gris-claro);font-size:14px;line-height:1}
+
+  .leyenda-doc{display:flex;gap:16px;flex-wrap:wrap;padding:12px 14px;
+    border-top:1px solid var(--linea);background:var(--hueso-claro);font-size:12.5px;color:var(--gris)}
+  .leyenda-doc span{display:inline-flex;align-items:center;gap:7px}
+  .leyenda-doc .dcel{width:22px;height:22px}
+  .leyenda-doc .dcel svg{width:13px;height:13px}
+</style>
+</head>
+<body>
+
+<main class="contenido">
+  <div class="migas"><a href="index.html">Inicio</a> › Documentación e Identidad</div>
+
+  <div class="enc">
+    <div class="enc-txt">
+      <h1>Documentación e Identidad</h1>
+      <div class="enc-sub">Qué documento le falta a cada expediente y qué desbloquea cada uno</div>
+    </div>
+    <div class="enc-acc" id="encAcc"></div>
+  </div>
+
+  <details class="plegable" id="avisoMod">
+    <summary>Cómo se lee esta matriz</summary>
+    <div class="cuerpo" id="avisoModCuerpo"></div>
+  </details>
+
+  <div id="panel"></div>
+
+  <p id="anuncio" class="sr-solo" role="status" aria-live="polite"></p>
+</main>
+
+<script src="assets/js/simh.js"></script>
+<script src="assets/js/simh-datos.js"></script>
+<script>
+(function () {
+  "use strict";
+  SIMH.chrome("documenta");
+  var ico = SIMH.icono, esc = SIMH.esc;
+  /* Reloj, permisos y catálogo de personas: assets/js/simh-datos.js, que
+     comparten los cuatro módulos de documentos. */
+  var D = window.DATOS;
+  var HOY = D.HOY, fecha = D.fecha, hora = D.hora, fechaHora = D.fechaHora;
+  var dias = D.dias, edad = D.edad, plural = D.plural, persona = D.persona;
+  var PERS = D.PERS, YO = D.YO;
+  var $ = function (s) { return document.querySelector(s); };
+  var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+
+  /* Fila de un bloque de resumen. */
+  function rd(lab, val) {
+    return '<div class="resumen-dato"><span class="r-lab">' + esc(lab) + "</span>" +
+      '<span class="r-val">' + esc(val) + "</span></div>";
+  }
+  function anuncia(t) { $("#anuncio").textContent = t; }
+  function noSimulado(q) {
+    anuncia(q);
+    window.alert(q + "\n\nEn el prototipo la acción no se ejecuta.");
+  }
+
+  /* ======================================================================
+     El módulo de documentación e identidad
+     --------------------------------------------------------------------
+     «Documentos que hacen falta», que fue como lo pidió la Dirección. La
+     pregunta es de conjunto —qué falta y a quién—, así que aquí no va otra
+     cartera: va una MATRIZ de personas por documento, con el lenguaje de
+     celda que ya se probó en la matriz de permisos de Administración.
+     Cada documento declara qué desbloquea, porque un faltante que no dice
+     lo que impide no le sirve a la ventanilla para priorizar. Y de ahí sale
+     la distinción que ordena la pantalla: hay faltantes que detienen un
+     trámite y faltantes que no, y tratarlos igual es lo que hace que en la
+     ventanilla se pidan papeles que nadie necesita.
+     ================================================================== */
+  var DOCS = [
+    { id:"ident",  t:"Identidad",            n:"Pasaporte o documento consular",
+      bloq:"Sin identidad no se recibe una solicitud en ventanilla ni se firma un contrato." },
+    { id:"acta",   t:"Acta de nacimiento",   n:"Del país de origen",
+      bloq:"Sin acta no se tramita la CURP ni se acredita el parentesco del grupo familiar (RF05)." },
+    { id:"curp",   t:"CURP",                 n:"RENAPO",
+      bloq:"Sin CURP no se tramita el NSS ni se emite una resolución de revalidación." },
+    { id:"migra",  t:"Documento migratorio", n:"FMM, TVRH o residencia",
+      bloq:"Sin un documento que autorice trabajar no puede firmarse el contrato (RF12)." },
+    { id:"comar",  t:"Constancia COMAR",     n:"Solicitantes de refugio, con su número de registro",
+      bloq:"Acredita el trámite en curso y es lo que sostiene la tarjeta por razones humanitarias." },
+    { id:"dom",    t:"Comprobante de domicilio", n:"Recibo o carta de residencia",
+      bloq:"Lo piden algunos planteles y los bancos. No condiciona la atención de la Secretaría." },
+    { id:"fiscal", t:"RFC y NSS",            n:"Opcionales al inicio",
+      bloq:"Los tramita el sector patronal después de contratar; no se piden en el alta (RF12)." }
+  ];
+
+  var EST_DOC = {
+    si:      { t:"Entregado",  i:"check" },
+    tramite: { t:"En trámite", i:"reloj" },
+    falta:   { t:"Falta",      i:"alerta" },
+    na:      { t:"No aplica",  i:null }
+  };
+
+  /* Estado documental por expediente. `num` guarda el folio del documento
+     cuando lo tiene: el número de registro de la COMAR es justo el dato que
+     la Dirección echó en falta, porque sin él la constancia no se coteja. */
+  var DOCU = {
+    "SIMH-2026-TAP-0412": { ident:"si", acta:"si", curp:"si", migra:"si", comar:"na", dom:"tramite",
+      fiscal:"na", num:{ migra:"TVRH 2026-047118 · vigente al 12/02/2027" } },
+    "SIMH-2026-TAP-0410": { ident:"falta", acta:"tramite", curp:"si", migra:"si", comar:"si",
+      dom:"falta", fiscal:"na",
+      num:{ comar:"COMAR/TAP/2026/03318 · presentada el 20/08/2026",
+            migra:"TVRH 2026-051204 · vigente al 20/02/2027" } },
+    "SIMH-2026-SUC-0177": { ident:"si", acta:"si", curp:"si", migra:"si", comar:"na", dom:"si",
+      fiscal:"si", num:{ migra:"Residencia permanente 2024-118440",
+                         fiscal:"RFC XIPM850214AB1 · NSS 5619874320" } },
+    "SIMH-2026-FCO-0094": { ident:"si", acta:"si", curp:"si", migra:"si", comar:"si", dom:"si",
+      fiscal:"na", num:{ comar:"COMAR/FCO/2026/01907 · resuelta favorable el 11/08/2026" } },
+    "SIMH-2026-TAP-0411": { ident:"si", acta:"falta", curp:"falta", migra:"tramite", comar:"si",
+      dom:"falta", fiscal:"na",
+      num:{ comar:"COMAR/TAP/2026/02955 · presentada el 05/08/2026" } },
+    "SIMH-2026-TAP-0408": { ident:"falta", acta:"falta", curp:"tramite", migra:"si", comar:"na",
+      dom:"falta", fiscal:"na", num:{ migra:"TVRH 2026-051206 · vigente al 20/02/2027" } },
+    "SIMH-2026-HUI-0203": { ident:"si", acta:"si", curp:"si", migra:"na", comar:"na", dom:"si",
+      fiscal:"na", num:{} }
+  };
+
+  function docDe(f) { return DOCU[f] || {}; }
+  function faltanDoc(f) {
+    var d = docDe(f);
+    return DOCS.filter(function (x) { return d[x.id] === "falta"; });
+  }
+  function detieneDoc(x) {
+    return x.bloq.indexOf("No condiciona") < 0 && x.bloq.indexOf("no se piden") < 0;
+  }
+
+  function dcel(est) {
+    var E = EST_DOC[est] || EST_DOC.falta;
+    if (!E.i) return '<span class="dcel na" title="' + E.t + '" aria-label="' + E.t + '">—</span>';
+    return '<span class="dcel ' + est + '" title="' + E.t + '" role="img" aria-label="' + E.t +
+      '">' + ico(E.i) + "</span>";
+  }
+
+  function matrizDocs() {
+    var vis = PERS.filter(function (p) { return p.est === "activo"; });
+
+    var filas = vis.map(function (p) {
+      var d = docDe(p.f);
+      return '<tr data-d="' + p.f + '" class="' + (p.f === dSel ? "activo" : "") + '">' +
+        '<td><span class="d-nom">' + esc(p.n) + "</span>" +
+          '<span class="d-fol">' + esc(p.f) + "</span></td>" +
+        DOCS.map(function (x) { return "<td>" + dcel(d[x.id]) + "</td>"; }).join("") +
+        "</tr>";
+    }).join("");
+
+    /* El faltante más frecuente sale de los datos, no está escrito a mano.
+       Y se cuenta solo entre los que DETIENEN algo: el comprobante de
+       domicilio es el que más falta y no impide nada, así que encabezar con
+       él mandaría a la ventanilla a perseguir el papel equivocado. */
+    var cuenta = DOCS.filter(detieneDoc).map(function (x) {
+      return { t:x.t, n:vis.filter(function (p) { return docDe(p.f)[x.id] === "falta"; }).length };
+    }).sort(function (a, b) { return b.n - a.n; });
+    var peor = cuenta[0];
+    var incompletos = vis.filter(function (p) { return faltanDoc(p.f).length; }).length;
+
+    return '<div class="tarjeta" style="padding:0;overflow:hidden">' +
+      '<div style="padding:15px 16px 13px;border-bottom:1px solid var(--linea)">' +
+        '<h2 class="sec-tit" id="tDocs">Qué documento le falta a cada expediente</h2>' +
+        '<div style="font-size:12.5px;color:var(--gris);margin-top:4px;line-height:1.5">' +
+        incompletos + " de " + vis.length + " expedientes activos tienen documentación incompleta" +
+        (peor && peor.n ? "; el faltante que más detiene trámites es <b>" + esc(peor.t) +
+          "</b>, en " + plural(peor.n, "expediente", "expedientes") : "") + ".</div></div>" +
+      '<div style="overflow-x:auto"><table class="matriz-doc">' +
+        '<colgroup><col class="c-per">' +
+        DOCS.map(function () { return "<col>"; }).join("") + "</colgroup><thead><tr>" +
+        "<th>Persona y expediente</th>" +
+        DOCS.map(function (x) { return "<th>" + esc(x.t) + "</th>"; }).join("") +
+        "</tr></thead><tbody>" + filas + "</tbody></table></div>" +
+      '<div class="leyenda-doc">' +
+        Object.keys(EST_DOC).map(function (k) {
+          return "<span>" + dcel(k) + EST_DOC[k].t + "</span>";
+        }).join("") +
+        "<span>Selecciona una fila para ver los folios y qué desbloquea cada documento</span>" +
+      "</div></div>";
+  }
+
+  function panelDocs(f) {
+    var p = persona(f), d = docDe(f);
+    var falt = faltanDoc(f);
+    var bloq = falt.filter(detieneDoc);
+    var corto = p.n.split(" ").slice(0, 2).join(" ");
+
+    var acc = !falt.length
+      ? { tono:"ok", i:"check", t:"Expediente documentalmente completo",
+          n:"No hay nada que pedirle a " + corto + "." }
+      : { tono: bloq.length ? "tibia" : "ok",
+          i: bloq.length ? "alerta" : "info",
+          t: "Faltan " + plural(falt.length, "documento", "documentos") +
+             (bloq.length ? ", " + plural(bloq.length, "de ellos detiene un trámite",
+                                          "de ellos detienen trámites") : ""),
+          n: bloq.length
+               ? bloq[0].t + ": " + bloq[0].bloq
+               : "Ninguno impide que la Secretaría atienda a " + corto +
+                 "; se regularizan sobre la marcha y no pueden pedirse como condición." };
+
+    var filas = DOCS.map(function (x) {
+      var st = d[x.id] || "falta", E = EST_DOC[st];
+      var num = (d.num || {})[x.id];
+      return '<div class="req-item"><span class="r-ico ' + st + '">' +
+        (E.i ? ico(E.i) : "—") + "</span>" +
+        '<span class="r-tx"><span class="r-t">' + esc(x.t) + "</span>" +
+        '<span class="r-est ' + st + '">' + esc(E.t) + (num ? " · " + esc(num) : "") + "</span>" +
+        '<span class="r-n">' + esc(x.n) + ". " + esc(x.bloq) + "</span></span></div>";
+    }).join("");
+
+    return '<div class="accion ' + acc.tono + '" style="margin-top:18px">' + ico(acc.i) +
+      '<div class="a-tx"><span class="a-t">' + esc(acc.t) + "</span>" +
+      '<span class="a-n">' + esc(acc.n) + "</span></div></div>" +
+      '<div class="tarjeta"><div class="tarjeta-enc">' +
+      '<h2 class="sec-tit" id="tDocPer" tabindex="-1">Documentación de ' + esc(p.n) + "</h2>" +
+      '<span class="chip chip-neutro">' + esc(p.f) + "</span></div>" + filas + "</div>";
+  }
+
+  function vistaDocs() {
+    return matrizDocs() + (dSel ? panelDocs(dSel) : "");
+  }
+
+  /* ------------------------------------ Eventos de documentación ------- */
+  function eventosDocs() {
+    $$("[data-d]").forEach(function (tr) {
+      tr.onclick = function () {
+        var f = this.getAttribute("data-d");
+        dSel = (dSel === f) ? null : f;
+        pinta();
+        var h = $("#tDocPer");
+        if (h) {
+          h.focus({ preventScroll:true });
+          h.scrollIntoView({ behavior:"smooth", block:"center" });
+          anuncia("Documentación de " + persona(f).n + ".");
+        } else {
+          anuncia("Panel cerrado.");
+        }
+      };
+    });
+  }
+  /* ======================================================================
+     Pintado y arranque
+     ================================================================== */
+  var dSel = null;             /* expediente abierto bajo la matriz */
+
+  $("#avisoModCuerpo").innerHTML =
+    '<div class="resumen-lista">' +
+    '<div class="resumen-dato"><span class="r-lab">No todo lo que falta detiene algo</span>' +
+      '<span class="r-val">Cada documento declara qué bloquea. Los recuentos y el titular cuentan ' +
+      'solo los que <b>detienen un trámite</b>: el comprobante de domicilio es el que más falta y ' +
+      'no impide nada, y encabezar con él mandaría a la ventanilla a perseguir el papel ' +
+      'equivocado.</span></div>' +
+    '<div class="resumen-dato"><span class="r-lab">Un faltante no justifica negar la atención</span>' +
+      '<span class="r-val">La Secretaría atiende con lo que la persona traiga. Si una institución ' +
+      'condiciona su atención a un documento, eso se registra en ' +
+      '<a href="revalidacion.html">Revalidación de Estudios</a> cuando es educativa, y se reclama ' +
+      'por oficio.</span></div>' +
+    '<div class="resumen-dato"><span class="r-lab">RFC y NSS son opcionales al inicio</span>' +
+      '<span class="r-val">Los tramita el sector patronal después de contratar. Pedirlos en el alta ' +
+      'retrasa el registro sin ganar nada (RF12).</span></div>' +
+    '<div class="resumen-dato"><span class="r-lab">La constancia COMAR lleva su número</span>' +
+      '<span class="r-val">Sin el número de registro la constancia no se puede cotejar ante la ' +
+      'COMAR, y es lo que sostiene la tarjeta por razones humanitarias.</span></div>' +
+    "</div>";
+
+  function pinta() {
+    $("#encAcc").innerHTML = "";
+    $("#panel").innerHTML = vistaDocs();
+    eventosDocs();
+  }
+
+  /* Atajo de revisión: ?d=0410 abre el expediente con más faltantes. */
+  var q = new URLSearchParams(location.search).get("d");
+  if (q) PERS.forEach(function (x) { if (x.f.indexOf(q) >= 0) dSel = x.f; });
+
+  pinta();
+})();
+</script>
+</body>
+</html>

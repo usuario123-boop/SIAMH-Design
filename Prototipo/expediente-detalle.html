@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Expediente SIMH-2026-TAP-0412 · SIMH</title>
+<link rel="icon" href="assets/img/simh-isotipo-96.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/simh.css">
+<style>
+  .panel-tab{display:none}
+  .panel-tab.activo{display:block}
+  .tarjeta + .tarjeta{margin-top:16px}
+</style>
+</head>
+<body>
+
+<main class="contenido">
+  <div class="migas"><a href="index.html">Inicio</a> › <a href="expedientes.html">Expedientes</a> › SIMH-2026-TAP-0412</div>
+
+  <!-- ======================= Cabecera de identidad ====================== -->
+  <section class="exp-cab">
+    <div class="exp-foto" id="expFoto"></div>
+
+    <div class="exp-id">
+      <h1 class="exp-nombre">Yolanda Esperanza Martínez Cruz</h1>
+      <div class="exp-folio">Folio SIMH-2026-TAP-0412 · CURP MACY940318MNEXXX01</div>
+
+      <div class="exp-chips">
+        <span class="chip chip-jade" id="chipActivo"></span>
+        <span class="chip chip-neutro">32 años</span>
+        <span class="chip chip-neutro">Honduras</span>
+        <span class="chip chip-neutro">Solicitante de refugio</span>
+        <span class="chip chip-rosa" id="chipVuln"></span>
+      </div>
+
+      <div class="exp-meta">
+        <span>Municipio<b>Tapachula, Chiapas</b></span>
+        <span>Fecha de registro<b>24/08/2026</b></span>
+        <span>Capturó<b>María Gómez Pérez</b></span>
+        <span>Grupo familiar<b><a href="familiar.html">SIMH-FAM-2026-0341</a></b></span>
+        <span>Última actualización<b>Hoy 11:09</b></span>
+      </div>
+    </div>
+
+    <div class="exp-acc">
+      <button class="btn btn-primario" type="button" id="btnConstancia"></button>
+      <button class="btn btn-secundario" type="button" id="btnOficio"></button>
+      <button class="btn btn-secundario" type="button" id="btnModificar"></button>
+    </div>
+  </section>
+
+  <!-- =============================== Pestañas ========================== -->
+  <div class="pestanas pegajosa" id="tabs">
+    <button class="pestana activa" data-tab="resumen">Resumen</button>
+    <button class="pestana" data-tab="datos">Datos generales</button>
+    <button class="pestana" data-tab="movilidad">Movilidad humana</button>
+    <button class="pestana" data-tab="familia">Familia y NNA</button>
+    <button class="pestana" data-tab="salud">Salud y vulnerabilidad</button>
+    <button class="pestana" data-tab="docs">Documentos <span class="chip chip-neutro" style="margin-left:5px">4</span></button>
+    <button class="pestana" data-tab="bitacora">Bitácora <span class="chip chip-neutro" style="margin-left:5px">12</span></button>
+  </div>
+
+  <div class="rejilla g-2-1">
+    <!-- ============================ Paneles ============================ -->
+    <div>
+      <!-- ------------------------------ RESUMEN ---------------------- -->
+      <section class="panel-tab activo" data-panel="resumen">
+        <article class="tarjeta">
+          <div class="grafica-enc"><h3>Ruta de atención</h3><span class="txt-min">Etapa 4 de 7</span></div>
+          <div class="ruta" id="ruta"></div>
+        </article>
+
+        <article class="tarjeta">
+          <div class="grafica-enc"><h3>Módulos vinculados</h3></div>
+          <div class="grafica-sub">Cada dirección opera con aislamiento de datos: se muestra que el módulo existe,
+            no necesariamente su contenido (RNF01).</div>
+          <div class="rejilla g-2" id="modulos" style="gap:10px"></div>
+        </article>
+
+        <article class="tarjeta">
+          <div class="grafica-enc">
+            <h3>Últimos movimientos</h3>
+            <button class="ver-tabla" type="button" data-ir="bitacora">Ver bitácora completa</button>
+          </div>
+          <div class="timeline" id="tlCorta"></div>
+        </article>
+      </section>
+
+      <!-- --------------------------- DATOS GENERALES ------------------ -->
+      <section class="panel-tab" data-panel="datos">
+        <article class="tarjeta">
+          <div class="grafica-enc"><h3>Identidad</h3></div>
+          <div class="resumen-grupo"><div class="resumen-lista" id="dIdentidad"></div></div>
+          <div class="grafica-enc mt-16"><h3>Perfil sociodemográfico</h3></div>
+          <div class="resumen-grupo"><div class="resumen-lista" id="dPerfil"></div></div>
+          <div class="grafica-enc mt-16"><h3>Residencia</h3></div>
+          <div class="resumen-grupo"><div class="resumen-lista" id="dResidencia"></div></div>
+          <div class="aviso aviso-neutro" style="margin:16px 0 0" id="avisoEdicion"></div>
+        </article>
+      </section>
+
+      <!-- ----------------------------- MOVILIDAD ---------------------- -->
+      <section class="panel-tab" data-panel="movilidad">
+        <article class="tarjeta">
+          <div class="grafica-enc"><h3>Origen y condición migratoria</h3></div>
+          <div class="resumen-grupo"><div class="resumen-lista" id="dMovilidad"></div></div>
+
+          <div class="grafica-enc mt-16"><h3>Ruta migratoria</h3></div>
+          <div class="grafica-sub">Países transitados antes de llegar a Chiapas</div>
+          <table class="tabla-datos">
+            <thead><tr><th>Orden</th><th>País</th><th>Llegada</th><th>Salida</th><th>Motivo del tránsito</th></tr></thead>
+            <tbody>
+              <tr><td>1º</td><td>Guatemala</td><td>14/07/2026</td><td>27/07/2026</td><td>Tránsito hacia México</td></tr>
+            </tbody>
+          </table>
+
+          <div class="aviso aviso-jade" style="margin-top:16px" id="avisoComar"></div>
+        </article>
+      </section>
+
+      <!-- ------------------------------ FAMILIA ----------------------- -->
+      <section class="panel-tab" data-panel="familia">
+        <article class="tarjeta">
+          <div class="grafica-enc">
+            <h3>Grupo familiar SIMH-FAM-2026-0341</h3>
+            <a class="ver-tabla" href="familiar.html">Abrir expediente familiar</a>
+          </div>
+          <div class="grafica-sub">Titular: Yolanda Esperanza Martínez Cruz · grupo nuclear conformado el 24/08/2026</div>
+          <table class="tabla" style="font-size:13px">
+            <thead><tr><th>Integrante</th><th>Edad</th><th>Parentesco</th><th>Depende</th><th>Viaja con el grupo</th><th>Condición</th></tr></thead>
+            <tbody id="tblFamilia"></tbody>
+          </table>
+          <div class="aviso aviso-guinda" style="margin-top:16px" id="avisoNNAFam"></div>
+        </article>
+      </section>
+
+      <!-- ------------------------------- SALUD ------------------------ -->
+      <section class="panel-tab" data-panel="salud">
+        <article class="tarjeta">
+          <div class="aviso aviso-rosa" id="avisoSensible"></div>
+          <div class="grafica-enc"><h3>Condiciones registradas</h3><a class="ver-tabla" href="salud.html">Editar en el módulo de Salud</a></div>
+          <div class="exp-chips" style="margin-top:0">
+            <span class="chip chip-neutro">Embarazo · 22 semanas</span>
+            <span class="chip chip-neutro">Hipertensión</span>
+          </div>
+
+          <div class="grafica-enc mt-16"><h3>Canalizaciones</h3></div>
+          <table class="tabla-datos">
+            <thead><tr><th>Fecha</th><th>Institución</th><th>Motivo</th><th>Oficio</th><th>Estado</th></tr></thead>
+            <tbody>
+              <tr><td>18/08/2026</td><td>IMSS-Bienestar</td><td>Control prenatal</td><td>SFS/0912/2026</td><td>Atendida</td></tr>
+              <tr><td>24/08/2026</td><td>Hospital General de Tapachula</td><td>Valoración por hipertensión</td><td>SFS/0947/2026</td><td>Cita programada</td></tr>
+            </tbody>
+          </table>
+        </article>
+      </section>
+
+      <!-- ----------------------------- DOCUMENTOS --------------------- -->
+      <section class="panel-tab" data-panel="docs">
+        <article class="tarjeta">
+          <div class="grafica-enc">
+            <h3>Documentos probatorios</h3>
+            <button class="btn btn-secundario btn-s" type="button" id="btnSubirDoc"></button>
+          </div>
+          <div class="grafica-sub">Cada documento conserva versión, fecha de carga y usuario responsable; no se sobrescriben (RNF02).</div>
+          <div id="listaDocs"></div>
+        </article>
+      </section>
+
+      <!-- ------------------------------ BITÁCORA ---------------------- -->
+      <section class="panel-tab" data-panel="bitacora">
+        <article class="tarjeta">
+          <div class="grafica-enc"><h3>Bitácora de seguimiento</h3></div>
+          <div class="grafica-sub">Registro cronológico de la atención. Las notas no se editan ni se eliminan.</div>
+
+          <div class="compositor">
+            <label class="etiqueta" for="nota">Agregar nota de seguimiento</label>
+            <textarea id="nota" placeholder="Ej. Atendida vía telefónica, confirma asistencia a cita médica del 12/09"></textarea>
+            <div class="c-pie">
+              <select style="height:34px;border:1px solid var(--arena);border-radius:var(--radio-s);
+                             font-family:var(--f-texto);font-size:13px;padding:0 10px" id="tipoNota">
+                <option>Seguimiento general</option><option>Resultado de cita médica</option>
+                <option>Entrega de documento</option><option>Canalización</option><option>Intento de contacto</option>
+              </select>
+              <button class="btn btn-primario btn-s" type="button" id="btnNota">Guardar nota</button>
+            </div>
+          </div>
+
+          <div class="flex gap-8 centro" style="margin-bottom:14px;flex-wrap:wrap">
+            <span class="f-lab" style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--gris-claro);font-weight:700">Filtrar</span>
+            <button class="chip chip-jade" type="button">Todo</button>
+            <button class="chip chip-neutro" type="button">Salud</button>
+            <button class="chip chip-neutro" type="button">Documentos</button>
+            <button class="chip chip-neutro" type="button">Canalizaciones</button>
+          </div>
+
+          <div class="timeline" id="tlLarga"></div>
+        </article>
+      </section>
+    </div>
+
+    <!-- ============================ Panel lateral ====================== -->
+    <aside>
+      <div class="tarjeta">
+        <div class="grafica-enc"><h3>Contacto</h3><button class="ver-tabla" type="button">Agregar medio</button></div>
+        <div id="contactos"></div>
+        <div class="tarjeta-pie">Al actualizar un teléfono el anterior se conserva en el historial (RF03).</div>
+      </div>
+
+      <div class="tarjeta">
+        <div class="grafica-enc"><h3>Alertas del expediente</h3></div>
+        <div class="lista-alertas" id="alertasExp"></div>
+      </div>
+
+      <div class="tarjeta">
+        <div class="grafica-enc"><h3>Estado del expediente</h3></div>
+        <div class="resumen-dato" style="border:0;padding:0 0 10px">
+          <span class="r-lab">Estado</span><span class="r-val">Activo desde el 24/08/2026</span>
+        </div>
+        <div class="resumen-dato" style="border:0;padding:0 0 14px">
+          <span class="r-lab">Próxima cita</span><span class="r-val">12/09/2026 · Control prenatal</span>
+        </div>
+        <button class="btn btn-secundario btn-bloque btn-s" type="button" id="btnCerrar"></button>
+        <p class="txt-min" style="margin:8px 0 0">Cerrar no elimina: el expediente y su historial persisten de forma
+          permanente (RNF03).</p>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<script src="assets/js/simh.js"></script>
+<script>
+(function () {
+  SIMH.chrome("expedientes");
+  var ico = SIMH.icono, $ = function (s) { return document.querySelector(s); };
+
+  $("#expFoto").innerHTML       = ico("persona");
+  $("#chipActivo").innerHTML    = ico("check") + "Expediente activo";
+  $("#chipVuln").innerHTML      = ico("alerta") + "Embarazo";
+  $("#btnConstancia").innerHTML = ico("doc") + "Generar constancia";
+  $("#btnOficio").innerHTML     = ico("oficios") + "Emitir oficio";
+  $("#btnModificar").innerHTML  = ico("candado") + "Solicitar modificación";
+  $("#btnSubirDoc").innerHTML   = ico("descarga") + "Cargar documento";
+  $("#btnCerrar").innerHTML     = ico("expedientes") + "Cerrar expediente";
+  $("#avisoEdicion").innerHTML  = ico("candado") +
+    "<span><strong>Este expediente es de solo lectura para su perfil</strong>" +
+    "Como Capturista Municipal puede consultar y agregar notas de seguimiento, pero modificar o cerrar el " +
+    "expediente requiere oficio y autorización del Director de Área (RNF02).</span>";
+  $("#avisoComar").innerHTML = ico("info") +
+    "<span><strong>Constancia COMAR vigente</strong>Folio COMAR-TAP-2026-11842 del 05/08/2026. " +
+    "Documento indispensable para inscribirse a grupos de capacitación (RF13).</span>";
+  $("#avisoSensible").innerHTML = ico("candado") +
+    "<span><strong>Información sensible</strong>Los datos de salud y vulnerabilidad están restringidos por permisos " +
+    "y en los reportes agregados se usan siempre de forma anonimizada.</span>";
+  $("#avisoNNAFam").innerHTML = ico("alerta") +
+    "<span><strong>Un integrante es NNA acompañado</strong>Wilmer Josué (9 años) viaja con la titular. " +
+    "Si la titular deja de acompañarlo, el sistema exige reclasificarlo y notificar a la Procuraduría Regional (RF06).</span>";
+
+  /* ------------------------------------------------------- Pestañas ---- */
+  function irTab(id) {
+    document.querySelectorAll(".pestana").forEach(function (p) {
+      p.classList.toggle("activa", p.getAttribute("data-tab") === id);
+    });
+    document.querySelectorAll(".panel-tab").forEach(function (p) {
+      p.classList.toggle("activo", p.getAttribute("data-panel") === id);
+    });
+  }
+  $("#tabs").addEventListener("click", function (e) {
+    var b = e.target.closest(".pestana");
+    if (b) irTab(b.getAttribute("data-tab"));
+  });
+  document.querySelectorAll("[data-ir]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      irTab(b.getAttribute("data-ir"));
+      window.scrollTo({ top:0, behavior:"smooth" });
+    });
+  });
+
+  /* Atajo de revisión: expediente-detalle.html?tab=bitacora */
+  var tabQ = new URLSearchParams(location.search).get("tab");
+  if (tabQ) irTab(tabQ);
+
+  /* --------------------------------------------- Ruta de atención ------ */
+  var hitos = [
+    { t:"Registro",     f:"24/08/2026", e:"hecho" },
+    { t:"Documentación",f:"24/08/2026", e:"hecho" },
+    { t:"Valoración de salud", f:"18/08/2026", e:"hecho" },
+    { t:"Canalización", f:"En curso",   e:"activo" },
+    { t:"Capacitación", f:"Pendiente",  e:"" },
+    { t:"Vinculación",  f:"Pendiente",  e:"" },
+    { t:"Seguimiento",  f:"Pendiente",  e:"" }
+  ];
+  $("#ruta").innerHTML = hitos.map(function (h) {
+    return '<div class="ruta-hito ' + h.e + '"><span class="r-bolita"></span>' + h.t +
+      '<span class="r-fecha">' + h.f + "</span></div>";
+  }).join("");
+
+  /* ------------------------------------------- Módulos vinculados ------ */
+  $("#modulos").innerHTML = [
+    { i:"salud",    t:"Salud y Vulnerabilidad", s:"2 condiciones · 2 canalizaciones", h:"salud.html" },
+    { i:"familia",  t:"Expediente familiar",    s:"3 integrantes · titular", h:"familiar.html" },
+    { i:"empleo",   t:"Empleabilidad",          s:"Sin acceso: dirección distinta", bloq:true },
+    { i:"capacita", t:"Capacitación",           s:"1 curso concluido · ICATECH", h:"capacitacion.html" }
+  ].map(function (m) {
+    return '<a class="modulo' + (m.bloq ? " bloqueado" : "") + '" href="' + (m.h || "#") + '">' +
+      ico(m.bloq ? "candado" : m.i) + "<span><b>" + m.t + '</b><span class="txt-min">' + m.s + "</span></span></a>";
+  }).join("");
+
+  /* ------------------------------------------------ Listas de datos ---- */
+  function lista(el, pares) {
+    document.getElementById(el).innerHTML = pares.map(function (p) {
+      return '<div class="resumen-dato"><span class="r-lab">' + p[0] + "</span>" +
+        (p[1] ? '<span class="r-val">' + p[1] + "</span>" : '<span class="r-vacio">Sin capturar</span>') + "</div>";
+    }).join("");
+  }
+  lista("dIdentidad", [
+    ["Nombre(s)","Yolanda Esperanza"], ["Primer apellido","Martínez"], ["Segundo apellido","Cruz"],
+    ["Fecha de nacimiento","18/03/1994"], ["Sexo","Mujer"], ["Identidad de género","Mujer"],
+    ["Nacionalidad","Honduras"], ["CURP","MACY940318MNEXXX01"], ["Documento presentado","Pasaporte hondureño"]
+  ]);
+  lista("dPerfil", [
+    ["Estado civil","Soltera"], ["Escolaridad","Primaria concluida"], ["Etnia o pueblo","No se autoadscribe"],
+    ["Lengua","Español"], ["Grado de marginación","Alto"], ["Oficio en origen","Costurera"],
+    ["Ocupación actual","Sin ocupación"], ["RFC",""], ["Número de Seguridad Social",""]
+  ]);
+  lista("dResidencia", [
+    ["Municipio de residencia","Tapachula"], ["Domicilio actual","Albergue Belén, Tapachula"],
+    ["Fecha de registro","24/08/2026"], ["Capturista","María Gómez Pérez"]
+  ]);
+  lista("dMovilidad", [
+    ["País de origen","Honduras"], ["Motivo de la migración","Violencia"], ["Salida del país de origen","10/07/2026"],
+    ["Ingreso a México","28/07/2026"], ["Punto de entrada","Ciudad Hidalgo, Suchiate"],
+    ["Destino final deseado","Tapachula, Chiapas"], ["Permanencia estimada","Indefinida"],
+    ["Estatus migratorio","Solicitante de refugio"], ["Solicitud de refugio","En trámite"]
+  ]);
+
+  /* ---------------------------------------------------------- Familia -- */
+  $("#tblFamilia").innerHTML = [
+    { n:"Yolanda Esperanza Martínez Cruz", e:32, p:"Titular", d:"—", v:"Sí", c:"Embarazo" },
+    { n:"Wilmer Josué Aguilar Paz", e:9, p:"Hijo", d:"Sí", v:"Sí", c:"NNA acompañado" },
+    { n:"Rosa Elena Cruz Medina", e:58, p:"Madre", d:"Sí", v:"Sí", c:"Adulta mayor" }
+  ].map(function (f) {
+    return "<tr><td><b>" + f.n + "</b></td><td>" + f.e + "</td><td>" + f.p + "</td><td>" + f.d +
+      "</td><td>" + f.v + '</td><td><span class="chip chip-neutro">' + f.c + "</span></td></tr>";
+  }).join("");
+
+  /* ------------------------------------------------------- Documentos -- */
+  $("#listaDocs").innerHTML = [
+    { n:"pasaporte_hn.pdf", t:"Pasaporte · cargado el 24/08/2026 por M. Gómez", e:"Validado", c:"chip-jade" },
+    { n:"constancia_comar.jpg", t:"Constancia COMAR · cargado el 24/08/2026 por M. Gómez", e:"Validado", c:"chip-jade" },
+    { n:"curp_temporal.pdf", t:"CURP temporal · cargado el 24/08/2026 por M. Gómez", e:"Pendiente", c:"chip-neutro" },
+    { n:"constancia_registro.pdf", t:"Constancia de registro SIMH · generado el 24/08/2026", e:"Emitido", c:"chip-neutro" }
+  ].map(function (d) {
+    return '<div class="doc-item">' + ico("doc") +
+      '<span class="d-nom"><b>' + d.n + '</b><br><span class="txt-min">' + d.t + "</span></span>" +
+      '<span class="chip ' + d.c + '">' + d.e + "</span>" +
+      '<a href="#" style="font-size:12.5px">Ver</a></div>';
+  }).join("");
+
+  /* --------------------------------------------------------- Bitácora -- */
+  var notas = [
+    { f:"Hoy 11:09", a:"María Gómez Pérez", ar:"Registro · Tapachula", t:"Se entrega constancia de registro impresa. La persona confirma domicilio en Albergue Belén." },
+    { f:"Hoy 09:40", a:"Sistema", ar:"Automático", t:"Se generó el oficio SFS/0947/2026 de canalización al Hospital General de Tapachula." },
+    { f:"22/08/2026 16:20", a:"Luis A. Ramírez", ar:"Salud", t:"Atendida vía telefónica. Confirma asistencia a cita de control prenatal del 12/09." },
+    { f:"18/08/2026 10:05", a:"Luis A. Ramírez", ar:"Salud", t:"Valoración inicial: embarazo de 22 semanas e hipertensión controlada. Se canaliza a IMSS-Bienestar." },
+    { f:"24/08/2026 08:55", a:"María Gómez Pérez", ar:"Registro · Tapachula", t:"Alta del expediente. Se verifica sin coincidencias en la base histórica conciliada." }
+  ];
+  function pintarNotas() {
+    var html = notas.map(function (n) {
+      return '<div class="tl-item"><div class="tl-caja">' +
+        '<div class="tl-meta"><span class="tl-autor">' + n.a + "</span><span>·</span><span>" + n.ar +
+        "</span><span>·</span><span>" + n.f + "</span></div>" + n.t + "</div></div>";
+    });
+    $("#tlLarga").innerHTML = html.join("");
+    $("#tlCorta").innerHTML = html.slice(0, 3).join("");
+  }
+  pintarNotas();
+
+  $("#btnNota").addEventListener("click", function () {
+    var t = $("#nota").value.trim();
+    if (!t) { $("#nota").focus(); return; }
+    var h = new Date();
+    notas.unshift({
+      f:"Hoy " + String(h.getHours()).padStart(2,"0") + ":" + String(h.getMinutes()).padStart(2,"0"),
+      a:"María Gómez Pérez", ar:$("#tipoNota").value + " · Tapachula", t:SIMH.esc(t)
+    });
+    $("#nota").value = "";
+    pintarNotas();
+  });
+
+  /* --------------------------------------------------------- Contacto -- */
+  $("#contactos").innerHTML = [
+    { v:"962 118 4472 · celular propio", f:"Desde 24/08/2026", act:true },
+    { v:"962 105 9930 · celular de familiar", f:"Hasta 24/08/2026" },
+    { v:"yolanda.mtz94@correo.com", f:"Desde 24/08/2026", act:true }
+  ].map(function (c) {
+    return '<div class="contacto-item' + (c.act ? "" : " previo") + '">' +
+      '<span class="c-val">' + c.v + "</span>" + '<span class="c-fecha">' + c.f + "</span></div>";
+  }).join("");
+
+  /* ---------------------------------------------------------- Alertas -- */
+  $("#alertasExp").innerHTML = [
+    { t:"aviso-p", txt:"<b>CURP temporal</b> pendiente de validación.", h:"Hoy" },
+    { t:"", txt:"<b>Cita médica</b> el 12/09: faltan 19 días.", h:"Hoy" },
+    { t:"", txt:"Elegible para <b>grupo de capacitación</b>: cumple CURP y COMAR.", h:"Ayer" }
+  ].map(function (a) {
+    return '<div class="alerta-item ' + a.t + '"><span class="a-punto"></span>' +
+      '<span class="a-txt">' + a.txt + '</span><span class="a-hora">' + a.h + "</span></div>";
+  }).join("");
+})();
+</script>
+</body>
+</html>

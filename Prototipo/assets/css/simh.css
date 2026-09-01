@@ -1,0 +1,818 @@
+/* ============================================================================
+   SIMH · Sistema Integral de Movilidad Humana
+   Secretaría de la Frontera Sur · Gobierno de Chiapas 2024-2030
+   Sistema de diseño basado en el Manual de Identidad "Humanismo que Transforma"
+   ----------------------------------------------------------------------------
+   v2 — Escala tipográfica reducida, superficies planas y color contenido.
+   Reglas que rigen esta versión:
+     · El color de marca vive en el chrome (barra, firma). Los datos usan una
+       sola rampa jade; el guinda queda reservado para estado crítico.
+     · Una sola cifra héroe por pantalla; el resto de indicadores son compactos.
+     · Cifras grandes en la tipografía de texto (nunca en la display) y con
+       figuras proporcionales; tabular-nums solo en columnas de tabla.
+   ----------------------------------------------------------------------------
+   Tipografías oficiales: Novecento Wide (títulos) y Gilroy (texto).
+   No son de distribución libre; el prototipo usa Montserrat y Poppins como
+   sustitutos. Para usar las oficiales, coloca los archivos en assets/fonts/ y
+   descomenta el bloque @font-face.
+   ========================================================================= */
+
+/*
+@font-face { font-family:"Novecento Wide"; src:url("../fonts/NovecentoWide-Bold.woff2") format("woff2"); font-weight:700; font-display:swap; }
+@font-face { font-family:"Gilroy"; src:url("../fonts/Gilroy-Regular.woff2") format("woff2"); font-weight:400; font-display:swap; }
+@font-face { font-family:"Gilroy"; src:url("../fonts/Gilroy-Bold.woff2") format("woff2"); font-weight:700; font-display:swap; }
+*/
+
+/* --------------------------------------------------------- 1. Tokens ----- */
+:root{
+  /* Colores oficiales del manual */
+  --jade:#009887;          /* PANTONE P 131-6 C */
+  --rosa:#C90166;          /* PANTONE P 69-70 C */
+  --guinda:#AE192D;        /* PANTONE P 53-16 C */
+  --arena:#D3C2B4;         /* PANTONE P 23-2 C  */
+  --tinta:#1A1A1A;         /* PANTONE Process Black C */
+
+  /* Rampa ordinal de datos (una sola tinta, validada: L monótona, extremo
+     claro 2.14:1 contra la superficie, dispersión de matiz 3°) */
+  --dato-1:#5BBFB3;
+  --dato-2:#17A395;
+  --dato-3:#008A7B;
+  --dato-4:#005249;
+  /* Serie categórica validada. Orden obligatorio: el par jade↔rosa queda en
+     el límite CVD (ΔE 6.4) y por eso SIEMPRE lleva separador de 2px y
+     etiqueta directa. Nunca colocar guinda y rosa contiguos. */
+  --cat-1:#AE192D;
+  --cat-2:#009887;
+  --cat-3:#C90166;
+
+  /* Estado (reservados: no se usan como series) */
+  --ok:#00695E;
+  --alerta:#C90166;
+  --critico:#AE192D;
+
+  /* Derivados de interfaz */
+  --jade-900:#00695E;
+  --jade-700:#007D70;
+  --jade-050:rgba(0,152,135,.09);
+  --jade-020:rgba(0,152,135,.035);
+  --rosa-050:rgba(201,1,102,.09);
+  --guinda-900:#8E1424;
+  --guinda-050:rgba(174,25,45,.09);
+  --arena-050:rgba(211,194,180,.20);
+
+  --hueso:#EFEDE8;
+  --hueso-claro:#F7F6F3;
+  --blanco:#FFFFFF;
+  --gris:#5F5F5F;
+  /* Era #8C8C8C: 3.36:1 sobre blanco y 2.87:1 sobre el hueso de la página,
+     por debajo del 4.5:1 que exige AA para texto normal — y lo usan las
+     migas de pan, los rótulos de dato y las fechas de la ruta, que son
+     texto para leer, no adorno. #6A6A6A es el gris más claro que pasa AA
+     sobre las dos superficies (5.41:1 y 4.62:1) y sigue siendo un escalón
+     más claro que --gris, así que la jerarquía no se pierde.             */
+  --gris-claro:#6A6A6A;
+  --linea:#E4E0D8;
+  --linea-suave:#EFECE5;
+
+  /* Tipografía */
+  --f-titulo:"Novecento Wide","Montserrat",system-ui,sans-serif;
+  --f-texto:"Gilroy","Poppins",system-ui,-apple-system,sans-serif;
+
+  /* Métrica */
+  --topbar-h:64px;
+  --sidebar-w:244px;
+  --sidebar-riel:66px;      /* menú colapsado: solo iconos */
+  --radio:10px;
+  --radio-s:8px;
+  --sombra:none;
+
+  --cenefa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='8' viewBox='0 0 28 8'><path d='M4 0 L8 4 L4 8 L0 4Z' fill='%23009887'/><path d='M18 0 L22 4 L18 8 L14 4Z' fill='%23C90166'/></svg>");
+}
+
+/* ---------------------------------------------------------- 2. Base ----- */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:var(--f-texto);
+  font-size:14px;
+  line-height:1.5;
+  color:var(--tinta);
+  background:var(--hueso);
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2{font-family:var(--f-titulo);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin:0}
+h1{font-size:19px;color:var(--guinda);line-height:1.25}
+h2{font-size:15px;color:var(--guinda)}
+/* Título de tarjeta: chrome discreto, no color de marca */
+h3{font-family:var(--f-texto);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;
+   font-weight:700;color:var(--gris);margin:0}
+a{color:var(--jade-900);text-decoration:none}
+a:hover{text-decoration:underline}
+p{margin:0 0 10px}
+small,.txt-min{font-size:12px;color:var(--gris);line-height:1.45}
+.txt-gris{color:var(--gris)}
+.mono{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
+
+.cenefa{height:7px;background-image:var(--cenefa);background-repeat:repeat-x;background-size:auto 7px}
+.cenefa-fina{height:4px;background-image:var(--cenefa);background-repeat:repeat-x;background-size:auto 4px}
+
+/* -------------------------------------------------- 3. Barra superior ---- */
+.topbar{
+  position:fixed;top:0;left:0;right:0;height:var(--topbar-h);z-index:50;
+  background:var(--guinda);display:flex;align-items:center;gap:20px;padding:0 20px;
+}
+.topbar::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;
+  background-image:var(--cenefa);background-repeat:repeat-x;background-size:auto 4px}
+/* Botón de menú: en escritorio colapsa el lateral a riel de iconos, y por
+   debajo de 900 px abre y cierra el cajón. Es un solo control con un solo
+   significado —mostrar u ocultar el menú— que se adapta al ancho.        */
+.menu-btn{display:inline-flex;background:none;border:0;color:#fff;cursor:pointer;padding:8px;
+  margin-left:-6px;border-radius:var(--radio-s);line-height:0;min-width:40px;min-height:40px;
+  align-items:center;justify-content:center}
+.menu-btn:hover{background:rgba(255,255,255,.12)}
+
+.marca{display:flex;align-items:center;gap:10px;min-width:calc(var(--sidebar-w) - 20px);color:#fff;text-decoration:none}
+.marca:hover{text-decoration:none}
+.marca svg{flex:none}
+.marca .marca-t{font-family:var(--f-titulo);font-size:14px;letter-spacing:.1em;line-height:1;font-weight:700}
+.marca .marca-s{font-size:10.5px;letter-spacing:.03em;opacity:.85;display:block;margin-top:2px;font-family:var(--f-texto)}
+
+.buscador{flex:1;max-width:420px;position:relative}
+.buscador input{
+  width:100%;height:38px;border-radius:var(--radio-s);border:1px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.1);color:#fff;padding:0 12px 0 38px;font-family:var(--f-texto);font-size:13px;
+}
+.buscador input::placeholder{color:rgba(255,255,255,.7)}
+.buscador input:focus{outline:none;background:rgba(255,255,255,.18);border-color:#fff}
+.buscador .icono{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.85;line-height:0}
+.buscador .icono svg{width:17px;height:17px}
+
+.topbar-der{margin-left:auto;display:flex;align-items:center;gap:14px}
+.campana{position:relative;background:none;border:0;cursor:pointer;padding:6px;line-height:0}
+.campana svg{width:19px;height:19px}
+.campana .badge{
+  position:absolute;top:1px;right:1px;min-width:16px;height:16px;border-radius:8px;background:var(--jade);
+  color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;padding:0 4px;border:2px solid var(--guinda)
+}
+.usuario{display:flex;align-items:center;gap:9px;color:#fff;background:none;border:0;cursor:pointer;
+  font-family:var(--f-texto);text-align:left;padding:5px 8px;border-radius:var(--radio-s)}
+.usuario:hover{background:rgba(255,255,255,.12)}
+.usuario .avatar{width:32px;height:32px;border-radius:50%;background:var(--jade);display:grid;place-items:center;
+  font-weight:700;font-size:12px;color:#fff;flex:none}
+.usuario .u-nombre{font-size:12.5px;font-weight:700;line-height:1.2}
+.usuario .u-rol{font-size:10.5px;opacity:.85;line-height:1.2}
+.usuario .u-caret{opacity:.8;line-height:0;flex:none}
+.usuario .u-caret svg{width:14px;height:14px}
+
+/* Menú de cuenta: de aquí cuelga Cerrar sesión */
+.menu-cuenta{position:relative}
+.menu-pop{position:absolute;top:calc(100% + 8px);right:0;min-width:236px;z-index:60;
+  background:var(--blanco);border:1px solid var(--linea);border-radius:var(--radio);
+  padding:6px;color:var(--tinta)}
+.menu-pop[hidden]{display:none}
+.menu-pop .m-cab{padding:10px 10px 9px;border-bottom:1px solid var(--linea-suave);margin-bottom:5px}
+.menu-pop .m-cab strong{display:block;font-size:13px;line-height:1.3}
+.menu-pop .m-cab span{display:block;font-size:11.5px;color:var(--gris);line-height:1.35;margin-top:2px}
+.menu-pop a{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--radio-s);
+  font-size:13px;color:var(--tinta)}
+.menu-pop a:hover{background:var(--hueso-claro);text-decoration:none}
+.menu-pop a svg{width:16px;height:16px;stroke:var(--gris-claro);flex:none}
+.menu-pop .m-sep{height:1px;background:var(--linea-suave);margin:5px 0}
+.menu-pop .m-salir{color:var(--guinda);font-weight:700}
+.menu-pop .m-salir svg{stroke:var(--guinda)}
+.menu-pop .m-salir:hover{background:var(--guinda-050)}
+
+/* ------------------------------------------------------ 4. Menú lateral -- */
+.sidebar{
+  position:fixed;top:var(--topbar-h);bottom:0;left:0;width:var(--sidebar-w);z-index:40;
+  background:var(--blanco);border-right:1px solid var(--linea);
+  display:flex;flex-direction:column;overflow-y:auto
+}
+.sidebar nav{padding:12px 10px;flex:1}
+.nav-grupo{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gris-claro);
+  padding:14px 10px 4px;font-weight:700}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--radio-s);
+  color:var(--tinta);font-size:13.5px;position:relative;margin-bottom:1px
+}
+.nav-item:hover{background:var(--hueso-claro);text-decoration:none}
+.nav-item svg{width:18px;height:18px;flex:none;stroke:var(--gris-claro);stroke-width:1.5;fill:none}
+.nav-item.activo{background:var(--jade-050);color:var(--jade-900);font-weight:700}
+.nav-item.activo svg{stroke:var(--jade)}
+.nav-item.activo::before{content:"";position:absolute;left:0;top:7px;bottom:7px;width:3px;border-radius:0 3px 3px 0;background:var(--jade)}
+.nav-item .pill{margin-left:auto;background:var(--guinda-050);color:var(--guinda);font-size:10.5px;font-weight:700;
+  padding:1px 6px;border-radius:9px}
+.firma{padding:14px;border-top:1px solid var(--linea);font-family:var(--f-titulo);font-size:8.5px;
+  letter-spacing:.09em;color:var(--guinda);line-height:1.7}
+
+/* ------------------------------------- 4.1 Menú colapsado (riel) -------- */
+/* Redefinir el token basta: el contenido y la marca ya se miden con él, así
+   que ninguna pantalla tiene que enterarse de que el menú se cerró. La clase
+   vive en <html> para poder aplicarse antes de que pinte el contenido.    */
+:root.menu-riel{--sidebar-w:var(--sidebar-riel)}
+.sidebar,.contenido{transition:width .18s ease,margin-left .18s ease}
+@media (prefers-reduced-motion:reduce){ .sidebar,.contenido{transition:none} }
+
+:root.menu-riel .sidebar nav{padding:12px 8px}
+:root.menu-riel .nav-item{justify-content:center;padding:11px 0;gap:0}
+/* El rótulo sigue en el DOM —el lector de pantalla lo necesita para nombrar
+   el enlace— pero deja de ocupar espacio. La pastilla no se oculta: es la
+   única señal de que hay algo pendiente detrás del icono.                */
+:root.menu-riel .nav-item > span:not(.pill){position:absolute;width:1px;height:1px;
+  overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+:root.menu-riel .nav-item .pill{position:absolute;top:4px;right:11px;margin:0;
+  min-width:15px;height:15px;padding:0 4px;font-size:9.5px;line-height:15px;border-radius:8px}
+:root.menu-riel .nav-item.activo::before{top:5px;bottom:5px}
+/* El rótulo del grupo se vuelve una regla: separa igual y no miente con un
+   texto recortado. */
+:root.menu-riel .nav-grupo{font-size:0;padding:12px 12px 8px;letter-spacing:0;height:auto}
+:root.menu-riel .nav-grupo::before{content:"";display:block;height:1px;background:var(--linea)}
+/* El primer grupo no separa nada: su regla quedaría pegada a la barra. */
+:root.menu-riel .nav-grupo:first-child{padding-top:4px}
+:root.menu-riel .nav-grupo:first-child::before{display:none}
+:root.menu-riel .firma{font-size:0;padding:14px 0;letter-spacing:0}
+:root.menu-riel .firma::before{content:"";display:block;width:24px;height:4px;margin:0 auto;
+  background-image:var(--cenefa);background-repeat:repeat-x;background-size:auto 4px}
+
+/* Etiqueta flotante del riel. Va suelta en <body> y posicionada con JS
+   porque `.sidebar` tiene overflow-y:auto, y un hijo absoluto se recorta
+   contra ese borde. Aparece también con el foco del teclado, no solo con
+   el ratón: si solo respondiera al hover, en el riel el teclado quedaría
+   navegando entre iconos sin nombre. Sin sombra, como el resto.          */
+.nav-tip{position:fixed;z-index:70;background:var(--tinta);color:#fff;
+  font-family:var(--f-texto);font-size:12.5px;line-height:1.3;padding:7px 11px;
+  border-radius:var(--radio-s);pointer-events:none;white-space:nowrap}
+.nav-tip[hidden]{display:none}
+
+/* --------------------------------------------------------- 5. Layout ----- */
+.contenido{margin-left:var(--sidebar-w);padding:24px 28px 56px;padding-top:calc(var(--topbar-h) + 22px);max-width:1520px}
+.migas{font-size:12px;color:var(--gris-claro);margin-bottom:8px}
+.migas a{color:var(--gris-claro)}
+.enc{display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:18px}
+.enc .enc-txt{flex:1;min-width:260px}
+.enc .enc-sub{color:var(--gris);font-size:13px;margin-top:4px}
+.enc .enc-acc{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+.rejilla{display:grid;gap:16px}
+.g-6{grid-template-columns:repeat(6,1fr)}
+.g-5{grid-template-columns:repeat(5,1fr)}
+.g-4{grid-template-columns:repeat(4,1fr)}
+.g-3{grid-template-columns:repeat(3,1fr)}
+.g-2{grid-template-columns:repeat(2,1fr)}
+.g-60-40{grid-template-columns:6fr 4fr;align-items:start}
+.g-55-45{grid-template-columns:55fr 45fr;align-items:start}
+.g-2-1{grid-template-columns:2fr 1fr}
+.g-hero{grid-template-columns:minmax(300px,1.15fr) 2fr}
+.mt-16{margin-top:16px}.mt-20{margin-top:20px}.mt-28{margin-top:28px}
+
+/* ------------------------------------- 6. Superficies (planas, sin sombra) */
+.tarjeta{background:var(--blanco);border:1px solid var(--linea);border-radius:var(--radio);padding:18px}
+.tarjeta-enc{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;min-height:20px}
+.tarjeta-pie{margin-top:12px;padding-top:10px;border-top:1px solid var(--linea-suave);font-size:11.5px;color:var(--gris)}
+
+/* Barra de filtros: una sola fila por encima de todo lo que filtra */
+.filtros{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--blanco);
+  border:1px solid var(--linea);border-radius:var(--radio);padding:10px 12px;margin-bottom:16px}
+.filtros .f-lab{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--gris-claro);font-weight:700}
+.filtros select{height:34px;min-width:150px;border:1px solid var(--linea);border-radius:var(--radio-s);
+  background:var(--blanco);font-family:var(--f-texto);font-size:13px;padding:0 30px 0 10px;color:var(--tinta);
+  appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%235F5F5F' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
+  background-repeat:no-repeat;background-position:right 9px center}
+
+/* ------------------------------------------------ 7. Cifras (figuras) ---- */
+/* Una sola cifra héroe por vista, en la tipografía de texto */
+.hero{background:var(--blanco);border:1px solid var(--linea);border-radius:var(--radio);padding:20px 22px;
+  display:flex;flex-direction:column;justify-content:center}
+.hero .h-lab{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--gris);font-weight:700}
+.hero .h-num{font-family:var(--f-texto);font-size:48px;line-height:1.05;font-weight:600;letter-spacing:-.02em;
+  margin:6px 0 2px;font-variant-numeric:proportional-nums}
+.hero .h-sub{font-size:12.5px;color:var(--gris)}
+.hero .h-spark{margin-top:14px}
+
+.kpi{background:var(--blanco);border:1px solid var(--linea);border-radius:var(--radio);padding:14px 16px;
+  display:flex;flex-direction:column;gap:2px;position:relative}
+.kpi .kpi-lab{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--gris);font-weight:700;line-height:1.35}
+.kpi .kpi-num{font-family:var(--f-texto);font-size:26px;line-height:1.15;font-weight:600;letter-spacing:-.01em;
+  font-variant-numeric:proportional-nums;margin-top:4px}
+.kpi .kpi-var{font-size:11.5px;color:var(--gris);display:flex;align-items:center;gap:4px;margin-top:2px}
+.kpi .kpi-var svg{width:13px;height:13px;flex:none;stroke-width:2;stroke:var(--gris-claro)}
+.kpi.critico{border-color:rgba(174,25,45,.4);background:rgba(174,25,45,.03)}
+.kpi.critico .kpi-num{color:var(--critico)}
+.kpi.critico .kpi-lab{color:var(--guinda-900)}
+.kpi.critico .kpi-var{color:var(--guinda-900)}
+.kpi.critico .kpi-var svg{stroke:var(--guinda)}
+
+/* --------------------------------------------------------- 8. Botones ---- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;height:38px;padding:0 15px;
+  border-radius:var(--radio-s);font-family:var(--f-texto);font-size:13.5px;font-weight:700;cursor:pointer;
+  border:1px solid transparent;background:none;color:var(--tinta);text-decoration:none;white-space:nowrap
+}
+.btn:hover{text-decoration:none}
+.btn svg{width:16px;height:16px;stroke-width:1.7;fill:none}
+.btn-primario{background:var(--jade);color:#fff;border-color:var(--jade)}
+.btn-primario:hover{background:var(--jade-700)}
+.btn-primario svg{stroke:#fff}
+.btn-secundario{border-color:var(--linea);color:var(--tinta);background:var(--blanco)}
+.btn-secundario:hover{background:var(--hueso-claro);border-color:var(--arena)}
+.btn-secundario svg{stroke:var(--gris)}
+.btn-neutro{border-color:var(--linea);color:var(--tinta);background:var(--blanco)}
+.btn-neutro:hover{background:var(--hueso-claro)}
+.btn-neutro svg{stroke:var(--gris)}
+.btn-peligro{background:var(--guinda);color:#fff;border-color:var(--guinda)}
+.btn-peligro:hover{background:var(--guinda-900)}
+.btn-texto{color:var(--jade-900);padding:0 2px;height:auto;font-weight:700}
+.btn-texto:hover{text-decoration:underline}
+.btn-s{height:32px;padding:0 11px;font-size:12.5px}
+.btn-s svg{width:14px;height:14px}
+.btn-bloque{width:100%}
+.btn[disabled],.btn.desactivado{opacity:.45;pointer-events:none}
+.btn-grande{height:44px;padding:0 20px;font-size:14.5px}
+
+/* ------------------------------------------------------ 9. Formularios --- */
+.campo{margin-bottom:14px}
+.campo label,.etiqueta{
+  display:block;font-size:11px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
+  color:var(--gris);margin-bottom:5px
+}
+.campo label .req{color:var(--rosa);font-size:13px;line-height:0;vertical-align:middle}
+.campo label .opc{color:var(--gris-claro);text-transform:none;letter-spacing:0;font-weight:400;font-size:11px}
+.campo input[type=text],.campo input[type=date],.campo input[type=number],.campo input[type=tel],
+.campo input[type=email],.campo input[type=password],.campo select,.campo textarea{
+  width:100%;min-height:40px;border:1px solid var(--arena);border-radius:var(--radio-s);background:var(--blanco);
+  padding:9px 11px;font-family:var(--f-texto);font-size:14px;color:var(--tinta)
+}
+.campo textarea{min-height:96px;resize:vertical}
+.campo select{appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='%235F5F5F' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
+  background-repeat:no-repeat;background-position:right 11px center;padding-right:34px}
+.campo input:focus,.campo select:focus,.campo textarea:focus{outline:none;border-color:var(--jade);
+  box-shadow:0 0 0 3px var(--jade-050)}
+.campo.error input,.campo.error select{border-color:var(--guinda);background:rgba(174,25,45,.02)}
+.campo .msg-error{display:none;font-size:12px;color:var(--guinda);margin-top:4px;font-weight:700}
+.campo.error .msg-error{display:block}
+.campo .ayuda{font-size:11.5px;color:var(--gris);margin-top:4px}
+.fila{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.fila-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 16px}
+.fila-4{display:grid;grid-template-columns:repeat(4,1fr);gap:0 16px}
+.check{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;margin-bottom:8px;cursor:pointer}
+.check input{width:17px;height:17px;accent-color:var(--jade);margin-top:2px;flex:none}
+.fieldset{border:1px solid var(--linea-suave);border-radius:var(--radio);padding:16px;margin-bottom:16px}
+.fieldset legend{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;
+  color:var(--gris);padding:0 6px}
+details.plegable{border:1px solid var(--linea-suave);border-radius:var(--radio);margin-bottom:16px}
+details.plegable > summary{cursor:pointer;padding:12px 16px;font-size:12.5px;font-weight:700;color:var(--jade-900);
+  list-style:none;display:flex;align-items:center;gap:8px}
+details.plegable > summary::-webkit-details-marker{display:none}
+details.plegable > summary::before{content:"+";font-size:15px;line-height:1;color:var(--jade)}
+details.plegable[open] > summary::before{content:"−"}
+details.plegable > .cuerpo{padding:0 16px 4px}
+
+/* ---------------------------------------------------------- 10. Chips ---- */
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;
+  background:var(--arena-050);color:var(--gris);white-space:nowrap}
+.chip svg{width:12px;height:12px;stroke-width:2;fill:none}
+.chip-jade{background:var(--jade-050);color:var(--jade-900)}
+.chip-jade svg{stroke:var(--jade-900)}
+.chip-rosa{background:var(--rosa-050);color:var(--rosa)}
+.chip-rosa svg{stroke:var(--rosa)}
+.chip-guinda{background:var(--guinda-050);color:var(--guinda)}
+.chip-guinda svg{stroke:var(--guinda)}
+.chip-neutro{background:var(--arena-050);color:var(--gris)}
+
+/* --------------------------------------------------------- 11. Tablas --- */
+.tabla-caja{background:var(--blanco);border:1px solid var(--linea);border-radius:var(--radio);overflow:hidden}
+table.tabla{width:100%;border-collapse:collapse;font-size:13px}
+table.tabla thead th{
+  background:var(--hueso-claro);color:var(--gris);font-size:10.5px;letter-spacing:.07em;
+  text-transform:uppercase;text-align:left;padding:9px 14px;border-bottom:1px solid var(--linea);white-space:nowrap
+}
+table.tabla tbody td{padding:11px 14px;border-bottom:1px solid var(--linea-suave);vertical-align:middle}
+table.tabla tbody tr:hover{background:var(--jade-020)}
+table.tabla tbody tr:last-child td{border-bottom:0}
+table.tabla .num{text-align:right;font-variant-numeric:tabular-nums}
+.tabla-pie{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;
+  border-top:1px solid var(--linea);font-size:12.5px;color:var(--gris);background:var(--hueso-claro)}
+.avatar-mini{width:30px;height:30px;border-radius:50%;background:var(--arena-050);display:inline-grid;
+  place-items:center;font-size:11px;font-weight:700;color:var(--gris);flex:none}
+.persona-celda{display:flex;align-items:center;gap:9px}
+.persona-celda .p-nom{display:block;font-weight:700;line-height:1.25}
+.persona-celda .p-sub{display:block;font-size:11.5px;color:var(--gris)}
+
+/* Tabla gemela de una gráfica (vista accesible de los mismos datos) */
+.tabla-datos{width:100%;border-collapse:collapse;font-size:12.5px}
+.tabla-datos th,.tabla-datos td{padding:6px 8px;border-bottom:1px solid var(--linea-suave);text-align:left}
+.tabla-datos th{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--gris-claro)}
+.tabla-datos td.num{text-align:right;font-variant-numeric:tabular-nums}
+
+/* ------------------------------------------------------- 12. Avisos ----- */
+.aviso{display:flex;gap:10px;padding:12px 14px;border-radius:var(--radio);font-size:13px;align-items:flex-start;
+  border:1px solid transparent;margin-bottom:16px;line-height:1.45}
+.aviso svg{width:18px;height:18px;flex:none;stroke-width:1.6;fill:none;margin-top:1px}
+.aviso strong{display:block;margin-bottom:1px}
+.aviso-rosa{background:var(--rosa-050);border-color:rgba(201,1,102,.22);color:#7d0140}
+.aviso-rosa svg{stroke:var(--rosa)}
+.aviso-guinda{background:var(--guinda-050);border-color:rgba(174,25,45,.26);color:var(--guinda-900)}
+.aviso-guinda svg{stroke:var(--guinda)}
+.aviso-jade{background:var(--jade-050);border-color:rgba(0,152,135,.24);color:var(--jade-900)}
+.aviso-jade svg{stroke:var(--jade)}
+.aviso-neutro{background:var(--hueso-claro);border-color:var(--linea);color:var(--gris)}
+.aviso-neutro svg{stroke:var(--gris)}
+
+/* ---------------------------------------------- 13. Lista de pendientes -- */
+.lista-alertas{display:flex;flex-direction:column}
+.alerta-item{display:flex;gap:10px;padding:11px 0;border-bottom:1px solid var(--linea-suave);align-items:flex-start}
+.alerta-item:last-child{border-bottom:0}
+.alerta-item .a-punto{width:7px;height:7px;border-radius:50%;background:var(--gris-claro);flex:none;margin-top:6px}
+.alerta-item.critica .a-punto{background:var(--critico)}
+.alerta-item.aviso-p .a-punto{background:var(--alerta)}
+.alerta-item .a-txt{flex:1;font-size:13px;line-height:1.4}
+.alerta-item .a-txt b{font-weight:700}
+.alerta-item .a-hora{font-size:11px;color:var(--gris-claro);white-space:nowrap}
+
+/* ------------------------------------------------------- 14. Gráficas --- */
+.grafica-enc{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:4px}
+.grafica-sub{font-size:11.5px;color:var(--gris-claro);margin-bottom:12px}
+.gr-leyenda{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:12px}
+.gr-leyenda span{display:flex;align-items:center;gap:6px;color:var(--gris)}
+.gr-leyenda i{width:9px;height:9px;border-radius:2px;display:inline-block;flex:none}
+.gr-leyenda b{color:var(--tinta);font-weight:700}
+.ver-tabla{background:none;border:0;font-family:var(--f-texto);font-size:11.5px;font-weight:700;
+  color:var(--jade-900);cursor:pointer;padding:2px 4px;white-space:nowrap}
+.ver-tabla:hover{text-decoration:underline}
+
+/* Barras horizontales: marca delgada, extremo redondeado, valor a la punta */
+.hbar{display:grid;grid-template-columns:132px 1fr 56px;gap:10px;align-items:center;margin-bottom:9px;font-size:12.5px}
+.hbar:last-child{margin-bottom:0}
+.hbar .h-lab{color:var(--gris);line-height:1.2}
+.hbar .h-pista{display:block;height:10px;border-radius:5px;background:var(--hueso);overflow:hidden}
+.hbar .h-fill{display:block;height:100%;border-radius:0 5px 5px 0;background:var(--dato-3)}
+.hbar .h-val{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--tinta)}
+.hbar.tenue .h-fill{background:var(--dato-1)}
+
+/* --------------------------------------------------- 15. Login (P1) ----- */
+.login{min-height:100vh;display:grid;grid-template-columns:52fr 48fr}
+
+/* -- Columna de marca: video de fondo + velo + contenido ------------------ */
+.login-marca{position:relative;overflow:hidden;padding:48px 52px;color:#fff;
+  /* Respaldo si el video no carga. Era un plano #2A0A15 casi negro; con un
+     degradado de guinda a jade la columna tiene fondo aunque falte el video. */
+  background:linear-gradient(150deg,#5A1226 0%,#2E0A18 48%,#0A3D38 100%);
+  display:flex;flex-direction:column;justify-content:space-between}
+/* El video entra más claro: la toma original es oscura y la columna se leía
+   apagada al lado del hueso del formulario. */
+.login-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  z-index:0;pointer-events:none;filter:brightness(1.28) saturate(1.06)}
+/* Velo: garantiza el contraste del texto SIN apagar la imagen entera. Antes
+   era un velo parejo del 62 % y por eso la columna se veía negra. Ahora el
+   peso se concentra en la banda izquierda, que es donde está el texto, y el
+   resto de la imagen queda claro: se sube el brillo donde no hay nada que
+   leer y se conserva el contraste donde sí lo hay.                       */
+.login-velo{position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:
+    linear-gradient(180deg,rgba(28,6,14,.34) 0%,rgba(28,6,14,.08) 45%,rgba(4,32,30,.52) 100%),
+    linear-gradient(90deg,rgba(16,4,10,.60) 0%,rgba(16,4,10,.20) 46%,rgba(16,4,10,0) 76%)}
+/* El isotipo actúa como textura, no como logotipo: sangra por el borde */
+.login-marca .marca-agua{position:absolute;z-index:1;right:-19%;bottom:-16%;
+  width:min(72%,560px);opacity:.15;pointer-events:none;filter:saturate(1.4)}
+/* Solo el contenido sube de capa: si esto alcanza a .login-video le quita el
+   position:absolute y el video pasa a ser un elemento de flujo. */
+.marca-tope,.marca-cuerpo,.marca-pie{position:relative;z-index:2}
+
+.marca-tope{display:flex;align-items:center;gap:11px;font-family:var(--f-titulo);
+  font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.90)}
+.marca-tope::before{content:"";width:26px;height:1px;background:rgba(255,255,255,.45);flex:none}
+
+.marca-cuerpo{max-width:460px;padding:32px 0}
+.marca-cuerpo h1{color:#fff;font-size:34px;line-height:1.18;letter-spacing:.055em;margin:0}
+.marca-cuerpo .cenefa{width:168px;margin:22px 0 20px;opacity:.95}
+.marca-cuerpo p{font-size:15px;line-height:1.62;color:rgba(255,255,255,.90);margin:0;max-width:40ch}
+
+.marca-pie{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.marca-firma{font-family:var(--f-titulo);font-size:9px;letter-spacing:.13em;
+  line-height:1.9;color:rgba(255,255,255,.86)}
+.marca-entorno{font-size:10.5px;letter-spacing:.05em;color:rgba(255,255,255,.62);
+  border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:4px 11px;white-space:nowrap}
+
+/* -- Columna de acceso ---------------------------------------------------- */
+.login-form{background:var(--hueso);display:flex;flex-direction:column;
+  justify-content:center;align-items:center;padding:44px 40px}
+.login-form .caja{width:100%;max-width:392px}
+.login-form .tarjeta{padding:28px}
+.login-lockup{display:block;width:100%;max-width:304px;height:auto;margin:0 auto 26px}
+.login-form h2{font-size:16px;margin-bottom:6px}
+.login-pie{margin-top:auto;padding-top:30px;text-align:center;width:100%;max-width:392px}
+.firma-pie{font-family:var(--f-titulo);font-size:9px;letter-spacing:.11em;color:var(--guinda);line-height:1.8;margin-top:12px}
+
+/* Ojo de contraseña: el campo reserva el espacio, el botón no lo tapa */
+.campo-clave{position:relative}
+.campo-clave input{padding-right:46px}
+.ver-clave{position:absolute;right:6px;top:50%;transform:translateY(-50%);
+  background:none;border:0;cursor:pointer;color:var(--gris);line-height:0;padding:8px;
+  border-radius:var(--radio-s)}
+.ver-clave:hover{background:var(--hueso)}
+.ver-clave[aria-pressed=true]{color:var(--jade-900)}
+
+/* Errores del formulario: una sola región anunciada, encima de los campos */
+.error-form{display:none;gap:9px;align-items:flex-start;background:var(--guinda-050);
+  border-left:3px solid var(--guinda);border-radius:var(--radio-s);
+  padding:10px 12px;margin-bottom:16px;font-size:12.5px;color:var(--guinda);line-height:1.45}
+.error-form.visible{display:flex}
+.error-form svg{width:16px;height:16px;flex:none;margin-top:1px;stroke:var(--guinda)}
+.aviso-caps{display:none;font-size:11.5px;color:var(--guinda);font-weight:700;margin-top:5px}
+.aviso-caps.visible{display:block}
+
+@media (max-width:960px){
+  .login{grid-template-columns:1fr}
+  .login-marca{padding:32px 28px;min-height:auto}
+  .marca-cuerpo{padding:20px 0}
+  .marca-cuerpo h1{font-size:25px}
+  .marca-cuerpo p{display:none}
+  .login-marca .marca-agua{width:200px;right:-56px;bottom:-40px}
+}
+/* Si la persona pidió menos movimiento, el video no se reproduce */
+@media (prefers-reduced-motion:reduce){
+  .login-video{display:none}
+}
+
+/* ------------------------------------------------- 16. Asistente pasos -- */
+.pasos{display:flex;align-items:center;margin-bottom:18px;background:var(--blanco);border:1px solid var(--linea);
+  border-radius:var(--radio);padding:12px 16px;overflow-x:auto}
+.paso{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--gris-claro);background:none;border:0;
+  font-family:var(--f-texto);padding:4px 6px;border-radius:var(--radio-s);white-space:nowrap;cursor:default}
+.paso .p-num{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:11.5px;
+  background:var(--hueso);color:var(--gris-claro);flex:none;border:1px solid var(--linea)}
+.paso.hecho{color:var(--tinta);cursor:pointer}
+.paso.hecho .p-num{background:var(--jade);color:#fff;border-color:var(--jade)}
+.paso.hecho:hover{background:var(--jade-050)}
+.paso.activo{color:var(--jade-900);font-weight:700}
+.paso.activo .p-num{background:var(--blanco);color:var(--jade-900);border-color:var(--jade);box-shadow:0 0 0 3px var(--jade-050)}
+.paso .p-linea{flex:1;height:1px;background:var(--linea);margin:0 10px;min-width:14px}
+.paso-sep{flex:1;height:1px;background:var(--linea);margin:0 8px;min-width:12px}
+
+.barra-acciones{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px;
+  padding-top:16px;border-top:1px solid var(--linea-suave)}
+.estado-borrador{font-size:11.5px;color:var(--gris-claro);display:flex;align-items:center;gap:6px}
+.estado-borrador svg{width:13px;height:13px;stroke:var(--jade);stroke-width:2;fill:none}
+
+/* ------------------------------------------------------ 17. Pestañas ---- */
+.pestanas{display:flex;gap:2px;border-bottom:1px solid var(--linea);margin-bottom:18px;overflow-x:auto}
+.pestana{padding:10px 14px;font-size:13px;color:var(--gris);border-bottom:2px solid transparent;white-space:nowrap;
+  cursor:pointer;background:none;border-top:0;border-left:0;border-right:0;font-family:var(--f-texto)}
+.pestana:hover{color:var(--tinta)}
+.pestana.activa{color:var(--jade-900);border-bottom-color:var(--jade);font-weight:700}
+
+/* -------------------------------------------------- 18. Línea de tiempo - */
+.timeline{position:relative;padding-left:26px}
+.timeline::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:1px;background:var(--linea)}
+.tl-item{position:relative;margin-bottom:14px}
+.tl-item::before{content:"";position:absolute;left:-22px;top:14px;width:9px;height:9px;border-radius:50%;
+  background:var(--jade);border:2px solid var(--blanco)}
+.tl-item .tl-caja{background:var(--hueso-claro);border:1px solid var(--linea-suave);border-radius:var(--radio-s);padding:12px 14px}
+.tl-meta{display:flex;gap:8px;align-items:center;font-size:11px;color:var(--gris-claro);margin-bottom:4px;flex-wrap:wrap}
+.tl-meta .tl-autor{font-weight:700;color:var(--tinta)}
+
+/* ------------------------------------------- 18b. Cabecera de expediente - */
+/* Identidad siempre visible: quién es, en qué estado está y qué se puede hacer. */
+.exp-cab{display:flex;gap:18px;align-items:flex-start;background:var(--blanco);border:1px solid var(--linea);
+  border-radius:var(--radio);padding:18px;flex-wrap:wrap}
+.exp-foto{width:86px;height:108px;border-radius:8px;background:var(--hueso-claro);border:1px solid var(--linea);
+  display:grid;place-items:center;flex:none;color:var(--gris-claro)}
+.exp-foto svg{width:34px;height:34px;stroke-width:1.3}
+.exp-id{flex:1;min-width:260px}
+.exp-nombre{font-family:var(--f-texto);font-size:21px;font-weight:600;line-height:1.2;letter-spacing:-.01em;
+  margin:0;text-transform:none;color:var(--tinta)}
+.exp-folio{font-size:12.5px;color:var(--gris);font-variant-numeric:tabular-nums;margin-top:3px}
+.exp-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}
+.exp-meta{display:flex;gap:20px;flex-wrap:wrap;margin-top:13px;font-size:11.5px;color:var(--gris-claro)}
+.exp-meta b{display:block;color:var(--tinta);font-weight:600;font-size:12.5px;margin-top:1px}
+.exp-acc{display:flex;flex-direction:column;gap:8px;min-width:196px}
+
+/* Pestañas fijas al desplazar: en un expediente largo son la orientación */
+.pestanas.pegajosa{position:sticky;top:var(--topbar-h);z-index:20;background:var(--hueso);
+  margin:16px 0 16px;padding-top:6px}
+
+/* Módulo de otra dirección: se ve que existe, no necesariamente su contenido */
+.modulo{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--linea);border-radius:var(--radio);
+  padding:12px 14px;background:var(--blanco);font-size:13px;color:var(--tinta);text-decoration:none}
+.modulo:hover{border-color:var(--jade);text-decoration:none}
+.modulo svg{width:17px;height:17px;stroke:var(--jade);stroke-width:1.6;fill:none;flex:none;margin-top:2px}
+.modulo b{display:block;margin-bottom:1px}
+.modulo.bloqueado{background:var(--hueso-claro);color:var(--gris-claro);pointer-events:none}
+.modulo.bloqueado svg{stroke:var(--gris-claro)}
+.modulo.bloqueado b{color:var(--gris)}
+
+/* Ruta de atención: en qué punto del proceso va la persona */
+.ruta{display:flex;align-items:flex-start;gap:0;overflow-x:auto;padding:4px 0}
+.ruta-hito{flex:1;min-width:104px;text-align:center;position:relative;font-size:11.5px;color:var(--gris-claro)}
+.ruta-hito .r-bolita{display:block;width:14px;height:14px;border-radius:50%;background:var(--hueso);
+  border:2px solid var(--linea);margin:0 auto 8px;position:relative;z-index:2}
+.ruta-hito::before{content:"";position:absolute;top:7px;left:-50%;width:100%;height:2px;background:var(--linea);z-index:1}
+.ruta-hito:first-child::before{display:none}
+.ruta-hito.hecho{color:var(--tinta)}
+.ruta-hito.hecho .r-bolita{background:var(--jade);border-color:var(--jade)}
+.ruta-hito.hecho::before{background:var(--jade)}
+.ruta-hito.activo{color:var(--jade-900);font-weight:700}
+.ruta-hito.activo .r-bolita{background:var(--blanco);border-color:var(--jade);box-shadow:0 0 0 3px var(--jade-050)}
+.ruta-hito .r-fecha{display:block;font-size:10.5px;color:var(--gris-claro);font-weight:400;margin-top:2px}
+
+/* Compositor de nota de bitácora */
+.compositor{border:1px solid var(--linea);border-radius:var(--radio);background:var(--hueso-claro);padding:12px;margin-bottom:16px}
+.compositor textarea{width:100%;border:1px solid var(--arena);border-radius:var(--radio-s);padding:9px 11px;
+  font-family:var(--f-texto);font-size:13.5px;min-height:64px;resize:vertical;background:var(--blanco)}
+.compositor textarea:focus{outline:none;border-color:var(--jade);box-shadow:0 0 0 3px var(--jade-050)}
+.compositor .c-pie{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:9px;flex-wrap:wrap}
+
+/* Historial de contacto: lo anterior se conserva, no se borra */
+.contacto-item{display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--linea-suave);font-size:13px}
+.contacto-item:last-child{border-bottom:0}
+.contacto-item.previo .c-val{text-decoration:line-through;color:var(--gris-claro)}
+.contacto-item .c-val{flex:1}
+.contacto-item .c-fecha{font-size:11px;color:var(--gris-claro);white-space:nowrap}
+
+/* Documento en lista */
+.doc-item{display:flex;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--linea-suave)}
+.doc-item:last-child{border-bottom:0}
+.doc-item > svg{width:19px;height:19px;stroke:var(--gris-claro);stroke-width:1.5;fill:none;flex:none}
+.doc-item .d-nom{flex:1;font-size:13px;line-height:1.3}
+
+/* -------------------------------------------------- 19. Resumen (review) - */
+.resumen-grupo{border:1px solid var(--linea-suave);border-radius:var(--radio);margin-bottom:12px;overflow:hidden}
+.resumen-grupo h4{margin:0;font-family:var(--f-texto);font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--gris);font-weight:700;padding:10px 14px;background:var(--hueso-claro);
+  display:flex;justify-content:space-between;align-items:center}
+.resumen-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:0}
+.resumen-dato{padding:9px 14px;border-top:1px solid var(--linea-suave);font-size:13px}
+.resumen-dato .r-lab{display:block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--gris-claro);
+  font-weight:700;margin-bottom:1px}
+.resumen-dato .r-val{color:var(--tinta)}
+.resumen-dato .r-vacio{color:var(--gris-claro);font-style:italic}
+
+/* ------------------------------------------------ 20. Fila de filtros --- */
+/* Los filtros van en UNA SOLA FILA por encima de todo lo que filtran, con
+   rótulo visible y controles de 40px. Sustituye a `.filtros` (§6), que nació
+   con selects de 34px, por debajo del piso de área táctil que fijó la
+   revisión de accesibilidad de Empleabilidad.                            */
+.filtros-fila{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;
+  background:var(--blanco);border:1px solid var(--linea);border-radius:var(--radio);
+  padding:12px 14px;margin-bottom:16px}
+.filtros-fila .campo{margin:0}
+.filtros-fila .campo input,.filtros-fila .campo select{min-height:40px}
+.filtros-fila .f-busca{flex:1;min-width:220px}
+.filtros-fila .f-sel{min-width:170px}
+
+/* ------------------------------------------- 21. Barra de acción única -- */
+/* Una pantalla de trabajo tiene UNA barra que dice qué pasa, por qué importa
+   y con qué botón se resuelve; los demás bloques la complementan, no la
+   repiten. Nació en Empleabilidad, donde el mismo vencimiento aparecía en el
+   aviso, en el pie de la cifra héroe y en la fila del hito, con dos botones
+   idénticos. Vive aquí porque la regla vale para todas las pantallas.     */
+.accion{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:var(--radio);
+  border:1px solid var(--linea);background:var(--hueso-claro);margin-bottom:16px}
+.accion > svg{width:20px;height:20px;flex:none;stroke-width:1.7;fill:none;margin-top:1px;stroke:var(--gris)}
+.accion .a-tx{flex:1;min-width:0}
+.accion .a-t{display:block;font-size:14.5px;font-weight:700;line-height:1.35;color:var(--tinta)}
+.accion .a-n{display:block;font-size:12.5px;color:var(--gris);line-height:1.5;margin-top:3px}
+.accion .a-acc{flex:none;display:flex;gap:8px;flex-wrap:wrap}
+.accion.urge{background:var(--guinda-050);border-color:rgba(174,25,45,.3)}
+.accion.urge > svg{stroke:var(--guinda)}
+.accion.urge .a-t{color:var(--guinda-900)}
+.accion.tibia{background:var(--rosa-050);border-color:rgba(201,1,102,.28)}
+.accion.tibia > svg{stroke:var(--rosa)}
+.accion.tibia .a-t{color:#7d0140}
+.accion.ok{background:var(--jade-050);border-color:rgba(0,152,135,.26)}
+.accion.ok > svg{stroke:var(--jade)}
+
+/* ------------------------------------ 22. Hoja de documento oficial ----- */
+/* Vista previa en papel membretado. Nació como la canalización de Salud y la
+   usa también la emisión de oficios; el tamaño de letra base (9px) es el de
+   una hoja reducida a una columna de ~300px, y una pantalla que la muestre
+   más grande sube la escala desde su propia hoja de estilos.              */
+.oficio-hoja{border:1px solid var(--linea);border-radius:6px;background:var(--blanco);
+  overflow:hidden;font-size:9px;line-height:1.55;color:var(--gris)}
+.oficio-hoja .o-membrete{padding:12px 14px 10px;border-bottom:1px solid var(--linea-suave)}
+.oficio-hoja .o-inst{display:block;font-family:var(--f-titulo);font-size:8px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--guinda);line-height:1.7}
+.oficio-hoja .o-cuerpo{padding:12px 14px 14px}
+.oficio-hoja .o-folio{display:block;text-align:right;font-variant-numeric:tabular-nums;
+  font-weight:700;color:var(--tinta);margin-bottom:9px}
+.oficio-hoja .o-dest{display:block;font-weight:700;color:var(--tinta);margin-bottom:8px;line-height:1.5}
+.oficio-hoja p{margin:0 0 7px}
+.oficio-hoja b{color:var(--tinta)}
+.oficio-hoja .o-firma{margin-top:16px;text-align:center;padding-top:6px}
+.oficio-hoja .o-firma .o-raya{display:block;width:66%;height:1px;background:var(--linea);margin:0 auto 5px}
+.oficio-hoja .o-pie{border-top:1px solid var(--linea-suave);padding:8px 14px;background:var(--hueso-claro);
+  font-size:8px;line-height:1.5;color:var(--gris-claro)}
+.oficio-cap{font-size:11px;color:var(--gris-claro);text-align:center;margin-top:8px;line-height:1.45}
+
+/* ------------------------------- 23. Piezas de módulo compartidas ------- */
+/* Lo que repetían Administración y los cuatro módulos de documentos. Cada uno
+   es un archivo autónomo, pero copiar la misma cartera cuatro veces es tener
+   cuatro definiciones que mantener.                                      */
+
+/* Encabezado de tarjeta cuando el título es una frase larga: `h3` sale en
+   versalitas de la tipografía de título y una frase entera se lee como un
+   grito. */
+.sec-tit{font-family:var(--f-texto);font-size:14.5px;font-weight:700;color:var(--tinta);
+  text-transform:none;letter-spacing:0;margin:0}
+
+/* Estado vacío de una tabla o una lista. */
+.vacio{padding:36px 20px;text-align:center;color:var(--gris);font-size:13px;line-height:1.6}
+.vacio svg{width:34px;height:34px;stroke-width:1.2;stroke:var(--arena);fill:none;display:block;margin:0 auto 10px}
+
+/* Piso de foco fijado en la revisión de accesibilidad de Empleabilidad: el
+   contorno global de 2px se pierde sobre las superficies de tarjeta. */
+.contenido :focus-visible{outline:3px solid var(--jade);outline-offset:2px;border-radius:4px}
+h2[tabindex]:focus,h3[tabindex]:focus{outline:3px solid var(--jade);outline-offset:4px}
+
+/* Cartera maestro-detalle: la lista de la izquierda con la que trabajan
+   Salud, Revalidación y Constancias. `role="listbox"` y no un montón de
+   `aria-pressed`: es una selección única, no interruptores sueltos.      */
+.cartera{border:1px solid var(--linea);border-radius:var(--radio);background:var(--blanco);
+  overflow:hidden}
+.cart-item{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;
+  padding:12px 14px;min-height:44px;background:none;border:0;cursor:pointer;
+  border-bottom:1px solid var(--linea-suave);font-family:var(--f-texto)}
+.cart-item:last-child{border-bottom:0}
+.cart-item:hover{background:var(--hueso-claro)}
+.cart-item[aria-selected="true"]{background:var(--jade-050)}
+.cart-item .k-tx{flex:1;min-width:0}
+.cart-item .k-n{display:block;font-size:13px;font-weight:700;color:var(--tinta);line-height:1.3}
+.cart-item .k-f{display:block;font-size:11.5px;color:var(--gris);margin-top:3px;line-height:1.4;
+  font-variant-numeric:tabular-nums;word-break:break-word}
+.cart-item .k-e{display:block;margin-top:6px}
+
+/* Renglón de requisito o de documento: glifo de estado, nombre, estado en
+   palabra y —lo que lo hace útil— qué bloquea si falta. Un requisito que no
+   declara su consecuencia es una casilla más.                           */
+.req-item{display:flex;gap:11px;align-items:flex-start;padding:12px 0;
+  border-bottom:1px solid var(--linea-suave)}
+.req-item:last-child{border-bottom:0;padding-bottom:0}
+.req-item > .r-ico{width:24px;height:24px;flex:none;border-radius:6px;display:grid;
+  place-items:center;border:1px solid transparent;margin-top:1px}
+.req-item > .r-ico svg{width:14px;height:14px;stroke-width:2;fill:none}
+.req-item .r-ico.si{background:var(--jade-050);border-color:rgba(0,152,135,.28)}
+.req-item .r-ico.si svg{stroke:var(--jade-900)}
+.req-item .r-ico.tramite{background:var(--rosa-050);border-color:rgba(201,1,102,.3)}
+.req-item .r-ico.tramite svg{stroke:var(--rosa)}
+.req-item .r-ico.falta{background:var(--guinda-050);border-color:rgba(174,25,45,.3)}
+.req-item .r-ico.falta svg{stroke:var(--guinda)}
+.req-item .r-ico.na{background:var(--arena-050);border-color:var(--linea);color:var(--gris-claro);
+  font-size:13px;line-height:1}
+.req-item .r-tx{flex:1;min-width:0}
+.req-item .r-t{display:block;font-size:13.5px;font-weight:700;color:var(--tinta);line-height:1.35}
+.req-item .r-est{display:block;font-size:12px;font-weight:700;margin-top:3px;line-height:1.4}
+.req-item .r-est.si{color:var(--jade-900)}
+.req-item .r-est.tramite{color:#7d0140}
+.req-item .r-est.falta{color:var(--guinda-900)}
+.req-item .r-est.na{color:var(--gris-claro)}
+.req-item .r-n{display:block;font-size:12.5px;color:var(--gris);margin-top:4px;line-height:1.5}
+
+/* Rejilla maestro-detalle de los módulos de documentos. */
+.g-carpeta{display:grid;grid-template-columns:300px 1fr;gap:22px;align-items:start}
+@media (max-width:1100px){ .g-carpeta{grid-template-columns:1fr} }
+
+/* --------------------------------------------------- 24. Utilidades ----- */
+.flex{display:flex}.entre{justify-content:space-between}.centro{align-items:center}
+.gap-8{gap:8px}.gap-10{gap:10px}.gap-16{gap:16px}
+.ml-auto{margin-left:auto}
+.oculto{display:none!important}
+.solo-lectura{pointer-events:none;opacity:.75}
+/* Texto solo para lectores de pantalla: rótulos de campo, encabezados de
+   orientación y regiones de anuncio (aria-live) que no deben verse pero sí
+   leerse. No usar display:none, que los quita también del lector.          */
+.sr-solo{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+@media (max-width:1280px){
+  .g-6,.g-5{grid-template-columns:repeat(3,1fr)}
+  .g-60-40,.g-55-45,.g-2-1,.g-hero{grid-template-columns:1fr}
+}
+@media (max-width:900px){
+  .sidebar{transform:translateX(-100%);transition:transform .2s;z-index:55}
+  .sidebar.abierto{transform:none}
+  .sidebar-velo{position:fixed;inset:0;background:rgba(26,26,26,.45);z-index:54}
+  .sidebar-velo[hidden]{display:none}
+  .contenido{margin-left:0;padding:20px 16px 52px;padding-top:calc(var(--topbar-h) + 20px)}
+  .g-6,.g-5,.g-4,.g-3,.g-2{grid-template-columns:1fr}
+  .fila,.fila-3,.fila-4{grid-template-columns:1fr}
+
+  /* La barra superior se arma para escritorio y no cabe en un teléfono:
+     .marca reservaba 236 px fijos y el buscador no encogía, así que la
+     página entera desbordaba a lo ancho. En angosto queda el isotipo, el
+     botón de menú y el avatar; el nombre del sistema, la búsqueda global
+     y la ficha de usuario se recuperan al abrir el menú o el pop.        */
+  .topbar{gap:10px;padding:0 12px}
+  .menu-btn{display:inline-flex}
+  .marca{min-width:0}
+  .marca > span{display:none}
+  .buscador{display:none}
+  .usuario .u-txt,.usuario .u-caret{display:none}
+  .usuario{padding:5px}
+}
+@media print{
+  .topbar,.sidebar,.no-imprimir{display:none!important}
+  .contenido{margin:0;padding:0}
+  body{background:#fff}
+}

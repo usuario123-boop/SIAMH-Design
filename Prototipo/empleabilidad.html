@@ -1,0 +1,1838 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Empleabilidad · Vinculación laboral y seguimiento · SIMH</title>
+<link rel="icon" href="assets/img/simh-isotipo-96.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/simh.css">
+<style>
+  /* ====================================================================
+     Empleabilidad · RF12
+     Aquí solo vive lo específico de esta pantalla. Todo lo demás son
+     componentes de assets/css/simh.css: .tarjeta, .exp-cab, .ruta,
+     .hero, .chip, .aviso, .tabla, .campo, .modulo, .resumen-dato.
+     ================================================================== */
+  .g-maestro{display:grid;grid-template-columns:308px minmax(0,1fr);gap:16px;align-items:start}
+  .g-maestro > *{min-width:0}
+  @media (max-width:1180px){ .g-maestro{grid-template-columns:1fr} }
+  @media (max-width:1080px){ .rejilla.g-hero,.rejilla.g-2{grid-template-columns:1fr} }
+
+  /* ---------- Cartera: ordenada por vencimiento, no por fecha de alta -- */
+  .pers-item{display:block;width:100%;text-align:left;background:none;border:0;
+    border-bottom:1px solid var(--linea-suave);padding:11px 12px;cursor:pointer;
+    font-family:var(--f-texto);position:relative}
+  .pers-item:hover{background:var(--hueso-claro)}
+  .pers-item.activo{background:var(--jade-050)}
+  .pers-item.activo::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;
+    background:var(--jade);border-radius:0 3px 3px 0}
+  .pers-item .p-nom{display:block;font-size:13.5px;font-weight:700;color:var(--tinta);line-height:1.3;margin:6px 0 2px}
+  .pers-item .p-folio{display:block;font-size:11.5px;color:var(--gris-claro);font-variant-numeric:tabular-nums}
+  .pers-item .p-donde{display:block;font-size:11.5px;color:var(--gris);line-height:1.4;margin-top:4px}
+  .pers-item .p-alerta{display:flex;gap:5px;align-items:flex-start;font-size:11.5px;color:var(--guinda-900);
+    font-weight:700;margin-top:5px;line-height:1.35}
+  .pers-item .p-alerta svg{width:13px;height:13px;stroke:var(--guinda);stroke-width:2;fill:none;flex:none;margin-top:1px}
+  .pers-item .p-alerta.tibia{color:var(--alerta)}
+  .pers-item .p-alerta.tibia svg{stroke:var(--alerta)}
+
+  .chips-filtro{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .chips-filtro .chip{cursor:pointer;border:0;font-family:var(--f-texto)}
+
+  /* El marcador .seg-mini (dos puntos de color) se retiró: el estado viajaba
+     solo en el color y sin nombre accesible. Lo sustituye .seg2, más abajo. */
+
+  /* ---------- Hitos de verificación: cada uno es un registro ----------- */
+  .ruta-hito.vencido{color:var(--critico);font-weight:700}
+  .ruta-hito.vencido .r-bolita{background:var(--critico);border-color:var(--critico)}
+  .ruta-hito.porvencer{color:var(--alerta);font-weight:700}
+  .ruta-hito.porvencer .r-bolita{background:var(--blanco);border-color:var(--alerta);
+    box-shadow:0 0 0 3px var(--rosa-050)}
+  .ruta-hito.nula .r-bolita{border-style:dashed}
+
+  .hito{display:flex;gap:13px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--linea-suave)}
+  .hito:last-child{border-bottom:0;padding-bottom:0}
+  .hito .h-tx{flex:1;min-width:0}
+  .hito .h-t{display:block;font-size:13.5px;font-weight:700;color:var(--tinta);line-height:1.3}
+  .hito .h-n{display:block;font-size:11.5px;color:var(--gris);margin-top:3px;line-height:1.45}
+  .hito .h-n.mal{color:var(--guinda-900);font-weight:700}
+  .hito .h-n.pv{color:var(--alerta);font-weight:700}
+  .hito .h-acc{flex:none}
+  .hito .h-reg{display:block;font-size:12px;color:var(--gris);margin-top:6px;line-height:1.55;
+    border-left:2px solid var(--linea);padding-left:9px}
+  .hito .h-reg b{color:var(--tinta);font-weight:700}
+  .hito .h-reg.fallido{border-left-color:var(--arena)}
+
+  /* ---------- Requisitos para formalizar la contratación --------------- */
+  .reqc{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-bottom:1px solid var(--linea-suave)}
+  .reqc:first-child{padding-top:0}
+  .reqc:last-child{border-bottom:0;padding-bottom:0}
+  .reqc > svg{width:17px;height:17px;stroke-width:2;fill:none;flex:none;margin-top:2px;stroke:var(--gris-claro)}
+  .reqc.si > svg{stroke:var(--jade-900)}
+  .reqc.no > svg{stroke:var(--critico)}
+  .reqc.pv > svg{stroke:var(--alerta)}
+  .reqc .rq-tx{flex:1;min-width:0}
+  .reqc .rq-t{display:block;font-size:13.5px;font-weight:700;color:var(--tinta);line-height:1.3}
+  .reqc .rq-n{display:block;font-size:11.5px;color:var(--gris);margin-top:3px;line-height:1.45}
+  .reqc.no .rq-n{color:var(--guinda-900);font-weight:700}
+  .reqc.pv .rq-n{color:var(--alerta);font-weight:700}
+  .reqc .rq-et{display:inline-block;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;
+    font-weight:700;color:var(--gris-claro);border:1px solid var(--linea);border-radius:3px;
+    padding:1px 5px;margin-left:7px;vertical-align:2px}
+
+  /* ---------- Historial laboral ---------------------------------------- */
+  /* table-layout:fixed y anchos declarados: es la única forma de que seis
+     columnas no desborden y corten la de acciones, que es el defecto que
+     ya apareció en el listado de expedientes y en capacitacion.html.      */
+  table.tabla.t-hist{table-layout:fixed}
+  table.tabla.t-hist tbody td{vertical-align:top;word-break:break-word}
+  table.tabla.t-hist thead th{white-space:normal}
+  .t-hist td,.t-hist th{padding-left:12px;padding-right:12px}
+  .t-hist col.c-vac{width:27%}
+  .t-hist col.c-eta{width:13%}
+  .t-hist col.c-res{width:19%}
+  .t-hist col.c-seg{width:15%}
+  .t-hist col.c-rsp{width:13%}
+  .t-hist col.c-acc{width:13%}
+  /* .btn trae white-space:nowrap: en una celda estrecha eso vuelve a
+     desbordar la tabla. Aquí el enlace de acción sí puede partirse. */
+  .t-hist .btn-texto{white-space:normal;text-align:right;line-height:1.35;display:inline}
+  .t-hist .v-vac{display:block;font-weight:700;font-size:13px;line-height:1.25}
+  .t-hist .v-emp{display:block;font-size:11.5px;color:var(--gris);margin-top:2px;line-height:1.35}
+  .t-hist .v-fec{display:block;font-size:11px;color:var(--gris-claro);margin-top:4px;
+    font-variant-numeric:tabular-nums;line-height:1.4}
+  .t-hist .v-res{display:block;font-size:12.5px;line-height:1.35}
+  .t-hist .v-mot{display:block;font-size:11.5px;color:var(--gris);margin-top:3px;line-height:1.4}
+  .t-hist .v-mot.mal{color:var(--guinda-900)}
+  .t-hist tr.cerrada td{background:var(--hueso-claro)}
+  .t-hist tr.cerrada .v-vac{color:var(--gris)}
+  .t-hist .v-na{color:var(--gris-claro)}
+  .t-hist .v-resp{font-size:12px;color:var(--gris);line-height:1.4}
+
+  .filtros-tabla{display:flex;gap:6px;flex-wrap:wrap}
+  .filtros-tabla .chip{cursor:pointer;border:0;font-family:var(--f-texto)}
+
+  /* ---------- Paneles de captura --------------------------------------- */
+  .panel{border:1px solid var(--jade);border-radius:var(--radio);background:var(--jade-020);
+    padding:15px 16px;margin-top:16px}
+  .panel > h3{margin:0 0 3px;font-family:var(--f-texto);font-size:14.5px;font-weight:700;
+    color:var(--tinta);text-transform:none;letter-spacing:0}
+  .panel > .p-int{font-size:12.5px;color:var(--gris);margin:0 0 13px;line-height:1.5}
+  .panel.grave{border-color:var(--guinda);background:var(--guinda-050)}
+  .panel.grave > h3{color:var(--guinda-900)}
+  .panel .campo{margin-bottom:12px}
+
+  /* La consecuencia se declara antes de confirmar, nunca después. */
+  .conse{border-left:3px solid var(--jade);background:var(--blanco);padding:10px 12px;
+    border-radius:0 var(--radio-s) var(--radio-s) 0;font-size:12.5px;color:var(--gris);
+    margin:2px 0 13px;line-height:1.55}
+  .conse.rompe{border-left-color:var(--guinda);color:var(--guinda-900)}
+  .conse.tibia{border-left-color:var(--alerta);color:#7d0140}
+  .conse b{color:var(--tinta);font-weight:700}
+  .conse.rompe b{color:var(--guinda-900)}
+  .conse svg{width:14px;height:14px;stroke-width:2;fill:none;vertical-align:-2px;margin-right:4px;stroke:var(--jade)}
+  .conse.rompe svg{stroke:var(--guinda)}
+  .conse.tibia svg{stroke:var(--alerta)}
+
+  .opciones{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-bottom:13px}
+  /* Nombre de clase: NO usar .opc — el sistema ya la ocupa para el "(opcional)"
+     de las etiquetas de campo, y ahí esta caja rompía la etiqueta en dos. */
+  .opcion{display:flex;gap:9px;align-items:flex-start;border:1px solid var(--linea);border-radius:var(--radio-s);
+    background:var(--blanco);padding:10px 11px;cursor:pointer;font-family:var(--f-texto)}
+  .opcion:hover{border-color:var(--arena)}
+  .opcion input{width:17px;height:17px;accent-color:var(--jade);margin-top:1px;flex:none}
+  .opcion.sel{border-color:var(--jade);box-shadow:0 0 0 2px var(--jade-050)}
+  .opcion.sel.grave{border-color:var(--guinda);box-shadow:0 0 0 2px var(--guinda-050)}
+  .opcion .o-t{display:block;font-size:13px;font-weight:700;line-height:1.3;color:var(--tinta)}
+  .opcion .o-n{display:block;font-size:11.5px;color:var(--gris);margin-top:2px;line-height:1.4}
+
+  /* ---------- Aislamiento entre direcciones (RNF01) -------------------- */
+  .mods{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px}
+
+  /* La cifra héroe no debe estirarse a la altura de la tarjeta vecina:
+     centrada dentro de una caja alta deja un hueco que no dice nada.      */
+  .rejilla.g-hero > .hero{align-self:start}
+  /* Cuando no hay cifra se escribe "—", nunca un cero que mentiría. A 48 px
+     un guion largo se lee como una barra negra, así que se compone tenue.  */
+  .hero .h-num.sin{font-size:32px;color:var(--gris-claro);font-weight:400}
+
+  .sec-tit{font-family:var(--f-texto);font-size:14.5px;font-weight:700;color:var(--tinta);
+    text-transform:none;letter-spacing:0;margin:0}
+  .vacio{padding:36px 20px;text-align:center;color:var(--gris-claro);font-size:13px;line-height:1.6}
+  .vacio svg{width:34px;height:34px;stroke-width:1.2;stroke:var(--arena);fill:none;display:block;margin:0 auto 10px}
+  .nac{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--gris);
+    border:1px solid var(--linea);border-radius:3px;padding:1px 5px;margin-left:6px;vertical-align:1px}
+
+  /* ======================================================================
+     REVISIÓN DE ACCESIBILIDAD Y CARGA COGNITIVA (v3)
+     --------------------------------------------------------------------
+     La versión anterior era correcta de fondo y difícil de usar: mostraba
+     los siete bloques de la persona a la vez (≈2 000 px de alto), repetía
+     el mismo vencimiento en tres lugares y cifraba el estado de los hitos
+     en dos puntos de color sin texto. Lo que sigue corrige eso sin tocar
+     el sistema de diseño global: son reglas locales de esta pantalla.
+     ================================================================== */
+
+  /* --- 1. Piso de legibilidad ------------------------------------------
+     El prompt de identidad exige contraste AA y no depender del color.
+     Aquí nada baja de 12.5 px y el texto secundario usa --gris (#5F5F5F,
+     7.1:1 sobre blanco) en vez de --gris-claro (#8C8C8C, 3.1:1), que no
+     alcanza AA para texto pequeño. --gris-claro queda solo para texto
+     desactivado y para el guion de "no aplica".                          */
+  .pers-item .p-folio{font-size:12.5px;color:var(--gris)}
+  .pers-item .p-donde,
+  .pers-item .p-alerta{font-size:12.5px}
+  .hito .h-n,.reqc .rq-n,.t-hist .v-emp,.t-hist .v-mot{font-size:12.5px}
+  .t-hist .v-fec{font-size:12px;color:var(--gris)}
+  .tarjeta-pie,.tabla-pie{font-size:12.5px;color:var(--gris)}
+  .vacio{color:var(--gris);font-size:13px}
+
+  /* --- 2. Área táctil de 44 px ------------------------------------------
+     Requisito explícito del manual. Se aplica a los controles que se usan
+     con el dedo o con prisa en ventanilla; los chips de filtro llegan a 36
+     px y se separan 8 px, que es el mínimo con el que no se pulsan dos.   */
+  .g-maestro .btn,#detalle .btn,#detalle .btn-s{min-height:44px}
+  .t-hist .btn-texto{min-height:44px;padding:0 4px}
+  .chips-filtro .chip,.filtros-tabla .chip{min-height:36px;padding:0 10px;font-size:12.5px;gap:6px}
+  .chips-filtro{gap:8px}
+  .filtros-tabla{gap:8px}
+  .pestana{min-height:44px}
+
+  /* --- 3. Foco visible --------------------------------------------------
+     El detalle se repinta entero con innerHTML: sin un anillo de foco
+     evidente el teclado se pierde. Un solo anillo para toda la pantalla.  */
+  #detalle :focus-visible,.g-maestro :focus-visible,.pestana:focus-visible{
+    outline:3px solid var(--jade);outline-offset:2px;border-radius:4px}
+  #detalle h2[tabindex]:focus{outline:3px solid var(--jade);outline-offset:4px}
+
+  /* --- 4. Estado de los hitos con forma y texto, no solo color ----------
+     Antes: dos <i> de color, sin nombre accesible, con la leyenda "15 d ·
+     30 d de seguimiento", que nombra los hitos pero no dice cómo están.
+     Ahora cada hito es una pastilla con glifo + palabra + color, así que
+     se lee igual en escala de grises y la lee un lector de pantalla.     */
+  .seg2{display:flex;flex-wrap:wrap;gap:6px}
+  .pers-item .seg2{margin-bottom:7px}
+  .seg2 .s2{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;
+    line-height:1.2;padding:3px 8px;border-radius:999px;border:1px solid var(--linea);
+    background:var(--hueso-claro);color:var(--gris);white-space:nowrap}
+  .seg2 .s2 .g{font-size:12px;line-height:1}
+  .seg2 .s2.ok{background:var(--jade-050);border-color:rgba(0,152,135,.3);color:var(--jade-900)}
+  .seg2 .s2.mal{background:var(--guinda-050);border-color:rgba(174,25,45,.3);color:var(--guinda-900)}
+  .seg2 .s2.pv{background:var(--rosa-050);border-color:rgba(201,1,102,.3);color:#7d0140}
+  .seg2 .s2.na{border-style:dashed;color:var(--gris)}
+
+  /* --- 5. Pestañas del detalle -----------------------------------------
+     Divulgación progresiva: seguimiento, historial y expediente laboral
+     dejan de competir en una sola columna. Es el mismo componente de
+     expediente-detalle.html, no uno nuevo.                                */
+  .pest-det{margin:16px 0 16px}
+  .pest-det .pestana{font-size:13.5px}
+  .pest-det .pestana .cta{display:inline-flex;align-items:center;justify-content:center;
+    min-width:19px;height:19px;padding:0 5px;margin-left:7px;border-radius:999px;
+    font-size:11px;font-weight:700;background:var(--arena-050);color:var(--gris)}
+  .pest-det .pestana.activa .cta{background:var(--jade-050);color:var(--jade-900)}
+  .pest-det .pestana .cta.urge{background:var(--guinda-050);color:var(--guinda-900)}
+
+  /* --- 6. Barra de acción única ----------------------------------------
+     Un solo lugar dice qué hay que hacer con esta persona hoy. Antes el
+     mismo vencimiento aparecía en el aviso rojo, en el pie de la cifra
+     héroe y en la fila del hito, con dos botones idénticos. El componente
+     `.accion` vive en simh.css §21: la regla vale para todas las pantallas.
+     -------------------------------------------------------------------- */
+
+  /* Marca de acompañamiento dentro de la ficha de requisitos, y la
+     observación que la sostiene. La marca no viaja sola en el color: lleva
+     glifo y palabra, como el resto de los estados del sistema. */
+  .reqc .rq-ac{display:inline-flex;align-items:center;gap:4px;margin-left:8px;
+    font-size:11px;font-weight:700;color:var(--rosa);text-transform:none;letter-spacing:0}
+  .reqc .rq-ac svg{width:12px;height:12px;stroke:var(--rosa);stroke-width:2;fill:none}
+  .reqc .rq-obs{display:block;font-size:12.5px;color:var(--gris);line-height:1.55;margin-top:6px;
+    border-left:2px solid var(--rosa-050);padding-left:9px}
+  .reqc .rq-obs b{color:var(--tinta)}
+
+  /* --- 7. Historial: de seis columnas a cuatro -------------------------
+     Con seis columnas el chip de etapa (que trae white-space:nowrap)
+     desbordaba su 13% y se encimaba con la columna de resultado, y
+     "Cerrar vinculación" se partía a mitad de palabra. Etapa y resultado
+     cuentan lo mismo, así que van juntos; el responsable baja a la
+     primera celda, que es donde ya viven las fechas.                      */
+  .t-hist col.c-vac{width:38%}
+  .t-hist col.c-eta{width:26%}
+  .t-hist col.c-seg{width:20%}
+  .t-hist col.c-acc{width:16%}
+  .t-hist .btn-texto{white-space:normal;text-align:left;line-height:1.35;display:inline-block;
+    word-break:normal;overflow-wrap:anywhere}
+  .t-hist td .chip{white-space:normal;margin-bottom:5px}
+  .t-hist .v-resp{display:block;font-size:12px;color:var(--gris);margin-top:4px;line-height:1.4}
+
+  /* --- 8. La columna del maestro se queda pegada ------------------------
+     Con el detalle en pestañas la página deja de medir 2 000 px, así que
+     el hueco muerto bajo la cartera desaparece por sí solo.               */
+  .g-maestro > .maestro{position:sticky;top:calc(var(--topbar-h) + 16px)}
+  @media (max-width:1100px){
+    .g-maestro{grid-template-columns:1fr}
+    .g-maestro > .maestro{position:static}
+  }
+</style>
+</head>
+<body>
+
+<main class="contenido">
+  <div class="migas"><a href="index.html">Inicio</a> › Empleabilidad</div>
+
+  <div class="enc">
+    <div class="enc-txt">
+      <h1>Empleabilidad</h1>
+      <div class="enc-sub">Vinculación laboral y verificación a los 15 y 30 días de la colocación (RF12)</div>
+    </div>
+    <div class="enc-acc">
+      <button class="btn btn-secundario btn-s" type="button" id="btnXls"></button>
+      <button class="btn btn-secundario btn-s" type="button" id="btnPdf"></button>
+    </div>
+  </div>
+
+  <!-- Las reglas del módulo (RNF01 y RNF02) son ciertas y permanentes, pero
+       no se necesitan en cada visita: cuatro líneas de texto normativo fijas
+       en la cabecera eran la primera cosa que leía quien abría la pantalla.
+       Se pliegan, y el resumen deja a la vista lo único operativo.          -->
+  <details class="plegable" id="avisoPermisos">
+    <summary>Qué hace este módulo y qué no</summary>
+    <div class="cuerpo" id="avisoPermisosCuerpo"></div>
+  </details>
+
+  <div class="g-maestro">
+    <!-- ================== Cartera de seguimiento ====================== -->
+    <section class="tarjeta maestro" style="padding:0" aria-labelledby="tCartera">
+      <div style="padding:13px 12px 12px;border-bottom:1px solid var(--linea)">
+        <h2 id="tCartera" class="sec-tit" style="margin-bottom:10px">Cartera de seguimiento</h2>
+        <label for="buscaPers" class="sr-solo">Buscar en la cartera por persona, folio o empresa</label>
+        <input type="text" id="buscaPers" placeholder="Buscar persona, folio o empresa"
+               style="width:100%;height:40px;border:1px solid var(--linea);border-radius:var(--radio-s);
+                      padding:0 11px;font-family:var(--f-texto);font-size:13.5px">
+        <div class="chips-filtro" id="chipsFiltro" role="group" aria-label="Filtrar la cartera"></div>
+      </div>
+      <div id="listaPers" role="listbox" aria-labelledby="tCartera"
+           style="max-height:58vh;overflow-y:auto"></div>
+      <div class="tabla-pie" style="border-radius:0 0 var(--radio) var(--radio)">
+        <span id="conteoPers"></span>
+      </div>
+    </section>
+
+    <!-- ========================== Detalle ============================= -->
+    <div id="detalle"></div>
+  </div>
+
+  <!-- El repintado por innerHTML no avisa de nada a un lector de pantalla:
+       este renglón anuncia a quién se seleccionó y qué está pendiente.     -->
+  <p id="anuncio" class="sr-solo" role="status" aria-live="polite"></p>
+</main>
+
+<script src="assets/js/simh.js"></script>
+<script>
+(function () {
+  "use strict";
+  SIMH.chrome("empleo");
+  var ico = SIMH.icono, esc = SIMH.esc;
+  var $  = function (s) { return document.querySelector(s); };
+  var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+
+  var HOY = "2026-08-27";
+
+  $("#btnXls").innerHTML = ico("excel") + "Exportar cartera de seguimiento";
+  $("#btnPdf").innerHTML = ico("pdf") + "Reporte de vinculación laboral";
+
+  $("#avisoPermisosCuerpo").innerHTML =
+    '<div class="resumen-lista">' +
+    '<div class="resumen-dato"><span class="r-lab">Esta ventanilla sí puede</span>' +
+      '<span class="r-val">Registrar vinculaciones, agendar entrevistas, capturar el resultado, ' +
+      'el inicio de labores y las verificaciones de 15 y 30 días.</span></div>' +
+    '<div class="resumen-dato"><span class="r-lab">Esta ventanilla no puede</span>' +
+      '<span class="r-val">Emitir la constancia de colocación ni cerrar formalmente el seguimiento: ' +
+      'los emite el Enlace de Vinculación Laboral (RNF02). Tampoco eliminar una vinculación (RNF03).</span></div>' +
+    '<div class="resumen-dato"><span class="r-lab">Aislamiento entre direcciones</span>' +
+      '<span class="r-val">Desde Empleabilidad no se consulta Salud ni Vulnerabilidad, y ninguna ' +
+      'condición de salud puede usarse como criterio para vincular o descartar a una persona (RNF01).</span></div>' +
+    "</div>";
+
+  /* ======================================================================
+     1. Lo que RF12 pide de verdad
+     --------------------------------------------------------------------
+     El guion original resolvía esta pantalla como una tabla de la persona
+     más un panel lateral con dos chips ("15 días" / "30 días"). Eso falla
+     en tres puntos que sí importan en operación:
+
+       · El módulo no se abre desde una persona: se abre desde el menú. Lo
+         que llega solo son los VENCIMIENTOS, no las personas. Por eso es
+         una cartera maestro-detalle ordenada por vencimiento, igual que
+         Salud y Capacitación.
+       · Un hito de seguimiento no es un chip de estado: es un REGISTRO con
+         fecha real, medio de verificación, resultado y responsable. Un chip
+         que dice "Vencido" no dice qué hacer ni deja constancia de nada.
+       · "Contratación (Sí / No)" no es un booleano: colapsa "todavía no hay
+         entrevista" con "no la contrataron", que es justo la distinción que
+         necesita quien da seguimiento. Se sustituyó por la ETAPA de la
+         vinculación, y el resultado aparece solo cuando ya aplica.
+
+     Además: el reloj de 15 y 30 días arranca en la FECHA DE INICIO DE
+     LABORES, no en la postulación, y solo existe para las vinculaciones que
+     llegaron a contratación. Dibujar el panel de seguimiento junto a una
+     postulación sin contratar es prometer un dato que no existe.
+     ================================================================== */
+  var HITOS = [15, 30];
+  var REPROG = 3;   /* cada intento sin contacto reprograma la verificación */
+
+  /* ------------------------------------------------------- Catálogos ---- */
+  var SECTORES = ["Agroindustria", "Comercio", "Construcción", "Manufactura de alimentos",
+    "Servicios de hospedaje y alimentos", "Servicios de limpieza", "Textil y confección",
+    "Transporte y almacenaje"];
+
+  var MEDIOS = ["Llamada telefónica al patrón", "Llamada telefónica a la persona",
+    "Visita al centro de trabajo", "Comparecencia en ventanilla"];
+
+  var MOT_FIN = ["Renuncia voluntaria", "Despido o rescisión de contrato", "Término del contrato",
+    "Condiciones laborales o de pago", "Traslado a otro municipio o país",
+    "Documento migratorio vencido", "Motivos de salud o familiares"];
+
+  var MOT_NOCON = ["El perfil no corresponde a la vacante",
+    "No acreditó documento que autorice trabajar", "La persona declinó la oferta",
+    "La vacante se cubrió con otra persona", "No se presentó a la entrevista",
+    "No aceptó las condiciones de la oferta"];
+
+  var PAIS = { GTM:"Guatemala", HND:"Honduras", SLV:"El Salvador", NIC:"Nicaragua",
+               HTI:"Haití", CUB:"Cuba", VEN:"Venezuela", MEX:"México" };
+
+  var RESP = "Lic. Adriana Molina Sántiz";
+
+  /* ======================================================================
+     2. Cartera. Datos a mano, como en el resto del prototipo.
+        Los folios coinciden con los de capacitacion.html a propósito: es la
+        misma población y así se ve que el expediente es único.
+     ================================================================== */
+  var PERSONAS = [
+    {
+      e:"0412", n:"Yesenia Ramírez Coc", nac:"GTM", edad:27, mun:"Tapachula",
+      curp:1, estancia:{ doc:"Tarjeta de Visitante por Razones Humanitarias", vig:"2027-03-14" },
+      rfc:{ est:"tram", d:"En trámite por el patrón desde el 03/08/2026" },
+      /* Acompañamiento de la Secretaría en un trámite que no es suyo pero del
+         que depende la colocación. Sin marcarlo, la ventanilla vuelve a pedir
+         el papel que la propia Secretaría está gestionando. */
+      acomp:[ { que:"rfc", desde:"2026-08-18", quien:"Lic. Adriana Molina Sántiz",
+                nota:"El SAT rechazó dos veces el comprobante de domicilio. Se acompaña la cita " +
+                     "del 04/09 con carta de residencia expedida por la Secretaría." } ],
+      nss:{ est:"reg",  d:"12 08 96 5411 3 · alta ante el IMSS el 30/07/2026" },
+      esc:"Secundaria concluida", perfil:"Auxiliar de panadería y pastelería",
+      exp:"3 años en panadería (Quetzaltenango, Guatemala)",
+      disp:"Tiempo completo · turno matutino",
+      cursos:"Panadería básica · ICATECH Tapachula (en curso)",
+      v:[
+        { id:"V-0412-01", vac:"Auxiliar de producción", emp:"Panificadora El Trigal, S.A. de C.V.",
+          sector:"Manufactura de alimentos", munEmp:"Tapachula", resp:RESP,
+          post:"2026-07-06", ent:"2026-07-14", entRes:"fav", con:1, fcon:"2026-07-18",
+          inicio:"2026-07-24", puesto:"Auxiliar de producción · turno matutino",
+          fin:null, motFin:null,
+          seg:{ "15":[{ f:"2026-08-10", medio:"Llamada telefónica al patrón", res:"continua",
+                        por:RESP, nota:"El patrón confirma asistencia regular y pago quincenal." }],
+                "30":[] } }
+      ]
+    },
+    {
+      e:"0429", n:"José Ramón Bulnes Ayala", nac:"HND", edad:34, mun:"Tapachula",
+      curp:1, estancia:{ doc:"Tarjeta de Visitante por Razones Humanitarias", vig:"2026-09-30" },
+      rfc:{ est:"reg",  d:"BUAJ920415H41" },
+      nss:{ est:"tram", d:"En trámite por el patrón desde el 18/08/2026" },
+      esc:"Primaria concluida", perfil:"Ayudante general de construcción",
+      exp:"8 años en albañilería y acabados", disp:"Tiempo completo",
+      cursos:"Panadería básica · ICATECH Tapachula (en curso)",
+      v:[
+        { id:"V-0429-02", vac:"Ayudante general", emp:"Constructora Soconusco del Sur",
+          sector:"Construcción", munEmp:"Tapachula", resp:RESP,
+          post:"2026-07-30", ent:"2026-08-06", entRes:"fav", con:1, fcon:"2026-08-10",
+          inicio:"2026-08-14", puesto:"Ayudante general de obra",
+          fin:null, motFin:null, seg:{ "15":[], "30":[] } },
+        { id:"V-0429-01", vac:"Estibador", emp:"Bodegas Peninsulares del Soconusco",
+          sector:"Transporte y almacenaje", munEmp:"Tapachula", resp:RESP,
+          post:"2026-06-22", ent:"2026-06-29", entRes:"nofav", con:0,
+          motNoCon:"La vacante se cubrió con otra persona",
+          inicio:null, fin:null, motFin:null, seg:{ "15":[], "30":[] } }
+      ]
+    },
+    {
+      e:"0447", n:"Yoselin Chávez Mendoza", nac:"NIC", edad:23, mun:"Huixtla",
+      curp:1, estancia:{ doc:"Tarjeta de Visitante por Razones Humanitarias", vig:"2027-01-20" },
+      rfc:{ est:"pend" }, nss:{ est:"pend" },
+      esc:"Bachillerato concluido", perfil:"Atención a clientes y caja",
+      exp:"2 años en tienda de abarrotes (Managua, Nicaragua)",
+      disp:"Medio tiempo · turno vespertino", cursos:"Sin cursos registrados",
+      v:[
+        { id:"V-0447-01", vac:"Cajera", emp:"Abarrotes La Frontera", sector:"Comercio",
+          munEmp:"Huixtla", resp:RESP,
+          post:"2026-08-17", ent:"2026-08-25", entRes:null, con:null,
+          inicio:null, fin:null, motFin:null, seg:{ "15":[], "30":[] } }
+      ]
+    },
+    {
+      e:"0464", n:"Yordanis Pérez Lazo", nac:"CUB", edad:41, mun:"Tapachula",
+      curp:1, estancia:{ doc:"Tarjeta de Residente Temporal", vig:"2028-05-02" },
+      rfc:{ est:"pend" }, nss:{ est:"pend" },
+      esc:"Técnico en soldadura industrial", perfil:"Soldador y hojalatero",
+      exp:"14 años en taller mecánico (La Habana, Cuba)", disp:"Tiempo completo",
+      cursos:"Sin cursos registrados",
+      v:[
+        { id:"V-0464-01", vac:"Soldador", emp:"Talleres Metálicos del Soconusco",
+          sector:"Textil y confección", munEmp:"Tapachula", resp:RESP,
+          post:"2026-08-11", ent:"2026-08-19", entRes:"fav", con:1, fcon:"2026-08-26",
+          inicio:null, puesto:"Soldador de primera",
+          fin:null, motFin:null, seg:{ "15":[], "30":[] } }
+      ]
+    },
+    {
+      e:"0470", n:"Génesis Andreína Rondón Silva", nac:"VEN", edad:29, mun:"Tapachula",
+      curp:1, estancia:{ doc:"Tarjeta de Visitante por Razones Humanitarias", vig:"2027-06-08" },
+      rfc:{ est:"reg", d:"ROSG970211M22" }, nss:{ est:"reg", d:"41 09 97 8823 0" },
+      esc:"Licenciatura en Administración (trunca)", perfil:"Auxiliar administrativa",
+      exp:"6 años en administración y facturación (Maracaibo, Venezuela)",
+      disp:"Tiempo completo", cursos:"Sin cursos registrados",
+      v:[
+        { id:"V-0470-01", vac:"Auxiliar administrativa", emp:"Comercializadora Agrícola de Chiapas",
+          sector:"Agroindustria", munEmp:"Tapachula", resp:RESP,
+          post:"2026-05-18", ent:"2026-05-27", entRes:"fav", con:1, fcon:"2026-06-02",
+          inicio:"2026-06-15", puesto:"Auxiliar administrativa · facturación",
+          fin:null, motFin:null,
+          seg:{ "15":[{ f:"2026-06-30", medio:"Visita al centro de trabajo", res:"continua",
+                        por:RESP, nota:"Contrato por tiempo indeterminado firmado; alta en el IMSS verificada." }],
+                "30":[{ f:"2026-07-15", medio:"Llamada telefónica a la persona", res:"continua",
+                        por:RESP, nota:"La persona confirma continuidad y pago puntual." }] } }
+      ]
+    },
+    {
+      e:"0658", n:"Suyapa del Carmen Lagos Munguía", nac:"HND", edad:26, mun:"Tapachula",
+      curp:1, estancia:{ doc:"Tarjeta de Visitante por Razones Humanitarias", vig:"2027-02-11" },
+      rfc:{ est:"reg", d:"LAMS000724MQ8" }, nss:{ est:"reg", d:"07 00 00 7712 4" },
+      esc:"Secundaria concluida", perfil:"Camarista y auxiliar de cocina",
+      exp:"4 años en hotelería y cocina (San Pedro Sula, Honduras)",
+      disp:"Tiempo completo · rol de turnos", cursos:"Corte y confección · ICATECH (en conformación)",
+      v:[
+        { id:"V-0658-02", vac:"Camarista", emp:"Hotel Loma Real",
+          sector:"Servicios de hospedaje y alimentos", munEmp:"Tapachula", resp:RESP,
+          post:"2026-08-22", ent:null, entRes:null, con:null,
+          inicio:null, fin:null, motFin:null, seg:{ "15":[], "30":[] } },
+        { id:"V-0658-01", vac:"Auxiliar de cocina", emp:"Restaurante Los Portales",
+          sector:"Servicios de hospedaje y alimentos", munEmp:"Tapachula", resp:RESP,
+          post:"2026-04-06", ent:"2026-04-13", entRes:"fav", con:1, fcon:"2026-04-17",
+          inicio:"2026-04-27", puesto:"Auxiliar de cocina",
+          fin:"2026-07-10", motFin:"Renuncia voluntaria",
+          seg:{ "15":[{ f:"2026-05-12", medio:"Llamada telefónica al patrón", res:"continua",
+                        por:RESP, nota:"Sin incidencias." }],
+                "30":[{ f:"2026-05-27", medio:"Comparecencia en ventanilla", res:"continua",
+                        por:RESP, nota:"La persona acude a actualizar su contacto." }] } }
+      ]
+    },
+    {
+      e:"0201", n:"María Guadalupe Roblero Pérez", nac:"MEX", edad:36, mun:"Tapachula",
+      curp:1, estancia:null,
+      rfc:{ est:"reg", d:"ROPM900612JK3" },
+      nss:{ est:"tram", d:"En trámite por el patrón desde el 24/08/2026" },
+      esc:"Secundaria concluida", perfil:"Cocinera",
+      exp:"11 años en cocina de fonda y comedor industrial", disp:"Tiempo completo",
+      cursos:"Panadería básica · ICATECH Tapachula (en curso)",
+      v:[
+        { id:"V-0201-01", vac:"Cocinera", emp:"Comedor Industrial Agroexportadora del Sur",
+          sector:"Servicios de hospedaje y alimentos", munEmp:"Tapachula", resp:RESP,
+          post:"2026-08-20", ent:null, entRes:null, con:null,
+          inicio:null, fin:null, motFin:null, seg:{ "15":[], "30":[] } }
+      ]
+    },
+    {
+      e:"0435", n:"Kenia Alvarenga Portillo", nac:"SLV", edad:31, mun:"Tapachula",
+      curp:1, estancia:null,
+      rfc:{ est:"pend" }, nss:{ est:"pend" },
+      acomp:[ { que:"estancia", desde:"2026-08-21", quien:"Lic. Adriana Molina Sántiz",
+                nota:"Cita en el INM de Tapachula el 09/09 para la tarjeta por razones " +
+                     "humanitarias. La Secretaría acompaña el trámite: no volver a pedirle el " +
+                     "documento antes de esa fecha." } ],
+      esc:"Secundaria concluida", perfil:"Costurera industrial",
+      exp:"5 años en maquila textil (San Salvador, El Salvador)", disp:"Tiempo completo",
+      cursos:"Panadería básica · ICATECH Tapachula (en curso)",
+      v:[
+        { id:"V-0435-01", vac:"Operaria de máquina plana", emp:"Confecciones del Soconusco",
+          sector:"Textil y confección", munEmp:"Tapachula", resp:RESP,
+          post:"2026-07-13", ent:"2026-07-21", entRes:"nofav", con:0,
+          motNoCon:"No acreditó documento que autorice trabajar",
+          inicio:null, fin:null, motFin:null, seg:{ "15":[], "30":[] } }
+      ]
+    }
+  ];
+
+  /* ======================================================================
+     3. Cálculo. Todo lo que la pantalla afirma sale de aquí.
+     ================================================================== */
+  function fecha(iso) { if (!iso) return "—"; var p = iso.split("-"); return p[2] + "/" + p[1] + "/" + p[0]; }
+  function dias(desde, hasta) { return Math.round((new Date(hasta) - new Date(desde)) / 86400000); }
+  function suma(iso, n) { var d = new Date(iso); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
+  function plural(n, uno, varios) { return n + " " + (n === 1 ? uno : varios); }
+  function hace(n) { return n === 1 ? "hace 1 día" : "hace " + n + " días"; }
+  function dentro(n) { return n === 0 ? "hoy" : (n === 1 ? "mañana" : "en " + n + " días"); }
+
+  /* La colocación vigente: contratada, ya inició labores y no ha concluido. */
+  function vigente(p) {
+    return p.v.filter(function (v) { return v.con === 1 && v.inicio && !v.fin; })[0] || null;
+  }
+  /* Contratada pero sin fecha de inicio: el reloj de 15/30 no puede arrancar. */
+  function sinInicio(p) {
+    return p.v.filter(function (v) { return v.con === 1 && !v.inicio && !v.fin; })[0] || null;
+  }
+  /* Vinculaciones abiertas que aún no se resuelven. */
+  function enProceso(p) {
+    return p.v.filter(function (v) { return v.con === null && !v.fin; });
+  }
+  /* Entrevista ya ocurrida sin resultado capturado. */
+  function entrevistaSinResultado(p) {
+    return enProceso(p).filter(function (v) {
+      return v.ent && dias(v.ent, HOY) >= 0 && !v.entRes;
+    })[0] || null;
+  }
+
+  /* Las etapas nombran el estado de la VINCULACIÓN, no el de la persona:
+     así el texto no concuerda en género con el nombre de quien se atiende. */
+  var ETAPAS = {
+    postulada:    { t:"Postulación",           c:"chip-neutro" },
+    agendada:     { t:"Entrevista agendada",   c:"chip-neutro" },
+    entrevistada: { t:"Entrevista realizada",  c:"chip-neutro" },
+    nocontratada: { t:"Sin contratación",      c:"chip-neutro" },
+    contratada:   { t:"Contratación registrada", c:"chip-jade" },
+    colocada:     { t:"Colocación vigente",    c:"chip-jade" },
+    concluida:    { t:"Concluida",             c:"chip-neutro" }
+  };
+
+  function etapa(v) {
+    var id;
+    if (v.fin)               id = "concluida";
+    else if (v.con === 0)    id = "nocontratada";
+    else if (v.con === 1)    id = v.inicio ? "colocada" : "contratada";
+    else if (v.ent)          id = dias(HOY, v.ent) > 0 ? "agendada" : "entrevistada";
+    else                     id = "postulada";
+    return { id:id, t:ETAPAS[id].t, c:ETAPAS[id].c };
+  }
+
+  /* --------------------------------------------------------------------
+     Estado de un hito de verificación. Estados posibles:
+       hecho      · quedó registrada la verificación con su resultado
+       vencido    · pasó la fecha programada y no hay registro
+       porvencer  · vence hoy o dentro de los próximos 3 días
+       programado · aún falta
+       nula       · el hito no aplica (sin fecha de inicio, o la persona
+                    causó baja antes de llegar a él). Se dibuja como "—",
+                    nunca como un cero ni como un incumplimiento.
+     Cada intento sin contacto reprograma la verificación 3 días; al tercer
+     intento el caso se turna al Enlace de Vinculación.
+     ------------------------------------------------------------------ */
+  function hito(v, d) {
+    var regs = v.seg[String(d)] || [];
+    var fallidos = regs.filter(function (r) { return r.res === "sincontacto"; });
+    var cerrado  = regs.filter(function (r) { return r.res !== "sincontacto"; });
+
+    if (!v.inicio || v.con !== 1) {
+      return { d:d, est:"nula", regs:regs, motivo:"La verificación arranca en la fecha de inicio de labores." };
+    }
+    var prog = suma(v.inicio, d);
+    if (v.fin && dias(v.inicio, v.fin) < d) {
+      return { d:d, est:"nula", prog:prog, regs:regs,
+               motivo:"La vinculación concluyó el " + fecha(v.fin) + ", antes de cumplir " + d + " días." };
+    }
+    if (cerrado.length) {
+      return { d:d, est:"hecho", prog:prog, regs:regs, reg:cerrado[cerrado.length - 1], fallidos:fallidos };
+    }
+    var venc = suma(prog, fallidos.length * REPROG);
+    var dd = dias(HOY, venc);
+    return { d:d, prog:prog, venc:venc, dd:dd, regs:regs, fallidos:fallidos,
+             est: dd < 0 ? "vencido" : (dd <= 3 ? "porvencer" : "programado") };
+  }
+
+  function hitos(v) { return HITOS.map(function (d) { return hito(v, d); }); }
+
+  /* Lo que exige acción, en orden de urgencia. Un solo pendiente por
+     persona: el más urgente. La lista se ordena por ese peso.            */
+  function pendiente(p) {
+    var vg = vigente(p), i, h;
+    if (vg) {
+      var hs = hitos(vg);
+      for (i = 0; i < hs.length; i++) {
+        h = hs[i];
+        if (h.est === "vencido") {
+          return { peso:1, txt:"La verificación de " + h.d + " días venció " + hace(-h.dd) };
+        }
+      }
+      for (i = 0; i < hs.length; i++) {
+        h = hs[i];
+        if (h.est === "porvencer") {
+          return { peso:2, tibia:true, txt:"La verificación de " + h.d + " días vence " + dentro(h.dd) };
+        }
+      }
+    }
+    var ev = entrevistaSinResultado(p);
+    if (ev) {
+      return { peso:3, tibia:true,
+               txt:"Falta el resultado de la entrevista del " + fecha(ev.ent) + " en " + ev.emp };
+    }
+    var si = sinInicio(p);
+    if (si) {
+      return { peso:4, tibia:true, txt:"Contratación registrada el " + fecha(si.fcon) +
+               " sin fecha de inicio de labores: el seguimiento no puede arrancar" };
+    }
+    if (!vg && !enProceso(p).length) {
+      var ult = p.v[p.v.length - 1];
+      return { peso:5, txt:"Sin colocación vigente ni postulación en proceso desde el " +
+               fecha(ult.fin || ult.ent || ult.post) };
+    }
+    return null;
+  }
+
+  /* Requisitos para FORMALIZAR la contratación. No impiden postularse ni
+     entrevistarse: impiden firmar. RFC y NSS son opcionales al inicio, los
+     tramita el sector patronal una vez contratada la persona.             */
+  function acompDe(p, que) {
+    return (p.acomp || []).filter(function (a) { return a.que === que; })[0] || null;
+  }
+  function acompAbiertos(p) { return (p.acomp || []); }
+
+  function requisitos(p) {
+    var r = [];
+    r.push({ t:"CURP", et:"Obligatorio", est: p.curp ? "si" : "no",
+      n: p.curp ? "Registrada y vigente en el expediente único."
+                : "No registrada. Sin CURP no puede formalizarse la contratación ni tramitarse el NSS." });
+
+    if (p.nac === "MEX") {
+      r.push({ t:"Documento que autoriza trabajar", et:"No aplica", est:"na",
+        n:"Persona mexicana: no requiere documento migratorio." });
+    } else if (!p.estancia) {
+      r.push({ t:"Documento que autoriza trabajar", et:"Obligatorio", est:"no",
+        n:"Sin documento vigente. Puede postularse y entrevistarse, pero la contratación no puede formalizarse." });
+    } else {
+      var dv = dias(HOY, p.estancia.vig);
+      r.push({ t:"Documento que autoriza trabajar", et:"Obligatorio",
+        est: dv <= 60 ? "pv" : "si",
+        n: p.estancia.doc + " · vigente hasta el " + fecha(p.estancia.vig) +
+           (dv <= 60 ? ". Vence " + dentro(dv) + ": debe renovarse antes de que concluya el seguimiento." : ".") });
+    }
+
+    [["RFC", p.rfc, "rfc"], ["NSS", p.nss, "nss"]].forEach(function (par) {
+      var c = par[1];
+      r.push({ t:par[0], et:"Opcional al inicio", ac:acompDe(p, par[2]),
+        est: c.est === "reg" ? "si" : "na",
+        n: c.est === "reg" ? c.d
+         : c.est === "tram" ? c.d
+         : "Pendiente. Lo tramita el sector patronal una vez formalizada la contratación." });
+    });
+
+    /* El acompañamiento del documento migratorio cuelga de su propio
+       requisito, no de una nota suelta al pie de la ficha. */
+    var ae = acompDe(p, "estancia");
+    if (ae) r.forEach(function (x) {
+      if (x.t === "Documento que autoriza trabajar") x.ac = ae;
+    });
+    return r;
+  }
+
+  /* ======================================================================
+     4. Estado de la pantalla
+     ================================================================== */
+  var qs      = new URLSearchParams(location.search);
+  var filtro  = "accion";
+  var busca   = "";
+  var sel     = "0412";        /* el vencimiento más urgente de la cartera */
+  var filaFil = "todas";
+  var pest    = "seg";         /* pestaña del detalle: "seg" | "vinc" | "ficha" */
+  var panel   = null;          /* "nueva" | "verifica" | "resultado" | "inicio" */
+  var pHito   = null;          /* hito que se está verificando: 15 o 30 */
+  var pVinc   = null;          /* vinculación sobre la que actúa el panel   */
+  var res     = null;          /* resultado elegido dentro del panel        */
+  var acuses  = [];            /* lo hecho en esta sesión, para el recuento */
+
+  if (qs.get("e")) {
+    PERSONAS.forEach(function (p) { if (p.e === qs.get("e")) sel = p.e; });
+  }
+  if (qs.get("nueva") === "1") panel = "nueva";
+  if (qs.get("ver")) {
+    var hq = parseInt(qs.get("ver"), 10);
+    if (HITOS.indexOf(hq) >= 0) { panel = "verifica"; pHito = hq; }
+  }
+
+  function persona() {
+    return PERSONAS.filter(function (p) { return p.e === sel; })[0] || PERSONAS[0];
+  }
+
+  /* ======================================================================
+     5. Cartera
+     ================================================================== */
+  var FILTROS = [
+    { id:"accion",   t:"Requieren acción" },
+    { id:"proceso",  t:"En proceso" },
+    { id:"colocada", t:"Colocadas" },
+    { id:"sin",      t:"Sin colocación" },
+    { id:"todas",    t:"Todas" }
+  ];
+
+  function pasa(p, f) {
+    var pe = pendiente(p);
+    if (f === "accion")   return !!pe && pe.peso <= 4;
+    if (f === "proceso")  return enProceso(p).length > 0;
+    if (f === "colocada") return !!vigente(p) || !!sinInicio(p);
+    if (f === "sin")      return !vigente(p) && !sinInicio(p) && !enProceso(p).length;
+    return true;
+  }
+
+  function pasaBusca(p) {
+    if (!busca) return true;
+    var t = busca.toLowerCase();
+    if ((p.n + " " + p.e + " " + p.perfil).toLowerCase().indexOf(t) >= 0) return true;
+    return p.v.some(function (v) { return (v.emp + " " + v.vac).toLowerCase().indexOf(t) >= 0; });
+  }
+
+  function pintaChips() {
+    $("#chipsFiltro").innerHTML = FILTROS.map(function (f) {
+      var n = PERSONAS.filter(function (p) { return pasa(p, f.id); }).length;
+      return '<button type="button" class="chip ' + (f.id === filtro ? "chip-jade" : "chip-neutro") +
+        '" data-f="' + f.id + '" aria-pressed="' + (f.id === filtro) + '">' +
+        esc(f.t) + " " + n + "</button>";
+    }).join("");
+  }
+
+  /* --------------------------------------------------------------------
+     Marcador de los dos hitos. La versión anterior dibujaba dos puntos de
+     color con la leyenda "15 d · 30 d de seguimiento": nombraba los hitos
+     pero no su estado, así que el estado viajaba SOLO en el color y sin
+     nombre accesible. Ahora cada hito es una pastilla con glifo, palabra y
+     color — tres canales — y se entiende impresa en blanco y negro.      */
+  var EST_HITO = {
+    hecho:      { c:"ok",  g:"✓", t:"cumplida"   },
+    vencido:    { c:"mal", g:"!", t:"vencida"    },
+    porvencer:  { c:"pv",  g:"•", t:"por vencer" },
+    programado: { c:"",    g:"·", t:"programada" },
+    nula:       { c:"na",  g:"–", t:"no aplica"  }
+  };
+
+  function segHitos(v) {
+    var hs = hitos(v);
+    return '<span class="seg2">' + hs.map(function (h) {
+      var e = EST_HITO[h.est];
+      return '<span class="s2 ' + e.c + '"><span class="g" aria-hidden="true">' + e.g + "</span>" +
+        h.d + " d: " + e.t + "</span>";
+    }).join("") + "</span>";
+  }
+
+  function segMini(p) {
+    var vg = vigente(p);
+    return vg ? segHitos(vg) : "";
+  }
+
+  function pintaLista() {
+    var vis = PERSONAS.filter(function (p) { return pasa(p, filtro) && pasaBusca(p); })
+      .sort(function (a, b) {
+        var pa = pendiente(a), pb = pendiente(b);
+        var wa = pa ? pa.peso : 99, wb = pb ? pb.peso : 99;
+        return wa !== wb ? wa - wb : a.n.localeCompare(b.n, "es");
+      });
+
+    $("#listaPers").innerHTML = vis.length ? vis.map(function (p) {
+      var pe = pendiente(p), vg = vigente(p) || sinInicio(p);
+      var donde = vg ? vg.vac + " · " + vg.emp
+        : (enProceso(p).length ? "Postulada en " + enProceso(p)[0].emp : "Sin vinculación abierta");
+      /* role="option" y no aria-pressed: es una lista de selección única,
+         no cinco interruptores independientes. Un lector de pantalla
+         anuncia "seleccionado 1 de 8" en vez de "no presionado".         */
+      return '<button type="button" class="pers-item' + (p.e === sel ? " activo" : "") +
+        '" data-p="' + p.e + '" role="option" aria-selected="' + (p.e === sel) + '">' +
+        segMini(p) +
+        '<span class="p-nom">' + esc(p.n) + '<span class="nac">' + p.nac + "</span></span>" +
+        '<span class="p-folio">Expediente ' + p.e + "</span>" +
+        '<span class="p-donde">' + esc(donde) + "</span>" +
+        (pe ? '<span class="p-alerta' + (pe.tibia ? " tibia" : "") + '">' + ico("alerta") +
+              "<span>" + esc(pe.txt) + "</span></span>" : "") +
+        "</button>";
+    }).join("") : '<div class="vacio">' + ico("buscar") + "Ningún resultado con este filtro.</div>";
+
+    $("#conteoPers").textContent = plural(vis.length, "persona", "personas") + " de " + PERSONAS.length;
+  }
+
+  /* ======================================================================
+     6. Detalle
+     ================================================================== */
+  function inic(n) {
+    return n.split(" ").slice(0, 2).map(function (w) { return w.charAt(0); }).join("");
+  }
+
+  var ACOMP_TXT = { rfc:"RFC", nss:"NSS", curp:"CURP",
+                    estancia:"documento migratorio" };
+
+  function cabecera(p) {
+    var vg = vigente(p), si = sinInicio(p), ep = enProceso(p);
+    var chips = [];
+    if (vg) chips.push('<span class="chip chip-jade">' + ico("check") + "Colocación vigente</span>");
+    else if (si) chips.push('<span class="chip chip-jade">' + ico("check") + "Contratación registrada</span>");
+    else if (ep.length) chips.push('<span class="chip chip-neutro">' + plural(ep.length, "vinculación en proceso", "vinculaciones en proceso") + "</span>");
+    else chips.push('<span class="chip chip-neutro">Sin colocación vigente</span>');
+    chips.push('<span class="chip chip-neutro">' + esc(PAIS[p.nac] || p.nac) + "</span>");
+    chips.push('<span class="chip chip-neutro">' + p.edad + " años</span>");
+    /* La marca de aviso que pidió la Dirección: si la Secretaría está
+       acompañando un trámite del que depende la colocación, tiene que verse
+       desde la cabecera, no dentro de la tercera pestaña. Si no se ve, en la
+       ventanilla se vuelve a pedir el papel que ya se está gestionando. */
+    acompAbiertos(p).forEach(function (a) {
+      chips.push('<span class="chip chip-rosa">' + ico("info") + "Acompañamiento · " +
+        esc(ACOMP_TXT[a.que] || a.que) + "</span>");
+    });
+
+    /* La cabecera ya no repite los botones de la barra de acción: dos
+       controles idénticos a 200 px de distancia obligan a decidir cuál es
+       "el bueno". Aquí queda solo lo que siempre está disponible.        */
+    return '<div class="exp-cab">' +
+      '<div class="exp-foto" aria-hidden="true" style="width:64px;height:64px;border-radius:50%">' +
+        '<span style="display:block;font-size:19px;font-weight:700;color:var(--gris)">' + inic(p.n) + "</span></div>" +
+      '<div class="exp-id">' +
+        '<h2 class="exp-nombre" id="tPersona" tabindex="-1">' + esc(p.n) + "</h2>" +
+        '<div class="exp-folio">Expediente ' + p.e + " · " + esc(p.perfil) + "</div>" +
+        '<div class="exp-chips">' + chips.join("") + "</div>" +
+        '<div class="exp-meta">' +
+          "<span>Municipio de residencia<b>" + esc(p.mun) + "</b></span>" +
+          "<span>Disponibilidad<b>" + esc(p.disp) + "</b></span>" +
+          "<span>Responsable del seguimiento<b>" + esc(RESP) + "</b></span>" +
+        "</div></div>" +
+      '<div class="exp-acc">' +
+        '<button class="btn btn-secundario btn-s" type="button" id="btnNueva">' + ico("mas") + "Registrar vinculación</button>" +
+        '<a class="btn btn-secundario btn-s" href="expediente-detalle.html">' + ico("expedientes") + "Ver expediente</a>" +
+      "</div></div>";
+  }
+
+  /* --------------------------------------------------------------------
+     Barra de acción: UN solo lugar que dice qué hacer con esta persona hoy.
+     Antes el mismo vencimiento se enunciaba tres veces —aviso rojo, pie de
+     la cifra héroe y fila del hito— con dos botones idénticos, y los
+     pendientes que no eran vencimientos (peso 3, 4 y 5) no tenían aviso
+     ninguno: había que descubrirlos leyendo la tabla. Ahora los cinco
+     pesos de pendiente() producen la misma barra, con su botón, y cuando
+     no hay nada pendiente lo dice en vez de callar.
+     El texto responde a tres preguntas en este orden: qué pasa, por qué
+     importa, qué botón resuelve.                                          */
+  function accionBarra(p) {
+    var pe = pendiente(p), vg = vigente(p);
+    var tono = "", icono = "alerta", tit, nota, btn = "";
+
+    if (!pe) {
+      var hs = vg ? hitos(vg) : [];
+      var prox = hs.filter(function (h) { return h.est === "programado"; })[0];
+      return '<div class="accion ok">' + ico("check") +
+        '<div class="a-tx"><span class="a-t">Sin pendientes de seguimiento hoy</span>' +
+        '<span class="a-n">' +
+        (prox ? "La siguiente verificación es la de " + prox.d + " días, el " + fecha(prox.venc) + "."
+              : "El seguimiento de 15 y 30 días está concluido. El cierre formal y la constancia de " +
+                "colocación los emite el Enlace de Vinculación Laboral.") +
+        "</span></div></div>";
+    }
+
+    if (pe.peso === 1 || pe.peso === 2) {
+      var h = hitos(vg).filter(function (x) {
+        return x.est === "vencido" || x.est === "porvencer";
+      })[0];
+      tono = pe.peso === 1 ? "urge" : "tibia";
+      tit  = pe.txt;
+      nota = "Programada para el " + fecha(h.venc) + ". Confirma que la persona sigue laborando; " +
+             "si ya no labora, la vinculación se cierra con motivo y vuelve a la cartera para revincular.";
+      btn  = '<button class="btn ' + (pe.peso === 1 ? "btn-peligro" : "btn-primario") +
+             ' btn-s" type="button" data-ver="' + h.d + '">' + ico("check") + "Registrar verificación</button>";
+
+    } else if (pe.peso === 3) {
+      tono = "tibia"; tit = pe.txt;
+      nota = "Sin el resultado, la vinculación se queda detenida: no puede registrarse la contratación " +
+             "ni el motivo por el que no se contrató.";
+      btn  = '<button class="btn btn-primario btn-s" type="button" id="btnResultado">' +
+             ico("editar") + "Registrar resultado</button>";
+
+    } else if (pe.peso === 4) {
+      var si = sinInicio(p);
+      tono = "tibia"; tit = "Falta la fecha de inicio de labores";
+      nota = "La contratación se registró el " + fecha(si.fcon) + " en " + si.emp +
+             ", pero el reloj de 15 y 30 días arranca en la fecha de inicio: sin ella el " +
+             "seguimiento no puede programarse.";
+      btn  = '<button class="btn btn-primario btn-s" type="button" id="btnInicio">' +
+             ico("reloj") + "Registrar inicio de labores</button>";
+
+    } else {
+      tono = ""; icono = "info"; tit = "Sin colocación vigente ni postulación en proceso";
+      nota = pe.txt.replace("Sin colocación vigente ni postulación en proceso desde el ",
+                            "La última vinculación se movió el ") + ". Requiere una nueva vinculación.";
+      btn  = '<button class="btn btn-primario btn-s" type="button" id="btnNueva2">' +
+             ico("mas") + "Registrar vinculación</button>";
+    }
+
+    /* Con el panel abierto, el botón que lo abrió deja de dibujarse: dos
+       controles vivos para la misma acción, uno encima del otro, hacen
+       dudar de cuál es el que guarda.                                    */
+    return '<div class="accion ' + tono + '">' + ico(icono) +
+      '<div class="a-tx"><span class="a-t">' + esc(tit) + "</span>" +
+      '<span class="a-n">' + esc(nota) + "</span></div>" +
+      (panel ? "" : '<div class="a-acc">' + btn + "</div>") + "</div>";
+  }
+
+  /* Una sola cifra héroe: los días que lleva la colocación en pie. Es la
+     pregunta real del módulo, porque RF12 mide permanencia, no altas.    */
+  function heroe(p) {
+    var vg = vigente(p), si = sinInicio(p), ep = enProceso(p);
+    var num, lab, sub;
+    if (vg) {
+      num = String(dias(vg.inicio, HOY));
+      lab = "Días en el empleo actual";
+      /* El estado del próximo hito ya lo dice la barra de acción y la fila
+         del hito. Repetirlo aquí era la tercera vez en la misma pantalla,
+         así que la cifra se queda solo con lo que nadie más cuenta.       */
+      sub = "Inició el <b>" + fecha(vg.inicio) + "</b> en " + esc(vg.emp) + ".";
+    } else if (si) {
+      num = "—";
+      lab = "Sin fecha de inicio de labores";
+      sub = "Contratación registrada el <b>" + fecha(si.fcon) + "</b> en " + esc(si.emp) + ".";
+    } else {
+      num = "—";
+      lab = "Sin colocación vigente";
+      sub = ep.length
+        ? plural(ep.length, "vinculación en proceso", "vinculaciones en proceso") + ". Sin seguimiento activo hasta que haya contratación."
+        : "Sin postulación abierta. Requiere una nueva vinculación.";
+    }
+    return '<div class="hero">' +
+      '<span class="h-lab">' + lab + "</span>" +
+      '<div class="h-num' + (num === "—" ? " sin" : "") + '">' + num + "</div>" +
+      '<div class="h-sub">' + sub + "</div></div>";
+  }
+
+  /* La línea de hitos usa el componente .ruta del sistema de diseño: es
+     exactamente la misma idea que la ruta de atención del expediente.     */
+  function rutaSeguimiento(vg) {
+    if (!vg) return "";
+    var hs = hitos(vg);
+    var cls = { hecho:"hecho", vencido:"vencido", porvencer:"porvencer", programado:"", nula:"nula" };
+    var nodos = [{ t:"Inicio de labores", f:fecha(vg.inicio), c:"hecho" }].concat(
+      hs.map(function (h) {
+        return { t:"Verificación " + h.d + " días",
+                 f: h.est === "nula" ? "no aplica" : fecha(h.est === "hecho" ? h.reg.f : h.venc),
+                 c: cls[h.est] };
+      }));
+    return '<div class="ruta">' + nodos.map(function (x) {
+      return '<div class="ruta-hito ' + x.c + '"><span class="r-bolita"></span>' + esc(x.t) +
+        '<span class="r-fecha">' + esc(x.f) + "</span></div>";
+    }).join("") + "</div>";
+  }
+
+  var RES_TXT = {
+    continua:    "Continúa laborando",
+    nolabora:    "Ya no labora",
+    sincontacto: "No se pudo contactar"
+  };
+
+  function bloqueHitos(p) {
+    var vg = vigente(p), si = sinInicio(p);
+
+    if (!vg) {
+      return '<div class="tarjeta"><div class="tarjeta-enc"><h3>Seguimiento posterior a la colocación</h3></div>' +
+        '<div class="vacio">' + ico("reloj") +
+        (si ? "La contratación está registrada, pero el seguimiento de 15 y 30 días no puede programarse " +
+              "sin la <b>fecha de inicio de labores</b>."
+            : "El seguimiento de 15 y 30 días existe solo cuando hay una contratación con fecha de inicio de labores. " +
+              "Una postulación no genera hitos.") +
+        "</div></div>";
+    }
+
+    var hs = hitos(vg);
+    var filas = hs.map(function (h) {
+      var estChip, nota = "", acc = "", reg = "";
+
+      if (h.est === "hecho") {
+        estChip = '<span class="chip chip-jade">' + ico("check") + "Cumplida</span>";
+        nota = '<span class="h-n">Programada para el ' + fecha(h.prog) + ".</span>";
+        reg = '<span class="h-reg"><b>' + esc(RES_TXT[h.reg.res]) + "</b> · " + fecha(h.reg.f) +
+          "<br>" + esc(h.reg.medio) + " · " + esc(h.reg.por) +
+          (h.reg.nota ? "<br>" + esc(h.reg.nota) : "") + "</span>";
+      } else if (h.est === "nula") {
+        estChip = '<span class="chip chip-neutro">No aplica</span>';
+        nota = '<span class="h-n">' + esc(h.motivo) + "</span>";
+      } else {
+        var etq = { vencido:["chip-guinda", "Vencida"], porvencer:["chip-rosa", "Por vencer"],
+                    programado:["chip-neutro", "Programada"] }[h.est];
+        estChip = '<span class="chip ' + etq[0] + '">' + etq[1] + "</span>";
+        nota = '<span class="h-n' + (h.est === "vencido" ? " mal" : (h.est === "porvencer" ? " pv" : "")) + '">' +
+          (h.est === "vencido" ? "Venció el " + fecha(h.venc) + ", " + hace(-h.dd) + "."
+                               : "Vence el " + fecha(h.venc) + ", " + dentro(h.dd) + ".") +
+          (h.fallidos.length ? " Reprogramada por " + plural(h.fallidos.length, "intento", "intentos") +
+             " sin contacto." : "") + "</span>";
+        acc = '<button class="btn ' + (h.est === "vencido" ? "btn-peligro" : "btn-secundario") +
+          ' btn-s" type="button" data-ver="' + h.d + '">' + ico("check") + "Registrar</button>";
+      }
+
+      if (h.fallidos && h.fallidos.length) {
+        reg += h.fallidos.map(function (r) {
+          return '<span class="h-reg fallido">Intento sin contacto · ' + fecha(r.f) + " · " +
+            esc(r.medio) + "</span>";
+        }).join("");
+      }
+
+      return '<div class="hito"><div class="h-tx">' +
+        '<span class="h-t">Verificación de ' + h.d + " días " + estChip + "</span>" +
+        nota + reg + "</div>" +
+        (acc ? '<div class="h-acc">' + acc + "</div>" : "") + "</div>";
+    }).join("");
+
+    var todos = hs.every(function (h) { return h.est === "hecho" || h.est === "nula"; });
+
+    return '<div class="tarjeta">' +
+      '<div class="tarjeta-enc"><h3>Seguimiento posterior a la colocación</h3>' +
+        '<span class="txt-min">' + esc(vg.puesto || vg.vac) + " · " + esc(vg.emp) + "</span></div>" +
+      rutaSeguimiento(vg) +
+      '<div style="margin-top:14px">' + filas + "</div>" +
+      '<div class="tarjeta-pie">' +
+        (todos ? "Seguimiento concluido. El cierre formal lo emite el Enlace de Vinculación Laboral."
+               : "Un intento sin contacto no cierra el hito: lo reprograma " + REPROG +
+                 " días y al tercero se turna al Enlace de Vinculación.") +
+      "</div></div>";
+  }
+
+  function bloqueRequisitos(p) {
+    var ic = { si:"check", no:"alerta", pv:"reloj", na:"info" };
+    return '<div class="tarjeta">' +
+      '<div class="tarjeta-enc"><h3>Requisitos para formalizar la contratación</h3></div>' +
+      requisitos(p).map(function (r) {
+        return '<div class="reqc ' + r.est + '">' + ico(ic[r.est]) +
+          '<span class="rq-tx"><span class="rq-t">' + esc(r.t) +
+          '<span class="rq-et">' + esc(r.et) + "</span>" +
+          (r.ac ? '<span class="rq-ac">' + ico("info") + "Acompañado</span>" : "") + "</span>" +
+          '<span class="rq-n">' + esc(r.n) + "</span>" +
+          (r.ac ? '<span class="rq-obs"><b>Acompañamiento desde el ' + fecha(r.ac.desde) + " · " +
+                  esc(r.ac.quien) + ".</b> " + esc(r.ac.nota) + "</span>" : "") +
+          "</span></div>";
+      }).join("") +
+      '<div class="tarjeta-pie">Ninguno impide postularse ni acudir a una entrevista: impiden <b>firmar</b>.' +
+      "</div></div>";
+  }
+
+  function bloquePerfil(p) {
+    var datos = [
+      ["Escolaridad", p.esc],
+      ["Experiencia declarada", p.exp],
+      ["Perfil de vinculación", p.perfil],
+      ["Disponibilidad", p.disp],
+      ["Capacitación ICATECH", p.cursos],
+      ["Municipio de residencia", p.mun]
+    ];
+    return '<div class="tarjeta" style="padding:18px 0 0">' +
+      '<div class="tarjeta-enc" style="padding:0 18px"><h3>Perfil laboral</h3></div>' +
+      '<div class="resumen-lista">' + datos.map(function (d) {
+        return '<div class="resumen-dato"><span class="r-lab">' + esc(d[0]) + "</span>" +
+          '<span class="r-val">' + esc(d[1]) + "</span></div>";
+      }).join("") + "</div></div>";
+  }
+
+  /* ------------------------------------------------- Historial laboral -- */
+  var FILAS = [
+    { id:"todas",    t:"Todas" },
+    { id:"abiertas", t:"Abiertas" },
+    { id:"colocada", t:"Con contratación" },
+    { id:"cerradas", t:"Cerradas" }
+  ];
+
+  function pasaFila(v, f) {
+    var et = etapa(v).id;
+    if (f === "abiertas") return et === "postulada" || et === "agendada" || et === "entrevistada" || et === "contratada";
+    if (f === "colocada") return v.con === 1;
+    if (f === "cerradas") return et === "concluida" || et === "nocontratada";
+    return true;
+  }
+
+  function celdaSeg(v) {
+    if (v.con !== 1 || !v.inicio) {
+      return '<span class="v-na">—</span><span class="v-mot">' +
+        (v.con === 1 ? "Sin fecha de inicio" : "No aplica sin contratación") + "</span>";
+    }
+    return segHitos(v);
+  }
+
+  function bloqueHistorial(p) {
+    var vs = p.v.filter(function (v) { return pasaFila(v, filaFil); });
+    var filas = vs.map(function (v) {
+      var et = etapa(v);
+      var fechas = ["Postulación " + fecha(v.post)];
+      if (v.ent)    fechas.push("Entrevista " + fecha(v.ent));
+      if (v.fcon)   fechas.push("Contratación " + fecha(v.fcon));
+      if (v.inicio) fechas.push("Inicio de labores " + fecha(v.inicio));
+      if (v.fin)    fechas.push("Conclusión " + fecha(v.fin));
+
+      /* El resultado va en la misma celda que el chip de etapa, así que
+         complementa al chip en vez de repetirlo: cuando el chip ya dice
+         "Concluida", esta línea aporta el motivo, no la palabra otra vez.
+         Y donde antes había un "—" de relleno ahora no va nada: un guion
+         bajo un chip que ya explica el estado es ruido.                  */
+      var resu;
+      if (v.fin) {
+        resu = '<span class="v-mot mal">' + esc(v.motFin) + "</span>";
+      } else if (v.con === 0) {
+        resu = '<span class="v-mot mal">' + esc(v.motNoCon) + "</span>";
+      } else if (v.con === 1) {
+        resu = '<span class="v-mot">' + esc(v.puesto || v.vac) +
+          (v.inicio ? "" : " · falta la fecha de inicio de labores") + "</span>";
+      } else if (v.ent && dias(v.ent, HOY) >= 0) {
+        resu = '<span class="v-mot mal">La entrevista ya ocurrió: falta capturar el resultado.</span>';
+      } else if (v.ent) {
+        resu = '<span class="v-mot">Entrevista el ' + fecha(v.ent) + ".</span>";
+      } else {
+        resu = '<span class="v-mot">Sin entrevista agendada.</span>';
+      }
+
+      var acc = "";
+      if (!v.fin && v.con === null && !v.ent) {
+        acc = '<button class="btn btn-texto btn-s" type="button" data-ag="' + v.id + '">Agendar entrevista</button>';
+      } else if (!v.fin && v.con === null && v.ent && dias(v.ent, HOY) >= 0) {
+        acc = '<button class="btn btn-texto btn-s" type="button" data-res="' + v.id + '">Registrar resultado</button>';
+      } else if (!v.fin && v.con === null && v.ent) {
+        acc = '<button class="btn btn-texto btn-s" type="button" data-ag="' + v.id + '">Reagendar</button>';
+      } else if (!v.fin && v.con === 1 && !v.inicio) {
+        acc = '<button class="btn btn-texto btn-s" type="button" data-ini="' + v.id + '">Registrar inicio</button>';
+      } else if (!v.fin && v.con === 1) {
+        acc = '<button class="btn btn-texto btn-s" type="button" data-cierra="' + v.id + '">Cerrar vinculación</button>';
+      }
+
+      /* Cuatro columnas, no seis. Etapa y resultado cuentan lo mismo y van
+         juntos; el responsable baja a la celda que ya lleva las fechas.
+         Con seis columnas el chip de etapa (white-space:nowrap) desbordaba
+         su 13% y se encimaba con el resultado, y "Cerrar vinculación" se
+         partía a mitad de palabra.                                        */
+      return "<tr" + (v.fin || v.con === 0 ? ' class="cerrada"' : "") + ">" +
+        '<td><span class="v-vac">' + esc(v.vac) + "</span>" +
+        '<span class="v-emp">' + esc(v.emp) + " · " + esc(v.sector) + "</span>" +
+        '<span class="v-fec">' + fechas.join(" · ") + "</span>" +
+        '<span class="v-resp">Responsable: ' + esc(v.resp) + "</span></td>" +
+        '<td><span class="chip ' + et.c + '">' + et.t + "</span>" + resu + "</td>" +
+        "<td>" + celdaSeg(v) + "</td>" +
+        "<td>" + acc + "</td></tr>";
+    }).join("");
+
+    return '<div class="tarjeta" style="padding:0;overflow:hidden">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;' +
+      'flex-wrap:wrap;padding:15px 16px 13px;border-bottom:1px solid var(--linea)">' +
+        '<h3 class="sec-tit">Historial laboral</h3>' +
+        '<div class="filtros-tabla" role="group" aria-label="Filtrar el historial">' +
+          FILAS.map(function (f) {
+            var n = p.v.filter(function (v) { return pasaFila(v, f.id); }).length;
+            return '<button type="button" class="chip ' + (f.id === filaFil ? "chip-jade" : "chip-neutro") +
+              '" data-ff="' + f.id + '" aria-pressed="' + (f.id === filaFil) + '">' + f.t + " " + n + "</button>";
+          }).join("") +
+        "</div></div>" +
+      (vs.length
+        ? '<div style="overflow-x:auto"><table class="tabla t-hist">' +
+          '<colgroup><col class="c-vac"><col class="c-eta">' +
+          '<col class="c-seg"><col class="c-acc"></colgroup><thead><tr>' +
+          "<th>Vacante, empresa y fechas</th><th>Etapa y resultado</th>" +
+          "<th>Seguimiento 15 / 30 días</th><th>Acción</th>" +
+          "</tr></thead><tbody>" + filas + "</tbody></table></div>"
+        : '<div class="vacio">' + ico("buscar") + "Ninguna vinculación con este filtro.</div>") +
+      /* El porqué de la regla vive en el plegable de la cabecera; aquí basta
+         la regla. Un párrafo de tres renglones al pie de cada tarjeta era
+         lo que más hacía pesar la pantalla.                               */
+      '<div class="tabla-pie" style="display:block">' +
+        "Ninguna vinculación se elimina: las que no prosperan quedan como <b>No contratada</b> o " +
+        "<b>Concluida</b>, con su motivo de catálogo." +
+      "</div></div>";
+  }
+
+  /* ----------------------------------------------------------- Paneles -- */
+  function selOpts(lista, sel) {
+    return '<option value="">Selecciona…</option>' + lista.map(function (o) {
+      return '<option value="' + esc(o) + '"' + (o === sel ? " selected" : "") + ">" + esc(o) + "</option>";
+    }).join("");
+  }
+
+  function panelNueva(p) {
+    var vg = vigente(p);
+    var req = requisitos(p);
+    var falta = req.filter(function (r) { return r.est === "no"; });
+
+    var conse = "";
+    if (vg) {
+      conse += '<div class="conse tibia">' + ico("info") +
+        "Esta persona tiene una <b>colocación vigente</b> en " + esc(vg.emp) +
+        ". Registrar otra vinculación <b>no cierra</b> la anterior: si ya no labora ahí, primero registra la " +
+        "verificación con resultado <b>Ya no labora</b>, para que el motivo quede documentado.</div>";
+    }
+    if (falta.length) {
+      conse += '<div class="conse rompe">' + ico("alerta") +
+        "Le falta <b>" + esc(falta[0].t.toLowerCase()) + "</b>. La vinculación puede registrarse y la persona " +
+        "puede entrevistarse, pero <b>la contratación no podrá formalizarse</b> hasta acreditarlo. " +
+        "El sistema no lo bloquea: lo declara.</div>";
+    }
+    if (!conse) {
+      conse = '<div class="conse">' + ico("check") +
+        "Requisitos completos: si la entrevista resulta favorable, la contratación puede formalizarse " +
+        "y el seguimiento de 15 y 30 días arrancará en la fecha de inicio de labores.</div>";
+    }
+
+    return '<div class="panel" id="panelNueva">' +
+      "<h3>Registrar vinculación</h3>" +
+      '<p class="p-int">Alta de una postulación de <b>' + esc(p.n) + "</b>. El nombre de la empresa o patrón " +
+      "es de captura libre porque una parte del empleo en la región no está en el padrón (RF12).</p>" +
+      conse +
+      '<div class="fila">' +
+        '<div class="campo"><label for="nvVac">Vacante o actividad <span class="req">*</span></label>' +
+          '<input type="text" id="nvVac" placeholder="Ej. Auxiliar de producción">' +
+          '<span class="msg-error">Captura la vacante o la actividad.</span></div>' +
+        '<div class="campo"><label for="nvEmp">Empresa o patrón <span class="req">*</span></label>' +
+          '<input type="text" id="nvEmp" placeholder="Razón social o nombre del patrón">' +
+          '<span class="msg-error">Captura la empresa o el patrón.</span></div>' +
+      "</div>" +
+      '<div class="fila-3">' +
+        '<div class="campo"><label for="nvSec">Sector <span class="req">*</span></label>' +
+          '<select id="nvSec">' + selOpts(SECTORES) + "</select>" +
+          '<span class="msg-error">Elige el sector.</span></div>' +
+        '<div class="campo"><label for="nvMun">Municipio del centro de trabajo</label>' +
+          '<input type="text" id="nvMun" value="' + esc(p.mun) + '"></div>' +
+        '<div class="campo"><label for="nvFec">Fecha de postulación <span class="req">*</span></label>' +
+          '<input type="date" id="nvFec" value="' + HOY + '">' +
+          '<span class="msg-error">Captura la fecha.</span></div>' +
+      "</div>" +
+      '<div class="campo"><label for="nvResp">Responsable del seguimiento <span class="req">*</span></label>' +
+        '<input type="text" id="nvResp" value="' + esc(RESP) + '">' +
+        '<span class="msg-error">Captura quién dará seguimiento.</span></div>' +
+      '<div class="flex gap-8">' +
+        '<button class="btn btn-primario btn-s" type="button" id="okNueva">' + ico("guardar") + "Registrar vinculación</button>" +
+        '<button class="btn btn-secundario btn-s" type="button" id="cancelaPanel">Cancelar</button>' +
+      "</div></div>";
+  }
+
+  function panelVerifica(p) {
+    var vg = vigente(p);
+    if (!vg) return "";
+    var h = hito(vg, pHito);
+    var opciones = [
+      { id:"continua",    t:"Continúa laborando",   n:"La colocación se sostiene. El hito queda cumplido." },
+      { id:"nolabora",    t:"Ya no labora",         n:"Cierra la vinculación con motivo y regresa a revinculación.", grave:1 },
+      { id:"sincontacto", t:"No se pudo contactar", n:"Registra el intento y reprograma " + REPROG + " días." }
+    ];
+
+    var conse = "";
+    if (res === "nolabora") {
+      conse = '<div class="conse rompe">' + ico("alerta") +
+        "Al confirmar, la vinculación con <b>" + esc(vg.emp) + "</b> pasa a <b>Concluida</b> con el motivo que " +
+        "elijas y " + esc(p.n) + " regresa a la cartera como caso a revincular. " +
+        "<b>Nada se elimina</b>: la vinculación y sus verificaciones permanecen en el historial (RNF03).</div>";
+    } else if (res === "sincontacto") {
+      var n = (h.fallidos ? h.fallidos.length : 0) + 1;
+      conse = '<div class="conse tibia">' + ico("reloj") +
+        "Se registra el intento y la verificación se reprograma para el <b>" +
+        fecha(suma(h.venc, REPROG)) + "</b>. Sería el " + plural(n, "intento", "intentos") + " sin contacto" +
+        (n >= 3 ? "; al tercero el caso se turna al <b>Enlace de Vinculación Laboral</b>." : ".") + "</div>";
+    } else if (res === "continua") {
+      conse = '<div class="conse">' + ico("check") +
+        "El hito de " + pHito + " días queda <b>cumplido</b>" +
+        (pHito === 15 ? ". Quedará pendiente la verificación de 30 días, programada para el <b>" +
+           fecha(suma(vg.inicio, 30)) + "</b>."
+         : " y con él concluye el seguimiento que exige RF12.") + "</div>";
+    }
+
+    return '<div class="panel' + (res === "nolabora" ? " grave" : "") + '" id="panelVerifica">' +
+      "<h3>Registrar verificación de " + pHito + " días</h3>" +
+      '<p class="p-int">' + esc(vg.puesto || vg.vac) + " · " + esc(vg.emp) +
+      " · programada para el " + fecha(h.venc || h.prog) + ". " +
+      "Una verificación es un registro con fecha, medio, resultado y responsable, no una casilla.</p>" +
+      '<div class="etiqueta" style="margin-bottom:7px">Resultado de la verificación <span class="req">*</span></div>' +
+      '<div class="opciones" id="opcRes" role="radiogroup" aria-label="Resultado de la verificación">' +
+        opciones.map(function (o) {
+          return '<label class="opcion' + (res === o.id ? " sel" : "") + (o.grave ? " grave" : "") + '">' +
+            '<input type="radio" name="resVer" value="' + o.id + '"' + (res === o.id ? " checked" : "") + ">" +
+            '<span><span class="o-t">' + esc(o.t) + '</span><span class="o-n">' + esc(o.n) + "</span></span></label>";
+        }).join("") +
+      "</div>" +
+      conse +
+      '<div class="fila">' +
+        '<div class="campo"><label for="vfMedio">Medio de verificación <span class="req">*</span></label>' +
+          '<select id="vfMedio">' + selOpts(MEDIOS) + "</select>" +
+          '<span class="msg-error">Indica cómo se verificó.</span></div>' +
+        '<div class="campo"><label for="vfFecha">Fecha de la verificación <span class="req">*</span></label>' +
+          '<input type="date" id="vfFecha" value="' + HOY + '">' +
+          '<span class="msg-error">Captura la fecha.</span></div>' +
+      "</div>" +
+      (res === "nolabora"
+        ? '<div class="campo"><label for="vfMotivo">Motivo de la conclusión <span class="req">*</span></label>' +
+          '<select id="vfMotivo">' + selOpts(MOT_FIN) + "</select>" +
+          '<span class="msg-error">El motivo es obligatorio: es el dato que explica por qué no se sostienen las colocaciones.</span></div>'
+        : "") +
+      '<div class="campo"><label for="vfNota">Observación <span class="opc">(opcional)</span></label>' +
+        '<textarea id="vfNota" rows="2" style="min-height:60px" placeholder="Lo que se constató en la verificación"></textarea></div>' +
+      '<div class="flex gap-8">' +
+        '<button class="btn ' + (res === "nolabora" ? "btn-peligro" : "btn-primario") +
+          ' btn-s" type="button" id="okVerifica">' + ico("guardar") + "Guardar verificación</button>" +
+        '<button class="btn btn-secundario btn-s" type="button" id="cancelaPanel">Cancelar</button>' +
+      "</div></div>";
+  }
+
+  function panelResultado(p) {
+    var v = pVinc;
+    if (!v) return "";
+    var falta = requisitos(p).filter(function (r) { return r.est === "no"; });
+    var conse = res === "fav"
+      ? (falta.length
+          ? '<div class="conse rompe">' + ico("alerta") + "La entrevista fue favorable, pero le falta <b>" +
+            esc(falta[0].t.toLowerCase()) + "</b>: la contratación <b>no puede formalizarse</b> hasta acreditarlo.</div>"
+          : '<div class="conse">' + ico("check") + "Se registra la contratación. El seguimiento de 15 y 30 días " +
+            "no arranca hasta capturar la <b>fecha de inicio de labores</b>.</div>")
+      : (res === "nofav"
+          ? '<div class="conse rompe">' + ico("alerta") + "La vinculación pasa a <b>No contratada</b> con su motivo " +
+            "y permanece en el historial. El motivo alimenta el reporte de barreras de contratación.</div>"
+          : "");
+
+    return '<div class="panel' + (res === "nofav" ? " grave" : "") + '" id="panelResultado">' +
+      "<h3>Resultado de la entrevista</h3>" +
+      '<p class="p-int">' + esc(v.vac) + " · " + esc(v.emp) + " · entrevista del " + fecha(v.ent) + ".</p>" +
+      '<div class="opciones" id="opcRes" role="radiogroup" aria-label="Resultado de la entrevista">' +
+        [{ id:"fav", t:"Favorable: se contrata", n:"Registra la contratación y su fecha." },
+         { id:"nofav", t:"No favorable", n:"Cierra la vinculación con motivo de catálogo.", grave:1 }
+        ].map(function (o) {
+          return '<label class="opcion' + (res === o.id ? " sel" : "") + (o.grave ? " grave" : "") + '">' +
+            '<input type="radio" name="resEnt" value="' + o.id + '"' + (res === o.id ? " checked" : "") + ">" +
+            '<span><span class="o-t">' + esc(o.t) + '</span><span class="o-n">' + esc(o.n) + "</span></span></label>";
+        }).join("") +
+      "</div>" + conse +
+      (res === "fav"
+        ? '<div class="fila"><div class="campo"><label for="reFcon">Fecha de contratación <span class="req">*</span></label>' +
+          '<input type="date" id="reFcon" value="' + HOY + '"><span class="msg-error">Captura la fecha.</span></div>' +
+          '<div class="campo"><label for="rePuesto">Puesto <span class="opc">(opcional)</span></label>' +
+          '<input type="text" id="rePuesto" placeholder="Como aparece en el contrato"></div></div>'
+        : "") +
+      (res === "nofav"
+        ? '<div class="campo"><label for="reMot">Motivo de no contratación <span class="req">*</span></label>' +
+          '<select id="reMot">' + selOpts(MOT_NOCON) + "</select>" +
+          '<span class="msg-error">El motivo es obligatorio.</span></div>'
+        : "") +
+      '<div class="flex gap-8">' +
+        '<button class="btn ' + (res === "nofav" ? "btn-peligro" : "btn-primario") +
+          ' btn-s" type="button" id="okResultado">' + ico("guardar") + "Guardar resultado</button>" +
+        '<button class="btn btn-secundario btn-s" type="button" id="cancelaPanel">Cancelar</button>' +
+      "</div></div>";
+  }
+
+  /* Sin este paso la postulación se queda sin salida: RF12 pide capturar la
+     fecha de entrevista, y era el único eslabón que no tenía dónde hacerlo. */
+  function panelAgenda(p) {
+    var v = pVinc;
+    if (!v) return "";
+    return '<div class="panel" id="panelAgenda">' +
+      "<h3>" + (v.ent ? "Reagendar entrevista" : "Agendar entrevista") + "</h3>" +
+      '<p class="p-int">' + esc(v.vac) + " · " + esc(v.emp) +
+      " · postulación del " + fecha(v.post) + ".</p>" +
+      '<div class="conse">' + ico("reloj") +
+        "Una vez pasada la fecha, la vinculación aparecerá en la cartera como <b>pendiente de capturar " +
+        "el resultado</b>. La entrevista por sí sola no contrata a nadie: el resultado se registra aparte.</div>" +
+      '<div class="campo" style="max-width:280px"><label for="agFec">Fecha de la entrevista <span class="req">*</span></label>' +
+        '<input type="date" id="agFec" value="' + esc(v.ent || suma(HOY, 7)) + '">' +
+        '<span class="msg-error">Captura la fecha de la entrevista.</span></div>' +
+      '<div class="flex gap-8">' +
+        '<button class="btn btn-primario btn-s" type="button" id="okAgenda">' + ico("guardar") + "Guardar</button>" +
+        '<button class="btn btn-secundario btn-s" type="button" id="cancelaPanel">Cancelar</button>' +
+      "</div></div>";
+  }
+
+  function panelInicio(p) {
+    var v = pVinc;
+    if (!v) return "";
+    return '<div class="panel" id="panelInicio">' +
+      "<h3>Registrar inicio de labores</h3>" +
+      '<p class="p-int">' + esc(v.vac) + " · " + esc(v.emp) + " · contratada el " + fecha(v.fcon) + ".</p>" +
+      '<div class="conse">' + ico("reloj") +
+        "Esta fecha <b>arranca el reloj</b> de RF12: la verificación de 15 días y la de 30 días se programan " +
+        "a partir de ella, no de la fecha de contratación.</div>" +
+      '<div class="fila">' +
+        '<div class="campo"><label for="inFec">Fecha de inicio de labores <span class="req">*</span></label>' +
+          '<input type="date" id="inFec" value="' + HOY + '">' +
+          '<span class="msg-error">Captura la fecha.</span></div>' +
+        '<div class="campo"><label for="inPuesto">Puesto <span class="opc">(opcional)</span></label>' +
+          '<input type="text" id="inPuesto" value="' + esc(v.puesto || "") + '"></div>' +
+      "</div>" +
+      '<div class="flex gap-8">' +
+        '<button class="btn btn-primario btn-s" type="button" id="okInicio">' + ico("guardar") + "Guardar</button>" +
+        '<button class="btn btn-secundario btn-s" type="button" id="cancelaPanel">Cancelar</button>' +
+      "</div></div>";
+  }
+
+  function panelCierre(p) {
+    var v = pVinc;
+    if (!v) return "";
+    return '<div class="panel grave" id="panelCierre">' +
+      "<h3>Cerrar vinculación</h3>" +
+      '<p class="p-int">' + esc(v.vac) + " · " + esc(v.emp) + " · inició el " + fecha(v.inicio) + ".</p>" +
+      '<div class="conse rompe">' + ico("info") +
+        "Cerrar <b>no elimina</b> nada (RNF03): la vinculación y sus verificaciones quedan en el historial. " +
+        esc(p.n) + " regresa a la cartera como caso a revincular.</div>" +
+      '<div class="fila">' +
+        '<div class="campo"><label for="ciFec">Fecha de conclusión <span class="req">*</span></label>' +
+          '<input type="date" id="ciFec" value="' + HOY + '">' +
+          '<span class="msg-error">Captura la fecha.</span></div>' +
+        '<div class="campo"><label for="ciMot">Motivo <span class="req">*</span></label>' +
+          '<select id="ciMot">' + selOpts(MOT_FIN) + "</select>" +
+          '<span class="msg-error">El motivo es obligatorio.</span></div>' +
+      "</div>" +
+      '<div class="flex gap-8">' +
+        '<button class="btn btn-peligro btn-s" type="button" id="okCierre">' + ico("guardar") + "Cerrar vinculación</button>" +
+        '<button class="btn btn-secundario btn-s" type="button" id="cancelaPanel">Cancelar</button>' +
+      "</div></div>";
+  }
+
+  /* Aislamiento entre direcciones: se ve que el módulo existe, no su
+     contenido. Es la contraparte exacta del candado que expediente-detalle
+     pone sobre Empleabilidad.                                             */
+  function bloqueModulos() {
+    var mods = [
+      { i:"expedientes", t:"Expediente único",  s:"Identidad, movilidad y bitácora", h:"expediente-detalle.html" },
+      { i:"capacita",    t:"Capacitación",      s:"Misma dirección: cursos ICATECH", h:"capacitacion.html" },
+      { i:"salud",       t:"Salud y Vulnerabilidad", s:"Sin acceso: dirección distinta", bloq:1 },
+      { i:"constancia",  t:"Constancias",           s:"Constancia de colocación", h:"constancias.html" }
+    ];
+    return '<div class="tarjeta">' +
+      '<div class="tarjeta-enc"><h3>Módulos vinculados</h3></div>' +
+      '<div class="mods">' + mods.map(function (m) {
+        return '<a class="modulo' + (m.bloq ? " bloqueado" : "") + '" href="' + (m.h || "#") + '">' +
+          ico(m.bloq ? "candado" : m.i) + "<span><b>" + m.t + '</b><span class="txt-min">' + m.s +
+          "</span></span></a>";
+      }).join("") + "</div>" +
+      '<div class="tarjeta-pie">Se muestra que el módulo existe, no su contenido: ninguna condición de ' +
+      "salud puede usarse como criterio para vincular o descartar a una persona.</div></div>";
+  }
+
+  function acuse() {
+    if (!acuses.length) return "";
+    return '<div class="aviso aviso-jade" style="margin-bottom:16px">' + ico("check") +
+      "<span><strong>" + plural(acuses.length, "movimiento registrado", "movimientos registrados") +
+      " en esta sesión</strong>" + acuses.slice(-3).reverse().map(esc).join(" · ") + "</span></div>";
+  }
+
+  /* ======================================================================
+     Pestañas del detalle
+     --------------------------------------------------------------------
+     El detalle mostraba siete bloques a la vez, unos 2 000 px de alto, en
+     los que competían por la misma atención lo que hay que hacer hoy
+     (seguimiento), el expediente laboral completo (historial) y la ficha de
+     referencia (requisitos y perfil). Son tres tareas distintas y solo la
+     primera es diaria, así que se separan en pestañas: es el componente
+     .pestanas que ya usa expediente-detalle.html, no uno nuevo.
+     La barra de acción y la cabecera quedan FUERA de las pestañas, de modo
+     que el pendiente del día se ve siempre, sea cual sea la pestaña.
+     ================================================================== */
+  var PESTS = [
+    { id:"seg",  t:"Seguimiento" },
+    { id:"vinc", t:"Vinculaciones" },
+    { id:"ficha", t:"Requisitos y perfil" }
+  ];
+
+  /* Por omisión se abre Seguimiento, salvo cuando no hay colocación: ahí
+     esa pestaña sería un vacío y lo que importa es el historial.         */
+  function pestPorOmision(p) {
+    /* "Seguimiento" solo cuando hay un reloj corriendo. Si la contratación
+       aún no tiene fecha de inicio, lo accionable está en el historial.  */
+    return vigente(p) ? "seg" : "vinc";
+  }
+
+  function barraPestanas(p) {
+    var pe = pendiente(p);
+    /* El contador de la pestaña avisa de lo que hay dentro sin abrirla:
+       eso es lo que permite cerrar las otras dos sin perder información. */
+    var faltan = requisitos(p).filter(function (r) { return r.est === "no" || r.est === "pv"; }).length;
+    /* Un número junto a "Seguimiento" y otro junto a "Vinculaciones" se ven
+       iguales y no significan lo mismo: uno es una alerta y el otro un
+       recuento. La alerta lleva glifo, no cifra.                          */
+    var cta = { seg:  (pe && pe.peso <= 2)
+                        ? '<span class="cta urge" title="Requiere acción">!</span>' : "",
+                vinc: '<span class="cta">' + p.v.length + "</span>",
+                ficha: faltan ? '<span class="cta urge" title="Requisitos por atender">!</span>' : "" };
+    return '<div class="pestanas pest-det" role="tablist" aria-label="Secciones de la vinculación laboral">' +
+      PESTS.map(function (t) {
+        var act = t.id === pest;
+        return '<button type="button" role="tab" class="pestana' + (act ? " activa" : "") +
+          '" id="tab-' + t.id + '" data-tab="' + t.id + '" aria-selected="' + act +
+          '" aria-controls="panel-' + t.id + '" tabindex="' + (act ? "0" : "-1") + '">' +
+          t.t + (cta[t.id] || "") + "</button>";
+      }).join("") + "</div>";
+  }
+
+  function cuerpoPestana(p) {
+    if (pest === "seg") {
+      /* Sin colocación en marcha no hay cifra que dar: la tarjeta héroe se
+         quedaba con un "—" al lado de una tarjeta vacía que explicaba lo
+         mismo que la barra de acción, tres veces el mismo dato. Con reloj
+         corriendo sí van las dos, porque cuentan cosas distintas.        */
+      return vigente(p)
+        ? '<div class="rejilla g-hero">' + heroe(p) + bloqueHitos(p) + "</div>"
+        : bloqueHitos(p);
+    }
+    if (pest === "vinc") {
+      return (panel === "nueva" ? panelNueva(p) : "") +
+             bloqueHistorial(p) +
+             (panel === "cierre" ? panelCierre(p) : "");
+    }
+    return '<div class="rejilla g-2">' + bloqueRequisitos(p) + bloquePerfil(p) + "</div>" +
+           '<div class="mt-16">' + bloqueModulos() + "</div>";
+  }
+
+  function pintaDetalle() {
+    var p = persona();
+    /* La pestaña activa NO se corrige aquí: pestPorOmision() ya elige la
+       correcta al cambiar de persona, y forzarla en cada pintado hacía que
+       un clic en "Seguimiento" sobre alguien sin colocación no hiciera
+       nada visible. Esa pestaña tiene su propio estado vacío explicado.  */
+
+    /* Los paneles de captura siempre aparecen en el mismo sitio —justo
+       bajo la barra de acción— en vez de brotar en cuatro alturas
+       distintas de la página según el modo. Salvo los dos que pertenecen
+       a una fila del historial, que se quedan junto a su tabla.          */
+    var arriba = (panel === "verifica"  ? panelVerifica(p)  : "") +
+                 (panel === "resultado" ? panelResultado(p) : "") +
+                 (panel === "agenda"    ? panelAgenda(p)    : "") +
+                 (panel === "inicio"    ? panelInicio(p)    : "");
+
+    $("#detalle").innerHTML =
+      acuse() +
+      cabecera(p) +
+      '<div class="mt-16">' + accionBarra(p) + "</div>" +
+      arriba +
+      barraPestanas(p) +
+      '<div role="tabpanel" id="panel-' + pest + '" aria-labelledby="tab-' + pest + '" tabindex="0">' +
+        cuerpoPestana(p) +
+      "</div>";
+    eventosDetalle();
+  }
+
+  /* ======================================================================
+     7. Eventos del detalle (se reenlazan tras cada repintado)
+     ================================================================== */
+  /* Los paneles de alta y de cierre viven dentro de la pestaña del
+     historial: abrirlos desde fuera tiene que llevar ahí, o el panel se
+     pintaría en una pestaña que no está a la vista.                      */
+  var PANEL_PEST = { nueva:"vinc", cierre:"vinc" };
+
+  function abre(modo, vinc, h) {
+    panel = modo; pVinc = vinc || null; pHito = h || null; res = null;
+    if (PANEL_PEST[modo]) pest = PANEL_PEST[modo];
+    pintaDetalle();
+    var el = $(".panel");
+    if (el) {
+      el.scrollIntoView({ behavior:"smooth", block:"center" });
+      /* El foco entra al panel: abrir un formulario y dejar el foco en el
+         botón que ya desapareció obliga a tabular toda la página.        */
+      var primero = el.querySelector("input,select,textarea,button");
+      if (primero) primero.focus({ preventScroll:true });
+    }
+  }
+
+  function valida(ids) {
+    var falta = null;
+    ids.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      var vacio = !el.value;
+      el.closest(".campo").classList.toggle("error", vacio);
+      if (vacio && !falta) falta = el;
+    });
+    if (falta) falta.focus();
+    return !falta;
+  }
+
+  function cierra(msg) {
+    if (msg) acuses.push(msg);
+    panel = null; pVinc = null; pHito = null; res = null;
+    pintaChips(); pintaLista(); pintaDetalle();
+    if (msg) $("#anuncio").textContent = msg + ". " +
+      (pendiente(persona()) ? "Queda un pendiente." : "Sin pendientes de seguimiento.");
+    var h = $("#tPersona");
+    if (h) h.focus({ preventScroll:true });
+    window.scrollTo({ top:0, behavior:"smooth" });
+  }
+
+  function eventosDetalle() {
+    var p = persona();
+
+    /* Pestañas: clic y navegación con flechas, Inicio y Fin, como pide el
+       patrón de tablist. El repintado devuelve el foco a la pestaña.     */
+    $$("[data-tab]").forEach(function (b) {
+      b.onclick = function () {
+        pest = this.getAttribute("data-tab");
+        panel = null; pVinc = null; pHito = null; res = null;
+        pintaDetalle();
+        var t = $("#tab-" + pest);
+        if (t) t.focus({ preventScroll:true });
+      };
+      b.onkeydown = function (ev) {
+        var ids = PESTS.map(function (t) { return t.id; });
+        var i = ids.indexOf(this.getAttribute("data-tab")), n = null;
+        if (ev.key === "ArrowRight") n = ids[(i + 1) % ids.length];
+        else if (ev.key === "ArrowLeft") n = ids[(i - 1 + ids.length) % ids.length];
+        else if (ev.key === "Home") n = ids[0];
+        else if (ev.key === "End") n = ids[ids.length - 1];
+        if (!n) return;
+        ev.preventDefault();
+        var d = $("#tab-" + n);
+        if (d) d.click();
+      };
+    });
+
+    var bn = $("#btnNueva");
+    if (bn) bn.onclick = function () { abre("nueva"); };
+
+    var bn2 = $("#btnNueva2");
+    if (bn2) bn2.onclick = function () { abre("nueva"); };
+
+    var br = $("#btnResultado");
+    if (br) br.onclick = function () { abre("resultado", entrevistaSinResultado(p)); };
+
+    var bi = $("#btnInicio");
+    if (bi) bi.onclick = function () { abre("inicio", sinInicio(p)); };
+
+    $$("[data-ver]").forEach(function (b) {
+      b.onclick = function () { abre("verifica", null, parseInt(this.getAttribute("data-ver"), 10)); };
+    });
+    $$("[data-res]").forEach(function (b) {
+      b.onclick = function () { abre("resultado", vinc(this.getAttribute("data-res"))); };
+    });
+    $$("[data-ag]").forEach(function (b) {
+      b.onclick = function () { abre("agenda", vinc(this.getAttribute("data-ag"))); };
+    });
+    $$("[data-ini]").forEach(function (b) {
+      b.onclick = function () { abre("inicio", vinc(this.getAttribute("data-ini"))); };
+    });
+    $$("[data-cierra]").forEach(function (b) {
+      b.onclick = function () { abre("cierre", vinc(this.getAttribute("data-cierra"))); };
+    });
+    $$("[data-ff]").forEach(function (b) {
+      b.onclick = function () { filaFil = this.getAttribute("data-ff"); pintaDetalle(); };
+    });
+
+    var op = $("#opcRes");
+    if (op) op.addEventListener("change", function (ev) {
+      res = ev.target.value;
+      pintaDetalle();
+      /* El repintado pierde el foco: se devuelve a la opción elegida. */
+      var r = document.querySelector('#opcRes input[value="' + res + '"]');
+      if (r) r.focus();
+    });
+
+    var cp = $("#cancelaPanel");
+    if (cp) cp.onclick = function () { cierra(); };
+
+    var on = $("#okNueva");
+    if (on) on.onclick = function () {
+      if (!valida(["nvVac", "nvEmp", "nvSec", "nvFec", "nvResp"])) return;
+      p.v.unshift({
+        id:"V-" + p.e + "-" + (p.v.length + 1), vac:$("#nvVac").value, emp:$("#nvEmp").value,
+        sector:$("#nvSec").value, munEmp:$("#nvMun").value, resp:$("#nvResp").value,
+        post:$("#nvFec").value, ent:null, entRes:null, con:null,
+        inicio:null, fin:null, motFin:null, seg:{ "15":[], "30":[] }
+      });
+      cierra("Vinculación registrada en " + $("#nvEmp").value);
+    };
+
+    var ov = $("#okVerifica");
+    if (ov) ov.onclick = function () {
+      if (!res) { $("#opcRes").querySelector("input").focus(); return; }
+      var campos = ["vfMedio", "vfFecha"];
+      if (res === "nolabora") campos.push("vfMotivo");
+      if (!valida(campos)) return;
+      var vg = vigente(p);
+      vg.seg[String(pHito)].push({
+        f:$("#vfFecha").value, medio:$("#vfMedio").value, res:res, por:RESP,
+        nota:$("#vfNota").value || ""
+      });
+      if (res === "nolabora") { vg.fin = $("#vfFecha").value; vg.motFin = $("#vfMotivo").value; }
+      cierra("Verificación de " + pHito + " días: " + RES_TXT[res]);
+    };
+
+    var orr = $("#okResultado");
+    if (orr) orr.onclick = function () {
+      if (!res) { $("#opcRes").querySelector("input").focus(); return; }
+      if (!valida(res === "fav" ? ["reFcon"] : ["reMot"])) return;
+      if (res === "fav") {
+        pVinc.entRes = "fav"; pVinc.con = 1; pVinc.fcon = $("#reFcon").value;
+        if ($("#rePuesto").value) pVinc.puesto = $("#rePuesto").value;
+        cierra("Contratación registrada en " + pVinc.emp);
+      } else {
+        pVinc.entRes = "nofav"; pVinc.con = 0; pVinc.motNoCon = $("#reMot").value;
+        cierra("Vinculación no contratada en " + pVinc.emp);
+      }
+    };
+
+    var oa = $("#okAgenda");
+    if (oa) oa.onclick = function () {
+      if (!valida(["agFec"])) return;
+      pVinc.ent = $("#agFec").value;
+      cierra("Entrevista agendada en " + pVinc.emp + " para el " + fecha(pVinc.ent));
+    };
+
+    var oi = $("#okInicio");
+    if (oi) oi.onclick = function () {
+      if (!valida(["inFec"])) return;
+      pVinc.inicio = $("#inFec").value;
+      if ($("#inPuesto").value) pVinc.puesto = $("#inPuesto").value;
+      cierra("Inicio de labores registrado: " + fecha(pVinc.inicio));
+    };
+
+    var oc = $("#okCierre");
+    if (oc) oc.onclick = function () {
+      if (!valida(["ciFec", "ciMot"])) return;
+      pVinc.fin = $("#ciFec").value; pVinc.motFin = $("#ciMot").value;
+      cierra("Vinculación cerrada: " + pVinc.motFin);
+    };
+
+    function vinc(id) {
+      return p.v.filter(function (v) { return v.id === id; })[0] || null;
+    }
+  }
+
+  /* ======================================================================
+     8. Eventos de la cartera (elementos fijos del HTML)
+     ================================================================== */
+  $("#chipsFiltro").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-f]");
+    if (!b) return;
+    filtro = b.getAttribute("data-f");
+    pintaChips(); pintaLista();
+  });
+
+  $("#listaPers").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-p]");
+    if (!b) return;
+    sel = b.getAttribute("data-p");
+    panel = null; pVinc = null; pHito = null; res = null; filaFil = "todas";
+    pest = pestPorOmision(persona());
+    pintaLista(); pintaDetalle();
+    anuncia();
+    window.scrollTo({ top:0, behavior:"smooth" });
+  });
+
+  /* Cambiar de persona reemplaza el detalle entero por innerHTML. Sin esto,
+     quien navega con teclado o lector de pantalla se queda con el foco en
+     un botón que ya no existe y sin noticia de que cambió media pantalla. */
+  function anuncia() {
+    var p = persona(), pe = pendiente(p);
+    $("#anuncio").textContent = p.n + ", expediente " + p.e + ". " +
+      (pe ? pe.txt + "." : "Sin pendientes de seguimiento.");
+    var h = $("#tPersona");
+    if (h) h.focus({ preventScroll:true });
+  }
+
+  $("#buscaPers").addEventListener("input", function () {
+    busca = this.value;
+    pintaLista();
+  });
+
+  pest = pestPorOmision(persona());
+  if (qs.get("tab") && PESTS.some(function (t) { return t.id === qs.get("tab"); })) {
+    pest = qs.get("tab");
+  }
+  if (panel && PANEL_PEST[panel]) pest = PANEL_PEST[panel];
+  pintaChips();
+  pintaLista();
+  pintaDetalle();
+})();
+</script>
+</body>
+</html>

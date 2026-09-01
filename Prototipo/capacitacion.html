@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Capacitación · Grupos ICATECH · SIMH</title>
+<link rel="icon" href="assets/img/simh-isotipo-96.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/simh.css">
+<style>
+  .g-maestro{display:grid;grid-template-columns:308px minmax(0,1fr);gap:16px;align-items:start}
+  .g-maestro > *{min-width:0}
+  @media (max-width:1180px){ .g-maestro{grid-template-columns:1fr} }
+  @media (max-width:1000px){ .rejilla.g-3{grid-template-columns:1fr} }
+  @media (max-width:860px){ .rejilla.g-hero{grid-template-columns:1fr} }
+
+  /* ---------- Cartera de grupos: primero lo que exige acción ----------- */
+  .grp-item{display:block;width:100%;text-align:left;background:none;border:0;
+    border-bottom:1px solid var(--linea-suave);padding:11px 12px;cursor:pointer;
+    font-family:var(--f-texto);position:relative}
+  .grp-item:hover{background:var(--hueso-claro)}
+  .grp-item.activo{background:var(--jade-050)}
+  .grp-item.activo::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;
+    background:var(--jade);border-radius:0 3px 3px 0}
+  .grp-item .g-nom{display:block;font-size:13.5px;font-weight:700;color:var(--tinta);line-height:1.3;margin:6px 0 2px}
+  .grp-item .g-sede{display:block;font-size:11.5px;color:var(--gris-claro);line-height:1.35}
+  .grp-item .g-alerta{display:flex;gap:5px;align-items:flex-start;font-size:11.5px;color:var(--guinda-900);
+    font-weight:700;margin-top:5px;line-height:1.35}
+  .grp-item .g-alerta svg{width:13px;height:13px;stroke:var(--guinda);stroke-width:2;fill:none;flex:none;margin-top:1px}
+  .grp-item .g-cupo{display:flex;align-items:center;gap:8px;margin-top:7px}
+  .grp-item .g-barra{display:block;flex:1;height:5px;border-radius:3px;background:var(--linea-suave);overflow:hidden}
+  .grp-item .g-barra > span{display:block;height:100%;background:var(--dato-3)}
+  .grp-item .g-cifra{display:block;font-size:11px;color:var(--gris);font-variant-numeric:tabular-nums;flex:none}
+
+  .chips-filtro{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .chips-filtro .chip{cursor:pointer;border:0;font-family:var(--f-texto)}
+
+  /* ---------- Cabecera del grupo --------------------------------------- */
+  .grp-cab{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px}
+  .grp-cab .gc-txt{flex:1;min-width:280px}
+  .grp-cab h2{font-family:var(--f-texto);font-size:20px;font-weight:700;color:var(--tinta);
+    letter-spacing:0;text-transform:none;margin:0 0 6px;line-height:1.25}
+  .grp-cab .gc-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+  .grp-meta{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:12px;color:var(--gris)}
+  .grp-meta b{color:var(--tinta);font-weight:700}
+
+  /* ---------- Medidor de cupo: un lugar = una casilla ------------------ */
+  .cupo-med{display:flex;gap:3px;margin:6px 0 9px}
+  .cupo-med span{display:block;flex:1;height:28px;border-radius:3px;
+    background:var(--blanco);border:1px dashed var(--arena)}
+  .cupo-med span.ocu{background:var(--dato-3);border:1px solid var(--dato-3)}
+  .cupo-leyenda{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--gris)}
+  .cupo-leyenda .cl{display:flex;align-items:center;gap:6px}
+  .cupo-leyenda .cl i{display:block;width:11px;height:11px;border-radius:2px;flex:none}
+  .cupo-leyenda .cl i.ocu{background:var(--dato-3)}
+  .cupo-leyenda .cl i.lib{background:var(--blanco);border:1px dashed var(--arena)}
+
+  /* ---------- Proporción: magnitud contra un umbral, no dos categorías -- */
+  .prop{position:relative;height:28px;border-radius:4px;background:var(--hueso);overflow:hidden;margin:6px 0 7px}
+  .prop > .p-fill{display:block;height:100%;background:var(--dato-3)}
+  .prop > .p-fill.falla{background:var(--guinda)}
+  .prop > .p-umbral{display:block;position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--tinta);opacity:.8}
+  .prop > .p-et{display:block;position:absolute;top:5px;left:10px;font-size:12.5px;font-weight:700;color:#fff}
+  .prop-pie{display:flex;justify-content:space-between;gap:12px;font-size:11.5px;color:var(--gris);flex-wrap:wrap}
+
+  .bloque-med{border:1px solid var(--linea-suave);border-radius:var(--radio);padding:13px 15px}
+  .bloque-med > h4{margin:0;font-family:var(--f-texto);font-size:10.5px;letter-spacing:.07em;
+    text-transform:uppercase;color:var(--gris-claro);font-weight:700}
+  .bloque-med .bm-est{display:flex;align-items:flex-start;gap:6px;font-size:12.5px;font-weight:700;
+    margin-top:9px;line-height:1.35}
+  .bloque-med .bm-est svg{width:14px;height:14px;stroke-width:2;fill:none;flex:none;margin-top:1px}
+  .bm-ok{color:var(--jade-900)} .bm-ok svg{stroke:var(--jade-900)}
+  .bm-mal{color:var(--critico)} .bm-mal svg{stroke:var(--critico)}
+
+  /* ---------- Requisitos para acreditar -------------------------------- */
+  .req{display:flex;align-items:center;gap:13px;padding:12px 0;border-bottom:1px solid var(--linea-suave)}
+  .req:first-child{padding-top:0}
+  .req:last-child{border-bottom:0;padding-bottom:0}
+  .req .r-txt{flex:1;min-width:0}
+  .req .r-t{display:block;font-size:13.5px;font-weight:700;color:var(--tinta);line-height:1.3}
+  .req .r-n{display:block;font-size:11.5px;color:var(--gris);margin-top:3px;line-height:1.4}
+  .req .r-n.mal{color:var(--guinda-900);font-weight:700}
+  .req .r-cif{display:block;font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;flex:none;
+    color:var(--tinta);text-align:right;min-width:56px;line-height:1.1}
+  .req .r-cif small{display:block;font-size:10.5px;font-weight:400;color:var(--gris-claro);letter-spacing:.03em;margin-top:2px}
+  .req .r-bar{display:block;width:100px;height:6px;border-radius:3px;background:var(--linea-suave);overflow:hidden;flex:none}
+  .req .r-bar > span{display:block;height:100%;background:var(--dato-3)}
+  .req .r-bar > span.pend{background:var(--arena)}
+
+  /* ---------- Tabla de participantes ----------------------------------- */
+  .nac{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.06em;color:var(--gris);
+    border:1px solid var(--linea);border-radius:3px;padding:1px 4px;margin-left:6px;vertical-align:1px}
+  .t-part td{vertical-align:middle}
+  .t-part td:first-child,.t-part th:first-child{width:36%;min-width:222px}
+  .t-part td,.t-part th{padding-left:12px;padding-right:12px}
+  .t-part .p-nom a{color:var(--tinta);text-decoration:none}
+  .t-part .p-nom a:hover{color:var(--jade-900);text-decoration:underline}
+  .t-part .p-nom{display:block;font-weight:700;line-height:1.25;font-size:13px}
+  .t-part .p-folio{display:block;font-size:11.5px;color:var(--gris);margin-top:2px}
+  .t-part tr.dada-baja .p-nom{text-decoration:line-through;color:var(--gris-claro)}
+  .t-part tr.dada-baja td{background:var(--hueso-claro)}
+  .docs{display:flex;flex-direction:column;gap:4px}
+  .doc-l{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--gris);white-space:nowrap}
+  .doc-l svg{width:13px;height:13px;stroke-width:2.2;fill:none;flex:none}
+  .doc-l.si{color:var(--jade-900)} .doc-l.si svg{stroke:var(--jade-900)}
+  .doc-l.no{color:var(--critico);font-weight:700} .doc-l.no svg{stroke:var(--critico)}
+  .doc-l.na{color:var(--gris-claro)} .doc-l.na svg{stroke:var(--gris-claro)}
+  .asis-cel{display:block;font-size:13px;font-variant-numeric:tabular-nums;font-weight:700;line-height:1.2}
+  .asis-cel small{display:block;font-size:11px;font-weight:400;color:var(--gris);margin-top:2px}
+  .asis-cel.riesgo{color:var(--rosa)} .asis-cel.riesgo small{color:var(--rosa)}
+  .asis-cel.perdida{color:var(--critico)} .asis-cel.perdida small{color:var(--critico)}
+
+  .filtros-tabla{display:flex;gap:6px;flex-wrap:wrap}
+  .filtros-tabla .chip{cursor:pointer;border:0;font-family:var(--f-texto)}
+
+  /* ---------- Pase de lista -------------------------------------------- */
+  .pase{display:inline-flex;border:1px solid var(--linea);border-radius:var(--radio-s);overflow:hidden}
+  .pase button{height:28px;padding:0 11px;font-size:11.5px;font-weight:700;border:0;background:var(--blanco);
+    cursor:pointer;font-family:var(--f-texto);color:var(--gris);border-left:1px solid var(--linea)}
+  .pase button:first-child{border-left:0}
+  .pase button:hover{background:var(--hueso-claro)}
+  .pase button.on-p{background:var(--jade);color:#fff}
+  .pase button.on-a{background:var(--guinda);color:#fff}
+  .pase button.on-j{background:var(--arena);color:var(--tinta)}
+
+  /* ---------- Panel de alta de participante ---------------------------- */
+  .panel-add{border:1px solid var(--jade);border-radius:var(--radio);background:var(--jade-020);
+    padding:15px 16px;margin-bottom:16px}
+  .panel-add > h3{margin:0 0 3px;font-family:var(--f-texto);font-size:14.5px;font-weight:700;
+    color:var(--tinta);text-transform:none;letter-spacing:0}
+  .cand{display:flex;align-items:center;gap:11px;padding:9px 2px;border-bottom:1px solid var(--linea-suave)}
+  .cand:last-child{border-bottom:0}
+  .cand .c-txt{flex:1;min-width:0}
+  .cand .c-nom{display:block;font-size:13px;font-weight:700;line-height:1.25}
+  .cand .c-sub{display:block;font-size:11.5px;color:var(--gris);margin-top:2px}
+  .pred{border-left:3px solid var(--jade);background:var(--blanco);padding:10px 12px;
+    border-radius:0 var(--radio-s) var(--radio-s) 0;font-size:12.5px;color:var(--gris);margin-top:10px;line-height:1.5}
+  .pred.rompe{border-left-color:var(--guinda);color:var(--guinda-900)}
+  .pred svg{width:14px;height:14px;stroke-width:2;fill:none;stroke:var(--guinda);vertical-align:-2px}
+  .pred b{color:var(--tinta)}
+  .pred.rompe b{color:var(--guinda-900)}
+
+  /* ---------- Panel de baja -------------------------------------------- */
+  .panel-baja{border:1px solid var(--guinda);border-radius:var(--radio);background:var(--guinda-050);
+    padding:15px 16px;margin-top:16px}
+  .panel-baja > h3{margin:0 0 3px;font-family:var(--f-texto);font-size:14.5px;font-weight:700;
+    color:var(--guinda-900);text-transform:none;letter-spacing:0}
+
+  .sec-tit{font-family:var(--f-texto);font-size:14.5px;font-weight:700;color:var(--tinta);
+    text-transform:none;letter-spacing:0;margin:0}
+</style>
+</head>
+<body>
+
+<main class="contenido">
+  <div class="migas"><a href="index.html">Inicio</a> › Capacitación · Grupos ICATECH</div>
+
+  <div class="enc">
+    <div class="enc-txt">
+      <h1>Capacitación</h1>
+      <div class="enc-sub">Conformación de grupos ICATECH, asistencia y requisitos de acreditación (RF13)</div>
+    </div>
+    <div class="enc-acc">
+      <button class="btn btn-secundario btn-s" type="button" id="btnXls"></button>
+      <button class="btn btn-secundario btn-s" type="button" id="btnFirma"></button>
+    </div>
+  </div>
+
+  <div class="aviso aviso-neutro" id="avisoPermisos"></div>
+
+  <div class="g-maestro">
+    <!-- ======================= Cartera de grupos ======================= -->
+    <div class="tarjeta" style="padding:0;position:sticky;top:calc(var(--topbar-h) + 16px)">
+      <div style="padding:12px 12px 11px;border-bottom:1px solid var(--linea)">
+        <input type="text" id="buscaGrupo" placeholder="Buscar curso, sede o folio de grupo"
+               aria-label="Buscar grupo de capacitación"
+               style="width:100%;height:34px;border:1px solid var(--linea);border-radius:var(--radio-s);
+                      padding:0 11px;font-family:var(--f-texto);font-size:13px">
+        <!-- Los cursos se asignan por municipio: el municipio es el primer
+             corte de la cartera, no un dato escondido en el nombre de la sede. -->
+        <label class="sr-solo" for="filMun">Municipio</label>
+        <select id="filMun" style="width:100%;height:34px;margin-top:8px;border:1px solid var(--linea);
+                border-radius:var(--radio-s);padding:0 9px;font-family:var(--f-texto);font-size:13px;
+                background:var(--blanco);color:var(--tinta)"></select>
+        <div class="chips-filtro" id="chipsFiltro" role="group" aria-label="Filtrar los grupos"></div>
+      </div>
+      <div id="listaGrupos" style="max-height:62vh;overflow-y:auto"></div>
+      <div class="tabla-pie" style="border-radius:0 0 var(--radio) var(--radio)">
+        <span id="conteoGrupos"></span>
+      </div>
+    </div>
+
+    <!-- ============================ Detalle ============================ -->
+    <div id="detalle"></div>
+  </div>
+</main>
+
+<script src="assets/js/simh.js"></script>
+<script>
+(function () {
+  "use strict";
+  SIMH.chrome("capacita");
+  var ico = SIMH.icono, esc = SIMH.esc;
+  var $ = function (s) { return document.querySelector(s); };
+  var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+
+  var HOY = "2026-08-27";
+
+  $("#btnXls").innerHTML   = ico("excel") + "Exportar lista de asistencia";
+  $("#btnFirma").innerHTML = ico("pdf") + "Lista para firma física";
+  $("#avisoPermisos").innerHTML = ico("info") +
+    "<span><strong>Qué hace este módulo y qué no</strong>La ventanilla <b>conforma el grupo y pasa lista</b>. " +
+    "La acreditación y la constancia de competencia las emite <b>ICATECH</b> al concluir el curso; el SIMH " +
+    "solo verifica que cada persona llegue en condiciones de acreditar (RNF02). " +
+    "<b>No hay límite de cursos por persona</b>: haber cursado antes nunca impide inscribirse.</span>";
+
+  /* ======================================================================
+     1. Las reglas de RF13 no son la misma clase de cosa
+     ------------------------------------------------------------------
+     Y por eso no pueden mostrarse juntas como un solo semáforo:
+       · CUPO       → bloquea la inscripción hoy.
+       · PROPORCIÓN → regla del grupo; una sola alta puede romperla, así
+                      que se predice ANTES de confirmar, no se reporta
+                      después. Se verifica al cerrar la inscripción.
+       · DOCUMENTOS → no impiden inscribirse; impiden ACREDITAR, con plazo
+                      hasta el cierre del curso.
+       · ASISTENCIA → mínimo del 80% de las sesiones para acreditar.
+     ================================================================== */
+  var MIN_ASIS = 0.8;
+
+  /* ======================================================================
+     2. Grupos del ciclo. Datos a mano, como en el resto del prototipo.
+     ================================================================== */
+  var GRUPOS = [
+    {
+      id:"G-2026-021", curso:"Corte y confección", clave:"ICT-CYC-02",
+      sede:"ICATECH Tapachula", mun:"Tapachula", modalidad:"Presencial", aula:"Taller 3",
+      instructor:"Mtra. Lucía Nangüelú Espinosa",
+      inicio:"2026-09-07", fin:"2026-10-30", cierre:"2026-08-31",
+      sesiones:16, sesion:0, cupo:14, estado:"conformacion",
+      p:[
+        {e:"0631", n:"Blanca Estela Pop Caal",           nac:"GTM", ext:1, curp:1, comar:1, a:0, prev:0},
+        {e:"0644", n:"Elvia Consuelo Tzoc Ixcot",        nac:"GTM", ext:1, curp:1, comar:1, a:0, prev:1},
+        {e:"0652", n:"Reina Isabel Amador Flores",       nac:"HND", ext:1, curp:1, comar:1, a:0, prev:0},
+        {e:"0658", n:"Suyapa del Carmen Lagos Munguía",  nac:"HND", ext:1, curp:1, comar:0, a:0, prev:0},
+        {e:"0663", n:"Ana Ruth Guardado Melgar",         nac:"SLV", ext:1, curp:1, comar:1, a:0, prev:2},
+        {e:"0670", n:"Rosibel Martínez Ortiz",           nac:"NIC", ext:1, curp:1, comar:1, a:0, prev:0},
+        {e:"0322", n:"Herlinda Pérez Gómez",             nac:"MEX", ext:0, curp:1, comar:0, a:0, prev:0},
+        {e:"0338", n:"Claudia Yaneth Villatoro Ruiz",    nac:"MEX", ext:0, curp:1, comar:0, a:0, prev:1},
+        {e:"0341", n:"Fabiola Aguilar Camacho",          nac:"MEX", ext:0, curp:0, comar:0, a:0, prev:0},
+        {e:"0355", n:"Rosa María Cifuentes León",        nac:"MEX", ext:0, curp:1, comar:0, a:0, prev:0},
+        {e:"0360", n:"Karina Jiménez Espinosa",          nac:"MEX", ext:0, curp:1, comar:0, a:0, prev:3},
+        {e:"0374", n:"Leticia Vázquez Nangüelú",         nac:"MEX", ext:0, curp:1, comar:0, a:0, prev:0}
+      ]
+    },
+    {
+      id:"G-2026-018", curso:"Panadería básica", clave:"ICT-PAN-01",
+      sede:"ICATECH Tapachula", mun:"Tapachula", modalidad:"Presencial", aula:"Taller de alimentos",
+      instructor:"Ing. Rubén Cifuentes Ola",
+      inicio:"2026-08-10", fin:"2026-09-18", cierre:"2026-08-14",
+      sesiones:12, sesion:8, cupo:18, estado:"curso",
+      p:[
+        {e:"0412", n:"Yesenia Ramírez Coc",              nac:"GTM", ext:1, curp:1, comar:1, a:8, prev:1},
+        {e:"0418", n:"Marvin Estuardo Xicay Chávez",     nac:"GTM", ext:1, curp:1, comar:1, a:8, prev:0},
+        {e:"0423", n:"Dilcia Maradiaga Núñez",           nac:"HND", ext:1, curp:1, comar:0, a:7, prev:0},
+        {e:"0429", n:"José Ramón Bulnes Ayala",          nac:"HND", ext:1, curp:1, comar:1, a:6, prev:2},
+        {e:"0435", n:"Kenia Alvarenga Portillo",         nac:"SLV", ext:1, curp:1, comar:1, a:8, prev:0},
+        {e:"0441", n:"Wilmer Antonio Cruz Rivas",        nac:"SLV", ext:1, curp:0, comar:1, a:8, prev:1},
+        {e:"0447", n:"Yoselin Chávez Mendoza",           nac:"NIC", ext:1, curp:1, comar:1, a:5, prev:0},
+        {e:"0452", n:"Darwin Josué Pineda Zelaya",       nac:"HND", ext:1, curp:1, comar:1, a:7, prev:0},
+        {e:"0458", n:"Marie Claude Joseph",              nac:"HTI", ext:1, curp:1, comar:1, a:8, prev:3},
+        {e:"0464", n:"Yordanis Pérez Lazo",              nac:"CUB", ext:1, curp:1, comar:0, a:7, prev:0},
+        {e:"0470", n:"Génesis Andreína Rondón Silva",    nac:"VEN", ext:1, curp:1, comar:1, a:8, prev:0},
+        {e:"0201", n:"María Guadalupe Roblero Pérez",    nac:"MEX", ext:0, curp:1, comar:0, a:8, prev:1},
+        {e:"0209", n:"Sandra Luz Escobar Trujillo",      nac:"MEX", ext:0, curp:1, comar:0, a:6, prev:0},
+        {e:"0215", n:"Juan Carlos Velázquez Ruiz",       nac:"MEX", ext:0, curp:1, comar:0, a:8, prev:0},
+        {e:"0222", n:"Alba Nidia Morales Gómez",         nac:"MEX", ext:0, curp:1, comar:0, a:7, prev:2},
+        {e:"0230", n:"Óscar Iván Domínguez Solís",       nac:"MEX", ext:0, curp:1, comar:0, a:8, prev:0}
+      ]
+    },
+    {
+      id:"G-2026-014", curso:"Informática básica", clave:"ICT-INF-03",
+      sede:"ICATECH Tapachula", mun:"Tapachula", modalidad:"En línea", aula:"Aula virtual 2",
+      instructor:"Lic. Adriana Zúñiga Betanzos",
+      inicio:"2026-07-06", fin:"2026-08-28", cierre:"2026-07-10",
+      sesiones:14, sesion:13, cupo:20, estado:"porconcluir",
+      p:[
+        {e:"0508", n:"Anthony Josué Mejía Zelaya",       nac:"HND", ext:1, curp:1, comar:1, a:13, prev:0},
+        {e:"0512", n:"Keyla Nohemí Rodríguez Paz",       nac:"HND", ext:1, curp:1, comar:1, a:12, prev:1},
+        {e:"0517", n:"Jefferson Steve Ochoa Bran",       nac:"GTM", ext:1, curp:1, comar:1, a:13, prev:0},
+        {e:"0521", n:"Widlene Pierre Louis",             nac:"HTI", ext:1, curp:1, comar:0, a:11, prev:0},
+        {e:"0526", n:"Yeison David Sarmiento Peña",      nac:"VEN", ext:1, curp:1, comar:1, a:13, prev:2},
+        {e:"0530", n:"Dayana Carolina Guédez Mora",      nac:"VEN", ext:1, curp:1, comar:1, a:12, prev:0},
+        {e:"0534", n:"Osmar Alexis Portillo Cruz",       nac:"SLV", ext:1, curp:1, comar:1, a:13, prev:0},
+        {e:"0539", n:"Leidy Yohana Coy Chub",            nac:"GTM", ext:1, curp:0, comar:1, a:10, prev:0},
+        {e:"0247", n:"Brenda Aracely Gordillo Mo",       nac:"MEX", ext:0, curp:1, comar:0, a:13, prev:0},
+        {e:"0253", n:"Cristian de Jesús Nájera Coutiño", nac:"MEX", ext:0, curp:1, comar:0, a:12, prev:1},
+        {e:"0261", n:"Ilse Fernanda Ordóñez Cruz",       nac:"MEX", ext:0, curp:1, comar:0, a:14, prev:0}
+      ]
+    },
+    {
+      id:"G-2026-022", curso:"Cocina económica", clave:"ICT-COC-01",
+      sede:"ICATECH Huixtla", mun:"Huixtla", modalidad:"Presencial", aula:"Taller de alimentos",
+      instructor:"Chef Ernestina Palacios Toledo",
+      inicio:"2026-09-14", fin:"2026-10-23", cierre:"2026-09-04",
+      sesiones:12, sesion:0, cupo:16, estado:"conformacion",
+      p:[
+        {e:"0702", n:"Norma Leticia Sánchez Cardona",    nac:"GTM", ext:1, curp:1, comar:1, a:0, prev:0},
+        {e:"0708", n:"Mayra Alejandra Bonilla Rivera",   nac:"HND", ext:1, curp:1, comar:0, a:0, prev:0},
+        {e:"0713", n:"Glenda Patricia Sorto Arévalo",    nac:"SLV", ext:1, curp:1, comar:1, a:0, prev:1},
+        {e:"0716", n:"Yaneth del Socorro Obando Ruiz",   nac:"NIC", ext:1, curp:1, comar:1, a:0, prev:0},
+        {e:"0722", n:"Rosaura Batista Jean",             nac:"HTI", ext:1, curp:1, comar:1, a:0, prev:0},
+        {e:"0288", n:"Amelia Gómez Hernández",           nac:"MEX", ext:0, curp:1, comar:0, a:0, prev:0}
+      ]
+    },
+    {
+      id:"G-2026-003", curso:"Belleza y estilismo", clave:"ICT-BYE-01",
+      sede:"ICATECH Tapachula", mun:"Tapachula", modalidad:"Presencial", aula:"Taller 1",
+      instructor:"Mtra. Perla Vázquez Domínguez",
+      inicio:"2026-05-04", fin:"2026-06-26", cierre:"2026-05-08",
+      sesiones:12, sesion:12, cupo:14, estado:"concluido",
+      p:[
+        {e:"0118", n:"Sonia Marilú Coc Tzul",            nac:"GTM", ext:1, curp:1, comar:1, a:12, prev:0},
+        {e:"0124", n:"Digna Esperanza Núñez Ruiz",       nac:"HND", ext:1, curp:1, comar:1, a:11, prev:0},
+        {e:"0129", n:"Iris Yamileth Fúnez Ávila",        nac:"HND", ext:1, curp:1, comar:1, a:12, prev:1},
+        {e:"0133", n:"Mirna Elizabeth Ayala Cruz",       nac:"SLV", ext:1, curp:1, comar:1, a:10, prev:0},
+        {e:"0138", n:"Fanny Elizabeth Silva Meza",       nac:"NIC", ext:1, curp:1, comar:1, a:12, prev:0},
+        {e:"0142", n:"Nadège Saint-Fleur",               nac:"HTI", ext:1, curp:1, comar:1, a:11, prev:0},
+        {e:"0147", n:"Yanet Rodríguez Batista",          nac:"CUB", ext:1, curp:1, comar:1, a:12, prev:1},
+        {e:"0151", n:"Andreína Coromoto Blanco Pérez",   nac:"VEN", ext:1, curp:1, comar:1, a:9,  prev:0},
+        {e:"0156", n:"Karla Michelle Toledo Pinto",      nac:"GTM", ext:1, curp:1, comar:1, a:12, prev:2},
+        {e:"0163", n:"Verónica Nájera Aguilar",          nac:"MEX", ext:0, curp:1, comar:0, a:12, prev:0},
+        {e:"0168", n:"Cinthia Yaneth López Roblero",     nac:"MEX", ext:0, curp:1, comar:0, a:11, prev:0},
+        {e:"0172", n:"Dora Alicia Méndez Sánchez",       nac:"MEX", ext:0, curp:0, comar:0, a:12, prev:0},
+        {e:"0177", n:"Mariela Guadalupe Cruz Ovando",    nac:"MEX", ext:0, curp:1, comar:0, a:10, prev:1}
+      ]
+    }
+  ];
+
+  /* Personas con expediente que hoy no están en ningún grupo abierto.      */
+  var CANDIDATOS = [
+    {e:"0731", n:"Wilson Adalberto Cáceres Erazo",   nac:"HND", ext:1, curp:1, comar:1, prev:0},
+    {e:"0688", n:"Marleny Suchité Ramos",            nac:"GTM", ext:1, curp:1, comar:0, prev:1},
+    {e:"0719", n:"Osiris Alexander Bello Márquez",   nac:"VEN", ext:1, curp:1, comar:1, prev:0},
+    {e:"0698", n:"Ricardo Antonio Menjívar Cruz",    nac:"SLV", ext:1, curp:1, comar:1, prev:1},
+    {e:"0744", n:"Jean Baptiste Moïse",              nac:"HTI", ext:1, curp:0, comar:1, prev:0},
+    {e:"0455", n:"Berta Alicia Trujillo Molina",     nac:"MEX", ext:0, curp:1, comar:0, prev:3},
+    {e:"0510", n:"Silvia Patricia Roblero Aguilar",  nac:"MEX", ext:0, curp:1, comar:0, prev:0},
+    {e:"0296", n:"Elizabeth Coutiño Marroquín",      nac:"MEX", ext:0, curp:1, comar:0, prev:1}
+  ];
+
+  var PAIS = { GTM:"Guatemala", HND:"Honduras", SLV:"El Salvador", NIC:"Nicaragua",
+               VEN:"Venezuela", HTI:"Haití", CUB:"Cuba", MEX:"México" };
+
+  var MOTIVOS_BAJA = [
+    "Continuó su ruta migratoria fuera de Chiapas",
+    "Se incorporó a un empleo en horario incompatible",
+    "Motivo de salud",
+    "Abandono sin aviso (tres sesiones consecutivas)",
+    "Cambio a otro grupo del mismo curso"
+  ];
+
+  /* ======================================================================
+     3. Cálculos. Todo lo que la pantalla afirma se deriva de aquí.
+     ================================================================== */
+  function fecha(iso) { var p = iso.split("-"); return p[2] + "/" + p[1] + "/" + p[0]; }
+  function dias(desde, hasta) { return Math.round((new Date(hasta) - new Date(desde)) / 86400000); }
+  function plural(n, uno, varios) { return n + " " + (n === 1 ? uno : varios); }
+  function faltan(n) { return (n === 1 ? "falta " : "faltan "); }
+  function quedan(n) { return (n === 1 ? "queda " : "quedan "); }
+  function activos(g) { return g.p.filter(function (x) { return !x.baja; }); }
+  function docOk(x) { return !!x.curp && (x.ext ? !!x.comar : true); }
+
+  /* Asistencia: el porcentaje de hoy no basta. Lo que decide la
+     acreditación es si el mínimo TODAVÍA es alcanzable con las sesiones
+     que faltan; cuando deja de serlo es irreversible y hay que decirlo,
+     no dejarlo como un "va bajo" que ya no tiene remedio.                 */
+  function asis(g, x) {
+    var minimo = Math.ceil(g.sesiones * MIN_ASIS);
+    var faltan = g.sesiones - g.sesion;
+    var techo  = x.a + faltan;
+    var pctHoy = g.sesion ? x.a / g.sesion : 0;
+    var est = "ok";
+    if (techo < minimo) est = "perdida";
+    else if (g.sesion && pctHoy < MIN_ASIS) est = "riesgo";
+    return { minimo:minimo, techo:techo, faltan:faltan, pct:pctHoy, est:est };
+  }
+
+  function resumen(g) {
+    var act = activos(g);
+    var ext = act.filter(function (x) { return x.ext; }).length;
+    var mex = act.length - ext;
+    var libres = g.cupo - act.length;
+    var cumple = ext > mex;
+    /* Margen: cuántas personas mexicanas más caben sin romper ext > mex. */
+    var margen = Math.max(0, Math.min(libres, ext - mex - 1));
+    var faltanExt = cumple ? 0 : (mex - ext + 1);
+    var docs = act.filter(docOk).length;
+    var asisOk = 0, riesgo = 0, perdida = 0;
+    act.forEach(function (x) {
+      var a = asis(g, x);
+      if (a.est === "ok") asisOk++; else if (a.est === "riesgo") riesgo++; else perdida++;
+    });
+    var listos = act.filter(function (x) { return docOk(x) && asis(g, x).est === "ok"; }).length;
+    return { act:act, n:act.length, ext:ext, mex:mex, libres:libres, cumple:cumple,
+             margen:margen, faltanExt:faltanExt, docs:docs, asisOk:asisOk,
+             riesgo:riesgo, perdida:perdida, listos:listos,
+             pct: act.length ? ext / act.length : 0 };
+  }
+
+  /* Lo que exige acción del capturista, en orden de urgencia. */
+  function pendiente(g) {
+    if (g.estado === "concluido") return null;
+    var r = resumen(g), d = r.n - r.docs, dc = dias(HOY, g.cierre);
+    if (!r.cumple) {
+      return { peso:1, txt:"La proporción mayoritaria extranjera no se cumple: " + faltan(r.faltanExt) +
+        plural(r.faltanExt, "persona extranjera", "personas extranjeras") };
+    }
+    if (g.estado === "porconcluir" && d) {
+      return { peso:2, txt:plural(d, "persona no podrá acreditar", "personas no podrán acreditar") +
+        ": el curso termina el " + fecha(g.fin) };
+    }
+    if (g.estado === "conformacion" && dc >= 0 && dc <= 7) {
+      return { peso:3, txt:"La inscripción cierra en " + plural(dc, "día", "días") +
+        " y " + quedan(r.libres) + plural(r.libres, "lugar libre", "lugares libres") };
+    }
+    if (r.perdida) {
+      return { peso:4, txt:plural(r.perdida, "persona ya no alcanza", "personas ya no alcanzan") +
+        " el mínimo de asistencia" };
+    }
+    if (d) {
+      return { peso:5, txt:plural(d, "persona con documentación incompleta",
+        "personas con documentación incompleta") };
+    }
+    return null;
+  }
+
+  var EST = {
+    conformacion:{ t:"En conformación", c:"chip-neutro" },
+    curso:       { t:"En curso",        c:"chip-jade" },
+    porconcluir: { t:"Por concluir",    c:"chip-rosa" },
+    concluido:   { t:"Concluido",       c:"chip-neutro" }
+  };
+
+  /* ======================================================================
+     4. Estado de la pantalla
+     ================================================================== */
+  var qs        = new URLSearchParams(location.search);
+  var filtro    = "accion";
+  var fMun      = "todos";      /* los cursos se asignan por municipio */
+  var busca     = "";
+  var sel       = "G-2026-018";   /* el grupo en curso: pasar lista es la tarea diaria */
+  var filaFil   = "todos";
+  var modoLista = false;
+  var pase      = {};             /* folio → "P" | "A" | "J" */
+  var panelAdd  = false;
+  var buscaCand = "";
+  var candSel   = null;
+  var bajaDe    = null;
+  var altas     = [];             /* altas hechas en esta sesión, para el acuse */
+
+  if (qs.get("g")) {
+    GRUPOS.forEach(function (g) { if (g.id.indexOf(qs.get("g")) >= 0) sel = g.id; });
+  }
+  if (qs.get("lista") === "1") modoLista = true;
+  if (qs.get("add") === "1")   panelAdd  = true;
+  if (qs.get("cand")) { candSel = qs.get("cand"); buscaCand = candSel; panelAdd = true; }
+
+  function grupo() {
+    for (var i = 0; i < GRUPOS.length; i++) if (GRUPOS[i].id === sel) return GRUPOS[i];
+    return GRUPOS[0];
+  }
+
+  /* ======================================================================
+     5. Cartera de grupos
+     ================================================================== */
+  var FILTROS = [
+    { id:"accion",  t:"Requieren acción" },
+    { id:"abierto", t:"Inscripción abierta" },
+    { id:"curso",   t:"En curso" },
+    { id:"todos",   t:"Todos" }
+  ];
+
+  /* Municipios presentes en los datos, no una lista escrita a mano: si se da
+     de alta un grupo en otra sede, el filtro lo recoge solo. */
+  function municipios() {
+    var vistos = {};
+    GRUPOS.forEach(function (g) { vistos[g.mun] = 1; });
+    return Object.keys(vistos).sort();
+  }
+
+  function pintaMunicipios() {
+    var sel2 = $("#filMun");
+    if (!sel2) return;
+    sel2.innerHTML = '<option value="todos">Todos los municipios (' + GRUPOS.length + ")</option>" +
+      municipios().map(function (m) {
+        var n = GRUPOS.filter(function (g) { return g.mun === m; }).length;
+        return '<option value="' + esc(m) + '"' + (fMun === m ? " selected" : "") + ">" +
+          esc(m) + " (" + n + ")</option>";
+      }).join("");
+  }
+
+  function pasa(g, f) {
+    if (fMun !== "todos" && g.mun !== fMun) return false;
+    if (f === "accion")  return !!pendiente(g);
+    if (f === "abierto") return g.estado === "conformacion" && resumen(g).libres > 0;
+    if (f === "curso")   return g.estado === "curso" || g.estado === "porconcluir";
+    return true;
+  }
+  function pasaBusca(g) {
+    if (!busca) return true;
+    var t = (g.curso + " " + g.sede + " " + g.id + " " + g.clave + " " + g.instructor).toLowerCase();
+    return t.indexOf(busca.toLowerCase()) >= 0;
+  }
+
+  function pintaChips() {
+    /* Los recuentos de los chips cuentan DENTRO del municipio elegido: si
+       dijeran el total del estado, el chip prometería grupos que la lista de
+       abajo no va a mostrar. */
+    $("#chipsFiltro").innerHTML = FILTROS.map(function (f) {
+      var n = GRUPOS.filter(function (g) { return pasa(g, f.id); }).length;
+      return '<button type="button" class="chip ' + (filtro === f.id ? "chip-jade" : "chip-neutro") +
+        '" data-f="' + f.id + '" aria-pressed="' + (filtro === f.id) + '">' + esc(f.t) + " " + n + "</button>";
+    }).join("");
+  }
+
+  function pintaLista() {
+    var vis = GRUPOS.filter(function (g) { return pasa(g, filtro) && pasaBusca(g); })
+      .sort(function (a, b) {
+        var pa = pendiente(a), pb = pendiente(b);
+        return (pa ? pa.peso : 90) - (pb ? pb.peso : 90);
+      });
+
+    $("#listaGrupos").innerHTML = vis.length ? vis.map(function (g) {
+      var r = resumen(g), pen = pendiente(g), e = EST[g.estado];
+      return '<button type="button" class="grp-item' + (g.id === sel ? " activo" : "") +
+        '" data-g="' + g.id + '">' +
+        '<span class="chip ' + e.c + '">' + e.t + "</span>" +
+        '<span class="g-nom">' + esc(g.curso) + "</span>" +
+        '<span class="g-sede">' + esc(g.sede) + " · " + esc(g.modalidad) + " · " + g.id + "</span>" +
+        (pen ? '<span class="g-alerta">' + ico("alerta") + "<span>" + esc(pen.txt) + "</span></span>" : "") +
+        '<span class="g-cupo"><span class="g-barra"><span style="width:' +
+          Math.round(r.n / g.cupo * 100) + '%"></span></span>' +
+          '<span class="g-cifra">' + r.n + "/" + g.cupo + "</span></span>" +
+        "</button>";
+    }).join("")
+      : '<div style="padding:22px 14px;font-size:13px;color:var(--gris);text-align:center">' +
+        "Ningún grupo coincide con el filtro.</div>";
+
+    $("#conteoGrupos").textContent = plural(vis.length, "grupo", "grupos") +
+      " · " + GRUPOS.length + " en el ciclo 2026";
+  }
+
+  /* ======================================================================
+     6. Detalle del grupo
+     ================================================================== */
+  function bloqueCupo(g, r) {
+    var c = [], i;
+    for (i = 0; i < g.cupo; i++) c.push('<span class="' + (i < r.n ? "ocu" : "") + '"></span>');
+    var lleno = r.libres === 0;
+    return '<div class="bloque-med">' +
+      "<h4>Cupo del grupo</h4>" +
+      '<div class="cupo-med" role="img" aria-label="' + r.n + " de " + g.cupo + ' lugares ocupados">' +
+        c.join("") + "</div>" +
+      '<div class="cupo-leyenda">' +
+        '<span class="cl"><i class="ocu"></i>' + r.n + " inscritas</span>" +
+        '<span class="cl"><i class="lib"></i>' + plural(r.libres, "lugar libre", "lugares libres") + "</span>" +
+      "</div>" +
+      '<div class="bm-est ' + (lleno && g.estado !== "concluido" ? "bm-mal" : "bm-ok") + '">' +
+        ico(g.estado === "concluido" ? "check" : (lleno ? "alerta" : "check")) +
+        "<span>" + (g.estado === "concluido"
+          ? "Grupo cerrado: el cupo ya no se modifica"
+          : (lleno ? "Cupo lleno: no admite más altas"
+                   : "Admite " + plural(r.libres, "alta más", "altas más"))) + "</span>" +
+      "</div></div>";
+  }
+
+  function bloqueProp(g, r) {
+    var pct = Math.round(r.pct * 100);
+    return '<div class="bloque-med">' +
+      "<h4>Proporción mayoritaria extranjera</h4>" +
+      '<div class="prop" role="img" aria-label="' + pct + ' por ciento de personas extranjeras; el mínimo es más del 50 por ciento">' +
+        '<span class="p-fill' + (r.cumple ? "" : " falla") + '" style="width:' + Math.max(pct, 14) + '%"></span>' +
+        '<span class="p-umbral"></span>' +
+        '<span class="p-et">' + pct + "%</span>" +
+      "</div>" +
+      '<div class="prop-pie"><span>' + r.ext + " extranjeras · " + r.mex + " mexicanas</span>" +
+        "<span>mínimo: más del 50%</span></div>" +
+      '<div class="bm-est ' + (r.cumple ? "bm-ok" : "bm-mal") + '">' + ico(r.cumple ? "check" : "alerta") +
+        "<span>" + (r.cumple
+          ? (g.estado === "concluido"
+              ? "Cumplió la proporción mayoritaria extranjera"
+              : (r.margen
+                  ? "Cumple · " + (r.margen === 1 ? "cabe " : "caben ") +
+                    plural(r.margen, "persona mexicana", "personas mexicanas") + " más sin romperla"
+                  : "Cumple · toda alta adicional debe ser de persona extranjera"))
+          : "No cumple · " + faltan(r.faltanExt) + plural(r.faltanExt, "persona extranjera", "personas extranjeras")) +
+        "</span></div></div>";
+  }
+
+  function bloquePlazo(g) {
+    var dc = dias(HOY, g.cierre), df = dias(HOY, g.fin);
+    var t, s, mal = false, nota;
+    if (g.estado === "concluido") {
+      t = "Concluido el " + fecha(g.fin);
+      s = "Las constancias de competencia las emitió ICATECH";
+      nota = "El grupo queda cerrado; su historial se conserva";
+    } else if (g.estado === "conformacion") {
+      t = "Cierra inscripción el " + fecha(g.cierre);
+      s = dc >= 0 ? (dc === 1 ? "Falta 1 día" : "Faltan " + dc + " días") + " · inicia el " + fecha(g.inicio)
+                  : "El plazo de inscripción venció";
+      mal = dc >= 0 && dc <= 7;
+      nota = "La proporción se verifica al cerrar la inscripción";
+    } else {
+      t = "Sesión " + g.sesion + " de " + g.sesiones;
+      s = "Termina el " + fecha(g.fin) + " · " + faltan(df) + plural(df, "día", "días");
+      mal = df <= 7;
+      nota = "La documentación se verifica al cerrar el curso";
+    }
+    return '<div class="bloque-med">' +
+      "<h4>Calendario</h4>" +
+      '<div style="font-size:15px;font-weight:700;margin:8px 0 4px;line-height:1.25">' + esc(t) + "</div>" +
+      '<div style="font-size:12px;color:var(--gris);line-height:1.4">' + esc(s) + "</div>" +
+      '<div class="bm-est ' + (mal ? "bm-mal" : "bm-ok") + '">' + ico("reloj") + "<span>" + nota + "</span></div>" +
+      "</div>";
+  }
+
+  function filaReq(t, n, tot, nota, mal, pend) {
+    var pctv = (pend || !tot) ? 0 : Math.round(n / tot * 100);
+    return '<div class="req">' +
+      '<div class="r-txt"><span class="r-t">' + t + "</span>" +
+        '<span class="r-n' + (mal ? " mal" : "") + '">' + nota + "</span></div>" +
+      '<span class="r-bar"><span class="' + (pend ? "pend" : "") + '" style="width:' + pctv + '%"></span></span>' +
+      '<span class="r-cif">' + (pend ? "—" : n) + "<small>de " + tot + "</small></span></div>";
+  }
+
+  function bloqueRequisitos(g, r) {
+    var d = r.n - r.docs;
+    var bajo = r.riesgo + r.perdida;
+    var sinIniciar = g.sesion === 0;
+    var evalPend = g.estado !== "concluido";
+
+    var heroLab, heroSub;
+    if (g.estado === "concluido") {
+      heroLab = "Acreditaron el curso";
+      heroSub = "de " + r.n + " personas inscritas cumplieron la documentación y el mínimo de asistencia";
+    } else if (sinIniciar) {
+      heroLab = "Listas para acreditar";
+      heroSub = "de " + r.n + " personas inscritas tienen hoy la documentación completa; la asistencia " +
+                "empieza a contar el " + fecha(g.inicio);
+    } else {
+      heroLab = "En condiciones de acreditar";
+      heroSub = "de " + r.n + " personas inscritas cumplen hoy la documentación y el mínimo de asistencia";
+    }
+
+    return '<div class="tarjeta">' +
+      '<div class="tarjeta-enc"><h3 class="sec-tit">Requisitos para acreditar</h3>' +
+        (d || bajo ? '<button class="btn btn-texto" type="button" id="verPend">Ver solo pendientes</button>' : "") +
+      "</div>" +
+      '<div class="rejilla g-hero">' +
+        '<div class="hero" style="border:0;border-right:1px solid var(--linea-suave);border-radius:0;padding:0 20px 0 0">' +
+          '<span class="h-lab">' + heroLab + "</span>" +
+          '<span class="h-num">' + r.listos + "</span>" +
+          '<span class="h-sub">' + heroSub + "</span>" +
+        "</div>" +
+        "<div>" +
+          filaReq("Documentación completa", r.docs, r.n,
+            d ? plural(d, "persona sin CURP vigente o constancia COMAR",
+                          "personas sin CURP vigente o constancia COMAR") +
+                (g.estado === "concluido" ? " · el plazo venció el " + fecha(g.fin)
+                                          : " · plazo al " + fecha(g.fin))
+              : "Todas tienen CURP y, si son extranjeras, constancia COMAR",
+            !!d, false) +
+          filaReq("Asistencia mínima del 80%", r.asisOk, r.n,
+            sinIniciar
+              ? "Se contará sobre las " + g.sesiones + " sesiones: el mínimo son " +
+                Math.ceil(g.sesiones * MIN_ASIS) + " asistencias"
+              : (bajo
+                  ? (r.riesgo === 0
+                      ? plural(r.perdida, "persona no alcanzó", "personas no alcanzaron") +
+                        " el mínimo de " + Math.ceil(g.sesiones * MIN_ASIS) + " de " + g.sesiones + " sesiones"
+                      : plural(bajo, "persona por debajo del mínimo", "personas por debajo del mínimo") + ": " +
+                        r.riesgo + " aún " + (r.riesgo === 1 ? "puede" : "pueden") + " alcanzarlo" +
+                        (r.perdida ? ", " + r.perdida + " ya no" : ""))
+                  : "Todas superan las " + Math.ceil(g.sesiones * MIN_ASIS) + " de " + g.sesiones + " sesiones"),
+            !!r.perdida, sinIniciar) +
+          filaReq("Evaluación final", r.listos, r.n,
+            evalPend ? "La aplica ICATECH al concluir el curso; el SIMH solo registra el resultado"
+                     : "Resultado capturado por ICATECH el " + fecha(g.fin),
+            false, evalPend) +
+        "</div>" +
+      "</div>" +
+      '<div class="tarjeta-pie">La acreditación es competencia de ICATECH. El SIMH verifica los requisitos y ' +
+        "conserva el expediente de la persona; no emite la constancia de competencia.</div></div>";
+  }
+
+  function celdaDocs(x) {
+    var l = [];
+    l.push('<span class="doc-l ' + (x.curp ? "si" : "no") + '" title="' +
+      (x.curp ? "CURP vigente en el expediente" : "CURP no acreditada: impide acreditar el curso") + '">' +
+      ico(x.curp ? "check" : "alerta") + "CURP" + (x.curp ? "" : " falta") + "</span>");
+    if (x.ext) {
+      l.push('<span class="doc-l ' + (x.comar ? "si" : "no") + '" title="' +
+        (x.comar ? "Constancia COMAR vigente" : "Constancia COMAR faltante: impide acreditar el curso") + '">' +
+        ico(x.comar ? "check" : "alerta") + "COMAR" + (x.comar ? "" : " falta") + "</span>");
+    } else {
+      l.push('<span class="doc-l na" title="La constancia COMAR solo aplica a personas extranjeras">' +
+        ico("info") + "COMAR n/a</span>");
+    }
+    return '<div class="docs">' + l.join("") + "</div>";
+  }
+
+  function celdaAsis(g, x) {
+    if (!g.sesion) {
+      return '<span class="asis-cel" style="color:var(--gris-claro);font-weight:400">Sin iniciar</span>';
+    }
+    var a = asis(g, x);
+    var cls = a.est === "perdida" ? " perdida" : (a.est === "riesgo" ? " riesgo" : "");
+    var nota = a.est === "perdida"
+      ? "ya no alcanza " + a.minimo + " de " + g.sesiones
+      : (a.est === "riesgo"
+          ? "necesita las " + a.faltan + " que faltan"
+          : Math.round(a.pct * 100) + "% de lo impartido");
+    return '<span class="asis-cel' + cls + '">' + x.a + " / " + g.sesion + "<small>" + nota + "</small></span>";
+  }
+
+  function estadoPersona(g, x) {
+    if (x.baja) return '<span class="chip chip-neutro">Baja</span>';
+    var a = asis(g, x);
+    if (a.est === "perdida") return '<span class="chip chip-guinda">' + ico("alerta") + "No acredita</span>";
+    if (!docOk(x))          return '<span class="chip chip-guinda">' + ico("alerta") + "Falta documentación</span>";
+    if (a.est === "riesgo") return '<span class="chip chip-rosa">' + ico("reloj") + "Asistencia en riesgo</span>";
+    if (g.estado === "concluido") return '<span class="chip chip-jade">' + ico("check") + "Acreditada</span>";
+    return '<span class="chip chip-jade">' + ico("check") + "En regla</span>";
+  }
+
+  function persona(x) {
+    var ini = x.n.split(" ").slice(0, 2).map(function (w) { return w.charAt(0); }).join("");
+    return '<div class="persona-celda"><span class="avatar-mini">' + esc(ini) + "</span>" +
+      '<span><span class="p-nom"><a href="expediente-detalle.html">' + esc(x.n) + "</a>" +
+        '<span class="nac" title="' + PAIS[x.nac] + '">' + x.nac + "</span></span>" +
+      '<span class="p-folio">MH-2026-' + x.e +
+        (x.prev ? " · " + plural(x.prev, "curso previo", "cursos previos") : "") +
+      "</span></span></div>";
+  }
+
+  function pasaFila(g, x) {
+    if (filaFil === "docs") return !x.baja && !docOk(x);
+    if (filaFil === "asis") return !x.baja && asis(g, x).est !== "ok";
+    if (filaFil === "baja") return !!x.baja;
+    return true;
+  }
+
+  function barraPase(g) {
+    var act = activos(g);
+    var marcadas = act.filter(function (x) { return pase[x.e]; }).length;
+    return '<div class="tabla-pie">' +
+      "<span>" + marcadas + " de " + act.length + " marcadas" +
+        (marcadas < act.length ? " · faltan " + (act.length - marcadas) : "") + "</span>" +
+      '<span style="display:flex;gap:8px">' +
+        '<button class="btn btn-secundario btn-s" type="button" id="btnTodasP">Marcar todas presentes</button>' +
+        '<button class="btn btn-primario btn-s" type="button" id="btnGuardaPase"' +
+          (marcadas === act.length ? "" : " disabled") + ">" + ico("guardar") + "Guardar la sesión</button>" +
+      "</span></div>";
+  }
+
+  function tablaParticipantes(g, r) {
+    var filas = g.p.filter(function (x) { return pasaFila(g, x); });
+    var fils = [
+      { id:"todos", t:"Todas",                     n:g.p.length },
+      { id:"docs",  t:"Documentación pendiente",   n:r.act.filter(function (x) { return !docOk(x); }).length },
+      { id:"asis",  t:"Asistencia por debajo",     n:r.riesgo + r.perdida },
+      { id:"baja",  t:"Bajas",                     n:g.p.length - r.n }
+    ];
+
+    var cab = modoLista
+      ? "<tr><th>Persona</th><th>Asistencia acumulada</th><th>Sesión " + (g.sesion + 1) +
+        " · " + fecha(HOY) + "</th></tr>"
+      : "<tr><th>Persona</th><th>Documentación</th><th>Asistencia</th><th>Estado</th><th></th></tr>";
+
+    var cuerpo = filas.length ? filas.map(function (x) {
+      if (modoLista) {
+        var m = pase[x.e] || "";
+        return '<tr' + (x.baja ? ' class="dada-baja"' : "") + "><td>" + persona(x) + "</td>" +
+          "<td>" + celdaAsis(g, x) + "</td><td>" +
+          (x.baja
+            ? '<span style="font-size:12px;color:var(--gris-claro)">Dada de baja el ' + fecha(x.baja.f) + "</span>"
+            : '<span class="pase" role="group" aria-label="Asistencia de ' + esc(x.n) + '">' +
+              '<button type="button" data-pase="' + x.e + '" data-v="P" class="' + (m === "P" ? "on-p" : "") + '">Presente</button>' +
+              '<button type="button" data-pase="' + x.e + '" data-v="A" class="' + (m === "A" ? "on-a" : "") + '">Ausente</button>' +
+              '<button type="button" data-pase="' + x.e + '" data-v="J" class="' + (m === "J" ? "on-j" : "") + '">Justificada</button>' +
+              "</span>") +
+          "</td></tr>";
+      }
+      return '<tr' + (x.baja ? ' class="dada-baja"' : "") + "><td>" + persona(x) + "</td>" +
+        "<td>" + celdaDocs(x) + "</td>" +
+        "<td>" + celdaAsis(g, x) + "</td>" +
+        "<td>" + estadoPersona(g, x) +
+          (x.baja ? '<div style="font-size:11px;color:var(--gris);margin-top:4px;line-height:1.35">' +
+            esc(x.baja.m) + "</div>" : "") + "</td>" +
+        '<td style="text-align:right;white-space:nowrap">' +
+          (x.baja || g.estado === "concluido" ? ""
+            : '<button class="btn btn-texto" type="button" data-baja="' + x.e +
+              '" style="color:var(--gris)">Registrar baja</button>') +
+        "</td></tr>";
+    }).join("")
+      : '<tr><td colspan="' + (modoLista ? 3 : 5) + '" style="text-align:center;padding:24px;color:var(--gris)">' +
+        "Ninguna persona coincide con el filtro.</td></tr>";
+
+    return '<div class="tarjeta" style="padding:0">' +
+      '<div style="padding:15px 16px 12px;border-bottom:1px solid var(--linea)">' +
+        '<div class="tarjeta-enc" style="margin-bottom:11px">' +
+          '<h3 class="sec-tit">' + (modoLista
+            ? "Pase de lista · sesión " + (g.sesion + 1) + " de " + g.sesiones
+            : "Participantes del grupo") + "</h3>" +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+            (g.estado === "concluido" || g.estado === "conformacion" ? ""
+              : '<button class="btn btn-secundario btn-s" type="button" id="btnModo">' +
+                ico(modoLista ? "izq" : "check") +
+                (modoLista ? "Salir del pase de lista" : "Pasar lista de hoy") + "</button>") +
+            (g.estado === "concluido" || r.libres === 0 ? ""
+              : '<button class="btn btn-primario btn-s" type="button" id="btnAdd">' +
+                ico("mas") + "Agregar participante</button>") +
+          "</div>" +
+        "</div>" +
+        (modoLista
+          ? '<div style="font-size:12px;color:var(--gris);line-height:1.45">Marca la asistencia de hoy. ' +
+            "La sesión no se guarda hasta confirmarla abajo; una vez guardada, solo el instructor de ICATECH " +
+            "puede corregirla y la corrección queda en la bitácora.</div>"
+          : '<div class="filtros-tabla" id="filFila" role="group" aria-label="Filtrar participantes">' +
+            fils.map(function (f) {
+              return '<button type="button" class="chip ' + (filaFil === f.id ? "chip-jade" : "chip-neutro") +
+                '" data-ff="' + f.id + '" aria-pressed="' + (filaFil === f.id) + '">' +
+                f.t + " " + f.n + "</button>";
+            }).join("") + "</div>") +
+      "</div>" +
+      '<div style="overflow-x:auto"><table class="tabla t-part"><thead>' + cab +
+        "</thead><tbody>" + cuerpo + "</tbody></table></div>" +
+      (modoLista ? barraPase(g)
+        : '<div class="tabla-pie">' +
+          "<span>Ninguna persona se elimina del grupo: la baja se registra con su motivo y el historial se " +
+          "conserva (RNF03).</span><span>" + r.n + " activas · " + (g.p.length - r.n) + " bajas</span></div>") +
+      "</div>";
+  }
+
+  /* ---------- Alta: la predicción va ANTES de confirmar ----------------- */
+  function panelAgregar(g, r) {
+    var yaEstan = {};
+    g.p.forEach(function (x) { yaEstan[x.e] = 1; });
+    var lista = CANDIDATOS.filter(function (c) {
+      if (yaEstan[c.e]) return false;
+      if (!buscaCand) return true;
+      return (c.n + " " + c.e + " " + PAIS[c.nac]).toLowerCase().indexOf(buscaCand.toLowerCase()) >= 0;
+    });
+
+    var pred = "";
+    if (candSel) {
+      var c = null;
+      CANDIDATOS.forEach(function (x) { if (x.e === candSel) c = x; });
+      if (c) {
+        var ext2 = r.ext + (c.ext ? 1 : 0), mex2 = r.mex + (c.ext ? 0 : 1);
+        var rompe = !(ext2 > mex2);
+        var pct2  = Math.round(ext2 / (r.n + 1) * 100);
+        pred = '<div class="pred' + (rompe ? " rompe" : "") + '">' + (rompe ? ico("alerta") + " " : "") +
+          "Al inscribir a <b>" + esc(c.n) + "</b> el cupo queda en <b>" + (r.n + 1) + " de " + g.cupo +
+          "</b> y la proporción en <b>" + ext2 + " extranjeras / " + mex2 + " mexicanas (" + pct2 + "%)</b>. " +
+          (rompe
+            ? "Con esa alta el grupo dejaría de cumplir la proporción mayoritaria extranjera y no podría abrirse."
+            : "El grupo sigue cumpliendo la proporción mayoritaria extranjera.") +
+          (docOk(c) ? ""
+            : " Le falta " + (!c.curp ? "la CURP vigente" : "la constancia COMAR") +
+              ": puede inscribirse, pero no podrá acreditar si no la presenta antes del " + fecha(g.fin) + ".") +
+          (c.prev ? " Ya cursó " + plural(c.prev, "curso", "cursos") +
+            "; no hay límite de cursos por persona." : "") +
+          "</div>";
+      }
+    }
+
+    return '<div class="panel-add">' +
+      "<h3>Agregar participante al grupo</h3>" +
+      '<p style="font-size:12.5px;color:var(--gris);margin:0 0 11px;line-height:1.45">Solo se inscribe a personas ' +
+        "con expediente en el SIMH. La documentación incompleta no impide la inscripción: impide la acreditación.</p>" +
+      '<input type="text" id="buscaCand" value="' + esc(buscaCand) +
+        '" placeholder="Buscar por nombre, folio o nacionalidad" aria-label="Buscar persona con expediente" ' +
+        'style="width:100%;height:36px;border:1px solid var(--linea);border-radius:var(--radio-s);' +
+        'padding:0 11px;font-family:var(--f-texto);font-size:13px;background:var(--blanco)">' +
+      '<div style="max-height:212px;overflow-y:auto;margin-top:8px">' +
+        (lista.length ? lista.map(function (c) {
+          return '<div class="cand">' +
+            '<input type="radio" name="cand" value="' + c.e + '"' + (candSel === c.e ? " checked" : "") +
+              ' style="width:17px;height:17px;accent-color:var(--jade);flex:none" aria-label="' + esc(c.n) + '">' +
+            '<span class="c-txt"><span class="c-nom">' + esc(c.n) +
+              '<span class="nac">' + c.nac + "</span></span>" +
+              '<span class="c-sub">MH-2026-' + c.e + " · " + PAIS[c.nac] +
+                (c.prev ? " · " + plural(c.prev, "curso previo", "cursos previos") : " · primer curso") +
+              "</span></span>" +
+            (docOk(c) ? '<span class="chip chip-jade">' + ico("check") + "Documentada</span>"
+                      : '<span class="chip chip-rosa">' + ico("alerta") + "Incompleta</span>") +
+            "</div>";
+        }).join("")
+          : '<div style="padding:18px;font-size:12.5px;color:var(--gris);text-align:center">' +
+            'Ninguna persona con expediente coincide. <a href="registro.html">Dar de alta un expediente nuevo</a>.</div>') +
+      "</div>" + pred +
+      '<div style="display:flex;gap:8px;margin-top:12px">' +
+        '<button class="btn btn-primario btn-s" type="button" id="btnConfAdd"' + (candSel ? "" : " disabled") +
+          ">" + ico("mas") + "Inscribir en el grupo</button>" +
+        '<button class="btn btn-secundario btn-s" type="button" id="btnCancAdd">Cancelar</button>' +
+      "</div></div>";
+  }
+
+  function panelBaja(g) {
+    var x = null;
+    g.p.forEach(function (q) { if (q.e === bajaDe) x = q; });
+    if (!x) return "";
+    return '<div class="panel-baja">' +
+      "<h3>Registrar baja de " + esc(x.n) + "</h3>" +
+      '<p style="font-size:12.5px;color:var(--guinda-900);margin:0 0 12px;line-height:1.45">' +
+        "La baja <strong>no elimina</strong> a la persona del grupo ni de su expediente (RNF03): queda registrada " +
+        "con su motivo y su asistencia acumulada, y libera un lugar del cupo.</p>" +
+      '<div class="campo" style="margin-bottom:12px;max-width:440px">' +
+        '<label for="motBaja">Motivo de la baja <span class="req">*</span></label>' +
+        '<select id="motBaja"><option value="">Seleccione el motivo</option>' +
+        MOTIVOS_BAJA.map(function (m) { return '<option value="' + esc(m) + '">' + esc(m) + "</option>"; }).join("") +
+        '<div class="msg-error">Indique el motivo: la baja siempre queda documentada.</div></select></div>' +
+      '<div style="display:flex;gap:8px">' +
+        '<button class="btn btn-peligro btn-s" type="button" id="btnConfBaja">Registrar la baja</button>' +
+        '<button class="btn btn-secundario btn-s" type="button" id="btnCancBaja">Cancelar</button>' +
+      "</div></div>";
+  }
+
+  function acuse() {
+    if (!altas.length) return "";
+    return '<div class="aviso aviso-jade">' + ico("check") +
+      "<span><strong>" + plural(altas.length, "alta registrada", "altas registradas") +
+      " en esta sesión</strong>" + altas.map(esc).join(" · ") + "</span></div>";
+  }
+
+  function pintaDetalle() {
+    var g = grupo(), r = resumen(g), e = EST[g.estado], pen = pendiente(g);
+
+    var alerta = pen
+      ? '<div class="aviso ' + (pen.peso <= 2 ? "aviso-guinda" : "aviso-rosa") + '">' + ico("alerta") +
+        "<span><strong>Este grupo requiere acción</strong>" + esc(pen.txt) + ". " +
+        (pen.peso === 1
+          ? "La proporción se verifica al cerrar la inscripción el " + fecha(g.cierre) +
+            "; si no se cumple, el grupo no puede abrirse con presupuesto de atención a personas en movilidad."
+          : pen.peso === 2
+            ? "Después de esa fecha la documentación ya no puede subsanarse para este grupo."
+            : "") + "</span></div>"
+      : "";
+
+    var cab = '<div class="tarjeta" style="margin-bottom:16px">' +
+      '<div class="grp-cab"><div class="gc-txt">' +
+        '<div class="gc-chips"><span class="chip ' + e.c + '">' + e.t + "</span>" +
+          '<span class="chip chip-neutro">' + esc(g.modalidad) + "</span>" +
+          '<span class="chip chip-neutro">' + g.id + "</span></div>" +
+        "<h2>" + esc(g.curso) + "</h2>" +
+        '<div class="grp-meta">' +
+          "<span>Clave <b>" + esc(g.clave) + "</b></span>" +
+          "<span>Sede <b>" + esc(g.sede) + "</b> · " + esc(g.aula) + "</span>" +
+          "<span>Municipio <b>" + esc(g.mun) + "</b></span>" +
+          "<span>Instructor <b>" + esc(g.instructor) + "</b></span>" +
+          "<span><b>" + fecha(g.inicio) + " – " + fecha(g.fin) + "</b> · " + g.sesiones + " sesiones</span>" +
+        "</div></div>" +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+          '<button class="btn btn-secundario btn-s" type="button">' + ico("excel") + "Lista de asistencia</button>" +
+          '<button class="btn btn-secundario btn-s" type="button">' + ico("pdf") + "Lista para firma</button>" +
+        "</div></div>" +
+      '<div class="rejilla g-3">' + bloqueCupo(g, r) + bloqueProp(g, r) + bloquePlazo(g) + "</div>" +
+      '<div class="tarjeta-pie">La lista para firma física se imprime con membrete, folio del grupo y espacio de ' +
+        "sello. <strong>No lleva código QR</strong>: la validación es por folio y sello.</div></div>";
+
+    $("#detalle").innerHTML = acuse() + alerta + cab +
+      (panelAdd ? panelAgregar(g, r) : "") +
+      '<div style="margin-bottom:16px">' + bloqueRequisitos(g, r) + "</div>" +
+      tablaParticipantes(g, r) +
+      (bajaDe ? panelBaja(g) : "");
+
+    liga();
+  }
+
+  /* ======================================================================
+     7. Eventos del detalle (se vuelven a ligar en cada repintado)
+     ================================================================== */
+  function liga() {
+    var g = grupo();
+
+    var bm = $("#btnModo");
+    if (bm) bm.onclick = function () { modoLista = !modoLista; pase = {}; pintaDetalle(); };
+
+    var ba = $("#btnAdd");
+    if (ba) ba.onclick = function () { panelAdd = true; candSel = null; modoLista = false; pintaDetalle(); };
+
+    var bc = $("#btnCancAdd");
+    if (bc) bc.onclick = function () { panelAdd = false; candSel = null; buscaCand = ""; pintaDetalle(); };
+
+    var bq = $("#buscaCand");
+    if (bq) bq.oninput = function () {
+      buscaCand = this.value;
+      var pos = this.selectionStart;
+      pintaDetalle();
+      var n = $("#buscaCand");
+      if (n) { n.focus(); n.setSelectionRange(pos, pos); }
+    };
+
+    $$("input[name=cand]").forEach(function (i) {
+      i.onchange = function () { candSel = this.value; pintaDetalle(); };
+    });
+
+    var bf = $("#btnConfAdd");
+    if (bf) bf.onclick = function () {
+      var c = null;
+      CANDIDATOS.forEach(function (x) { if (x.e === candSel) c = x; });
+      if (!c) return;
+      g.p.push({ e:c.e, n:c.n, nac:c.nac, ext:c.ext, curp:c.curp, comar:c.comar, a:0, prev:c.prev });
+      altas.push(c.n + " (MH-2026-" + c.e + ")");
+      candSel = null; panelAdd = false; buscaCand = "";
+      pintaChips(); pintaLista(); pintaDetalle();
+      window.scrollTo({ top:0, behavior:"smooth" });
+    };
+
+    $$("[data-ff]").forEach(function (b) {
+      b.onclick = function () { filaFil = this.getAttribute("data-ff"); pintaDetalle(); };
+    });
+
+    var vp = $("#verPend");
+    if (vp) vp.onclick = function () {
+      filaFil = (grupo().sesion && resumen(grupo()).riesgo + resumen(grupo()).perdida) ? "asis" : "docs";
+      modoLista = false;
+      pintaDetalle();
+      var t = document.querySelector(".t-part");
+      if (t) t.scrollIntoView({ behavior:"smooth", block:"center" });
+    };
+
+    $$("[data-pase]").forEach(function (b) {
+      b.onclick = function () {
+        pase[this.getAttribute("data-pase")] = this.getAttribute("data-v");
+        pintaDetalle();
+      };
+    });
+
+    var bt = $("#btnTodasP");
+    if (bt) bt.onclick = function () {
+      activos(g).forEach(function (x) { pase[x.e] = "P"; });
+      pintaDetalle();
+    };
+
+    var bg = $("#btnGuardaPase");
+    if (bg) bg.onclick = function () {
+      g.sesion += 1;
+      activos(g).forEach(function (x) { if (pase[x.e] === "P" || pase[x.e] === "J") x.a += 1; });
+      if (g.sesion >= g.sesiones) g.estado = "concluido";
+      else if (g.sesiones - g.sesion <= 2) g.estado = "porconcluir";
+      pase = {}; modoLista = false;
+      pintaChips(); pintaLista(); pintaDetalle();
+      window.scrollTo({ top:0, behavior:"smooth" });
+    };
+
+    $$("[data-baja]").forEach(function (b) {
+      b.onclick = function () {
+        bajaDe = this.getAttribute("data-baja");
+        pintaDetalle();
+        var p = document.querySelector(".panel-baja");
+        if (p) p.scrollIntoView({ behavior:"smooth", block:"center" });
+      };
+    });
+
+    var cb = $("#btnCancBaja");
+    if (cb) cb.onclick = function () { bajaDe = null; pintaDetalle(); };
+
+    var kb = $("#btnConfBaja");
+    if (kb) kb.onclick = function () {
+      var s = $("#motBaja");
+      if (!s.value) { s.parentNode.classList.add("error"); s.focus(); return; }
+      g.p.forEach(function (x) { if (x.e === bajaDe) x.baja = { f:HOY, m:s.value }; });
+      bajaDe = null;
+      pintaChips(); pintaLista(); pintaDetalle();
+    };
+  }
+
+  /* ======================================================================
+     8. Eventos de la cartera (elementos fijos del HTML)
+     ================================================================== */
+  $("#chipsFiltro").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-f]");
+    if (!b) return;
+    filtro = b.getAttribute("data-f");
+    pintaChips(); pintaLista();
+  });
+
+  $("#listaGrupos").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-g]");
+    if (!b) return;
+    sel = b.getAttribute("data-g");
+    filaFil = "todos"; modoLista = false; panelAdd = false; bajaDe = null;
+    pase = {}; candSel = null; buscaCand = "";
+    pintaLista(); pintaDetalle();
+    window.scrollTo({ top:0, behavior:"smooth" });
+  });
+
+  $("#buscaGrupo").addEventListener("input", function () {
+    busca = this.value;
+    pintaLista();
+  });
+
+  /* Al cambiar de municipio puede desaparecer el grupo abierto: se pasa al
+     primero que sí pertenece al municipio en vez de dejar el detalle
+     mostrando un grupo que la lista ya no contiene. */
+  $("#filMun").addEventListener("change", function () {
+    fMun = this.value;
+    var vis = GRUPOS.filter(function (g) { return pasa(g, filtro) && pasaBusca(g); });
+    if (!vis.filter(function (g) { return g.id === sel; }).length) sel = vis.length ? vis[0].id : null;
+    pintaMunicipios(); pintaChips(); pintaLista(); pintaDetalle();
+    $("#filMun").focus({ preventScroll:true });
+  });
+
+  pintaMunicipios();
+  pintaChips();
+  pintaLista();
+  pintaDetalle();
+})();
+</script>
+</body>
+</html>

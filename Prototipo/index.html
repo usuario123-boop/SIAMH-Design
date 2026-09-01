@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel Estadístico · SIMH</title>
+<link rel="icon" href="assets/img/simh-isotipo-96.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/simh.css">
+</head>
+<body>
+
+<main class="contenido">
+  <div class="migas">Inicio</div>
+
+  <div class="enc">
+    <div class="enc-txt">
+      <h1>Panel Estadístico</h1>
+      <div class="enc-sub" id="encSub">Corte al 31 de agosto de 2026</div>
+    </div>
+  </div>
+
+  <!-- Una sola fila de filtros por encima de todo lo que filtra -->
+  <div class="filtros">
+    <span class="f-lab">Periodo</span>
+    <select aria-label="Periodo"><option>Agosto 2026</option><option>Julio 2026</option><option>Acumulado 2026</option></select>
+    <span class="f-lab"><label for="filMun">Municipio</label></span>
+    <!-- El selector filtra de verdad: todo el panel se recalcula con los
+         datos del municipio elegido. Antes era un adorno. -->
+    <select id="filMun" aria-label="Municipio"></select>
+    <span class="ml-auto flex gap-8">
+      <button class="btn btn-secundario btn-s" id="btnGlosa"></button>
+      <button class="btn btn-secundario btn-s" id="btnPdf"></button>
+    </span>
+  </div>
+
+  <!-- ================= Cifra héroe + indicadores compactos ================ -->
+  <section class="rejilla g-hero">
+    <article class="hero">
+      <span class="h-lab">Personas registradas</span>
+      <span class="h-num" id="heroNum">12,480</span>
+      <span class="h-sub" id="heroSub"></span>
+      <span class="h-spark" id="heroSpark"></span>
+    </article>
+
+    <div class="rejilla g-3" id="kpis" style="align-content:start"></div>
+  </section>
+
+  <!-- ==================== Tendencia + pendientes del día ================== -->
+  <section class="rejilla g-60-40 mt-16">
+    <article class="tarjeta" id="cardMeses"></article>
+
+    <article class="tarjeta">
+      <div class="grafica-enc">
+        <h3>Pendientes que requieren acción</h3>
+        <a class="ver-tabla" href="#">Ver todos</a>
+      </div>
+      <div class="grafica-sub">Ordenados por urgencia institucional</div>
+      <div class="lista-alertas" id="listaAlertas"></div>
+    </article>
+  </section>
+
+  <!-- ============================ Perfil de la población ================= -->
+  <section class="rejilla g-3 mt-16">
+    <article class="tarjeta" id="cardEdad"></article>
+    <article class="tarjeta" id="cardEstatus"></article>
+    <article class="tarjeta" id="cardNacion"></article>
+  </section>
+
+  <!-- ================================ Territorio ========================= -->
+  <section class="rejilla g-55-45 mt-16">
+    <article class="tarjeta">
+      <div class="grafica-enc">
+        <h3>Atención por municipio</h3>
+        <a class="ver-tabla" href="#">Ver detalle territorial</a>
+      </div>
+      <div class="grafica-sub" id="capMapa">Tamaño del círculo proporcional a personas atendidas</div>
+      <div class="rejilla g-2" style="gap:14px;align-items:center">
+        <div id="grMapa"></div>
+        <table class="tabla-datos"><thead><tr><th>Municipio</th><th class="num">Personas</th><th class="num">%</th></tr></thead>
+          <tbody id="tblMunicipios"></tbody></table>
+      </div>
+    </article>
+
+    <article class="tarjeta" id="cardGenero"></article>
+  </section>
+
+  <p class="txt-min mt-20" style="max-width:820px">
+    Datos agregados y anonimizados (RNF01). Cada exportación queda registrada en la bitácora de
+    auditoría con folio de generación, fecha y usuario.
+  </p>
+  <p id="anuncio" class="sr-solo" role="status" aria-live="polite"></p>
+</main>
+
+<script src="assets/js/simh.js"></script>
+<script>
+(function () {
+  "use strict";
+  SIMH.chrome("inicio");
+  var ico = SIMH.icono, n = SIMH.n, T = SIMH.TINTA;
+  var $ = function (q) { return document.querySelector(q); };
+
+  /* ======================================================================
+     1. Datos por municipio
+     --------------------------------------------------------------------
+     El panel se armaba con veinte cifras escritas a mano y el selector de
+     municipio no filtraba nada: era un control que prometía algo que no
+     hacía. La Dirección pidió justo lo contrario —estadísticas por
+     municipio, con los datos que cada uno captura y sus propios
+     expedientes—, así que ahora TODO el panel se deriva de esta tabla.
+
+     Cada municipio trae su total y su perfil en porcentaje. El perfil es lo
+     que de verdad cambia de un municipio a otro: Suchiate es cruce con
+     Guatemala y Tapachula concentra la población haitiana y hondureña, y un
+     panel que repartiera el total del estado en la misma proporción para
+     todos estaría inventando un dato uniforme que no existe.
+
+     "Todos los municipios" NO es una fila más: es la suma de las seis. Así
+     la cifra del estado y la de cada municipio no pueden contradecirse.
+     ================================================================== */
+  var NAC = ["Honduras", "Haití", "Venezuela", "Guatemala", "El Salvador", "Cuba", "Otras"];
+  var EST = ["Sin trámite", "Solicitante de refugio", "Refugiado / Residente", "Naturalizado"];
+  var EDA = ["0 a 5 años", "6 a 11 años", "12 a 17 años", "18 a 29 años",
+             "30 a 44 años", "45 a 59 años", "60 años y más"];
+  var GEN = ["Hombres", "Mujeres", "Otro / No binario"];
+  var MES = ["Sep", "Oct", "Nov", "Dic", "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago"];
+
+  /* pn/pe/pd/pg son porcentajes; la última entrada de cada uno absorbe el
+     redondeo para que las partes sumen siempre el total. */
+  var MUN = [
+    { k:"Tapachula", x:282, y:228, total:7420,
+      pn:[28, 27, 17, 10,  8,  6,  4],
+      pe:[30, 49, 18,  3],
+      pd:[10,  8,  7, 35, 25, 11,  4],
+      pg:[48, 50,  2],
+      pm:[ 6,  6,  7,  6,  8,  9, 10,  9, 10, 10,  9, 10],
+      act:76, sal:9.5, emp:4.6, con:73 },
+
+    { k:"Suchiate", x:336, y:258, total:1690,
+      pn:[18,  9, 11, 46,  9,  4,  3],
+      pe:[46, 38, 14,  2],
+      pd:[11,  9,  8, 33, 25, 11,  3],
+      pg:[52, 46,  2],
+      pm:[ 7,  7,  8,  7,  8,  9,  9,  8,  9,  9,  9, 10],
+      act:71, sal:7.1, emp:3.2, con:69 },
+
+    { k:"F. Comalapa", x:306, y:150, total:980,
+      pn:[22, 10, 12, 38, 10,  5,  3],
+      pe:[38, 44, 16,  2],
+      pd:[ 9,  8,  7, 34, 26, 12,  4],
+      pg:[47, 51,  2],
+      pm:[ 7,  7,  8,  7,  8,  9,  9,  9,  9,  9,  9,  9],
+      act:74, sal:8.8, emp:2.9, con:70 },
+
+    { k:"Motozintla", x:246, y:186, total:640,
+      pn:[26,  6,  9, 40, 11,  4,  4],
+      pe:[42, 40, 16,  2],
+      pd:[ 9,  8,  7, 32, 26, 13,  5],
+      pg:[46, 52,  2],
+      pm:[ 7,  7,  8,  8,  8,  9,  9,  8,  9,  9,  9,  9],
+      act:72, sal:8.1, emp:2.4, con:68 },
+
+    { k:"Tuxtla Gtz.", x:156, y:138, total:1120,
+      pn:[30, 18, 20,  9, 10,  8,  5],
+      pe:[24, 40, 30,  6],
+      pd:[ 9,  7,  7, 34, 27, 12,  4],
+      pg:[49, 49,  2],
+      pm:[ 7,  7,  8,  7,  8,  9,  9,  9,  9,  9,  9,  9],
+      act:80, sal:6.4, emp:6.1, con:75 },
+
+    { k:"Comitán", x:250, y:110, total:630,
+      pn:[24,  8, 12, 36, 11,  5,  4],
+      pe:[36, 44, 18,  2],
+      pd:[10,  8,  7, 33, 26, 12,  4],
+      pg:[48, 50,  2],
+      pm:[ 7,  7,  8,  8,  8,  9,  9,  8,  9,  9,  9,  9],
+      act:73, sal:7.6, emp:3.4, con:71 }
+  ];
+
+  /* Reparte un total según un vector de porcentajes sin perder ni ganar
+     personas: la última parte recibe el resto. Un panel donde la suma de las
+     barras no da la cifra héroe es un panel que nadie vuelve a creer.     */
+  function reparte(total, pct) {
+    var acc = 0;
+    return pct.map(function (p, i) {
+      if (i === pct.length - 1) return total - acc;
+      var v = Math.round(total * p / 100);
+      acc += v;
+      return v;
+    });
+  }
+
+  function serie(claves, vals) {
+    return claves.map(function (k, i) { return { k:k, v:vals[i] }; });
+  }
+
+  /* Vista agregada de un conjunto de municipios. Con uno solo es su propio
+     perfil; con los seis, la suma. */
+  function agrega(lista) {
+    var total = lista.reduce(function (a, m) { return a + m.total; }, 0);
+    function suma(campo, largo) {
+      var out = [];
+      for (var i = 0; i < largo; i++) out.push(0);
+      lista.forEach(function (m) {
+        reparte(m.total, m[campo]).forEach(function (v, i) { out[i] += v; });
+      });
+      return out;
+    }
+    function pond(campo) {
+      return lista.reduce(function (a, m) { return a + m[campo] * m.total; }, 0) / (total || 1);
+    }
+    return {
+      total: total,
+      nac: suma("pn", NAC.length),
+      est: suma("pe", EST.length),
+      eda: suma("pd", EDA.length),
+      gen: suma("pg", GEN.length),
+      mes: suma("pm", MES.length),
+      act: Math.round(total * pond("act") / 100),
+      sal: Math.round(total * pond("sal") / 100),
+      emp: Math.round(total * pond("emp") / 100),
+      con: Math.round(total * pond("con") / 100)
+    };
+  }
+
+  /* ======================================================================
+     2. Estado de la pantalla
+     ================================================================== */
+  var fMun = "todos";
+  function seleccion() {
+    return fMun === "todos" ? MUN : MUN.filter(function (m) { return m.k === fMun; });
+  }
+
+  function pintaSelector() {
+    $("#filMun").innerHTML =
+      '<option value="todos">Todos los municipios</option>' +
+      MUN.slice().sort(function (a, b) { return b.total - a.total; }).map(function (m) {
+        return '<option value="' + m.k + '"' + (fMun === m.k ? " selected" : "") + ">" +
+          m.k + "</option>";
+      }).join("");
+  }
+
+  /* ======================================================================
+     3. Pintado
+     ================================================================== */
+  function pinta() {
+    var lista = seleccion();
+    var d = agrega(lista);
+    var uno = fMun !== "todos";
+
+    /* Quién es el dueño de estas cifras: sin decirlo, un municipio no sabe
+       si está mirando lo suyo o lo del estado. */
+    $("#encSub").innerHTML = "Corte al 31 de agosto de 2026 · " +
+      (uno ? "expedientes capturados en <b>" + SIMH.esc(fMun) + "</b>"
+           : "seis municipios de la franja fronteriza");
+
+    /* ------------------------------------------- cifra héroe + serie --- */
+    var meses = serie(MES, d.mes);
+    var ago = d.mes[11], jul = d.mes[10];
+    var var_ = jul ? Math.round((ago - jul) / jul * 1000) / 10 : 0;
+    $("#heroNum").textContent = n(d.total);
+    $("#heroSub").innerHTML =
+      "+" + n(ago) + " en agosto · <span style='color:var(--" +
+      (var_ >= 0 ? "jade-900" : "guinda") + ");font-weight:700'>" +
+      (var_ >= 0 ? "+" : "−") + Math.abs(var_) + "%</span> respecto de julio";
+    $("#heroSpark").innerHTML = SIMH.sparkline(meses,
+      { alt:"Tendencia de registros de los últimos 12 meses" });
+
+    /* ------------------------------------------------------- KPI ------- */
+    /* NNA = los tres primeros rangos de edad. No es una cifra aparte: si lo
+       fuera podría contradecir a la gráfica de edades de más abajo. */
+    var nna = d.eda[0] + d.eda[1] + d.eda[2];
+    var noAcomp = Math.round(nna * 0.069);
+    var sinOficio = Math.max(1, Math.round(noAcomp * 0.056));
+
+    var kpis = [
+      { num:d.act, lab:"Expedientes activos",
+        var_:SIMH.pct(d.act, d.total) + " de los registrados" },
+      { num:nna,   lab:"Niñas, niños y adolescentes",
+        var_:SIMH.pct(nna, d.total) + " del total" },
+      { num:noAcomp, lab:"NNA no acompañados", critico:true,
+        var_:sinOficio + " sin oficio a la Procuraduría" },
+      { num:d.sal, lab:"Canalizaciones a salud", var_:"En el periodo" },
+      { num:d.emp, lab:"Vinculaciones a empleo", var_:"En el periodo" },
+      { num:d.con, lab:"Constancias emitidas",   var_:"En el periodo" }
+    ];
+    $("#kpis").innerHTML = kpis.map(function (k) {
+      return '<article class="kpi' + (k.critico ? " critico" : "") + '">' +
+        '<span class="kpi-lab">' + k.lab + "</span>" +
+        '<span class="kpi-num">' + n(k.num) + "</span>" +
+        '<span class="kpi-var">' + (k.critico ? ico("alerta") : ico("arriba")) + k.var_ +
+        "</span></article>";
+    }).join("");
+
+    /* --------------------------------------------------- gráficas ------ */
+    SIMH.grafica($("#cardMeses"), {
+      tipo:"columnas", titulo:"Registros por mes", datos:meses,
+      sub:"Últimos 12 meses · " + n(d.total) + " personas" +
+          (uno ? " en " + fMun : " en la franja"),
+      cols:["Mes", "Registros"], alt:"Registros mensuales de personas"
+    });
+
+    SIMH.grafica($("#cardEdad"), {
+      tipo:"barras", titulo:"Rangos de edad", cols:["Rango", "Personas"],
+      datos:serie(EDA, d.eda),
+      pie:n(nna) + " personas son NNA (" + SIMH.pct(nna, d.total) + ")."
+    });
+
+    /* Escala ordinal: de menor a mayor grado de regularización, tinta única. */
+    var tintas = [T.d1, T.d2, T.d3, T.d4];
+    SIMH.grafica($("#cardEstatus"), {
+      tipo:"barras", titulo:"Estatus migratorio", cols:["Estatus", "Personas"],
+      sub:"De menor a mayor grado de regularización",
+      datos:EST.map(function (k, i) { return { k:k, v:d.est[i], c:tintas[i] }; }),
+      pie:"Refugiados y naturalizados tienen derechos equivalentes a persona mexicana."
+    });
+
+    /* El pie dice cuántas nacionalidades concentran el 90 %: se calcula, no
+       se afirma de memoria. */
+    var ord = serie(NAC, d.nac).slice().sort(function (a, b) { return b.v - a.v; });
+    var acc = 0, cuantas = 0;
+    ord.forEach(function (x) { if (acc < d.total * 0.9) { acc += x.v; cuantas++; } });
+    SIMH.grafica($("#cardNacion"), {
+      tipo:"barras", titulo:"Nacionalidades", cols:["País", "Personas"],
+      datos:ord.map(function (x) { return { k:x.k, v:x.v, tenue:x.k === "Otras" }; }),
+      pie:cuantas + " nacionalidades concentran el 90% de los registros" +
+          (uno ? " de " + fMun : "") + "."
+    });
+
+    SIMH.grafica($("#cardGenero"), {
+      tipo:"apilada", titulo:"Composición por género", cols:["Género", "Personas"],
+      sub:"Identidad de género autoadscrita (RF01)",
+      datos:GEN.map(function (k, i) { return { k:k, v:d.gen[i], c:SIMH.CAT[i] }; }),
+      pie:n(Math.round(d.gen[1] * 0.296)) + " mujeres registran alguna condición de " +
+          "vulnerabilidad asociada (embarazo, jefatura de hogar)."
+    });
+
+    /* --------------------------------------------------- territorio ---- */
+    /* El mapa siempre muestra los seis municipios: es lo que da contexto al
+       elegido. Lo que cambia es cuál queda destacado. */
+    var burbujas = MUN.map(function (m) {
+      return { k:m.k, v:m.total, x:m.x, y:m.y };
+    });
+    $("#grMapa").innerHTML = SIMH.mapaBurbujas(burbujas);
+
+    var totalEstado = MUN.reduce(function (a, m) { return a + m.total; }, 0);
+    $("#tblMunicipios").innerHTML = MUN.slice()
+      .sort(function (a, b) { return b.total - a.total; })
+      .map(function (m) {
+        var act = fMun === m.k;
+        return '<tr' + (act ? ' style="background:var(--jade-050);font-weight:700"' : "") + ">" +
+          "<td>" + m.k + '</td><td class="num">' + n(m.total) + '</td><td class="num">' +
+          SIMH.pct(m.total, totalEstado) + "</td></tr>";
+      }).join("");
+    $("#capMapa").textContent = uno
+      ? "Tamaño proporcional a personas atendidas. " + fMun + " queda resaltado en la tabla."
+      : "Tamaño del círculo proporcional a personas atendidas";
+
+    /* ----------------------------------------------------- alertas ----- */
+    /* Los pendientes también son del municipio: uno de Tuxtla no puede
+       aparecer en el panel de Suchiate. */
+    var vis = ALERTAS.filter(function (a) { return !uno || a.mun === fMun; });
+    $("#listaAlertas").innerHTML = vis.length
+      ? vis.map(function (a) {
+          return '<div class="alerta-item ' + a.t + '"><span class="a-punto"></span>' +
+            '<span class="a-txt">' + a.txt +
+            (uno ? "" : ' <span class="txt-gris">· ' + a.mun + "</span>") + "</span>" +
+            '<span class="a-hora">' + a.h + "</span></div>";
+        }).join("")
+      : '<div class="alerta-item"><span class="a-punto"></span>' +
+        '<span class="a-txt">Sin pendientes registrados en ' + SIMH.esc(fMun) +
+        ".</span></div>";
+
+    $("#anuncio").textContent = uno
+      ? "Panel de " + fMun + ": " + n(d.total) + " personas registradas."
+      : "Panel de los seis municipios: " + n(d.total) + " personas registradas.";
+  }
+
+  var ALERTAS = [
+    { mun:"Tapachula",   t:"critica", h:"12 min",
+      txt:"<b>3 NNA no acompañados</b> sin oficio de canalización a la Procuraduría Regional." },
+    { mun:"Tapachula",   t:"critica", h:"Ayer",
+      txt:"<b>26 expedientes</b> sin actividad registrada por más de 7 días." },
+    { mun:"Suchiate",    t:"aviso-p", h:"1 h",
+      txt:"<b>12 expedientes</b> con documentación pendiente de validar (CURP / COMAR)." },
+    { mun:"Tapachula",   t:"aviso-p", h:"2 h",
+      txt:"<b>8 citas médicas</b> en las próximas 72 horas." },
+    { mun:"Tapachula",   t:"",        h:"09:14",
+      txt:"Grupo ICATECH <b>&ldquo;Panadería básica&rdquo;</b>: 16 de 18 cupos." },
+    { mun:"F. Comalapa", t:"aviso-p", h:"Ayer",
+      txt:"<b>4 personas</b> con negativa de inscripción escolar sin reclamar por oficio." },
+    { mun:"Tuxtla Gtz.", t:"",        h:"Ayer",
+      txt:"<b>14 seguimientos laborales</b> llegan al hito de 30 días esta semana." },
+    { mun:"Motozintla",  t:"aviso-p", h:"Ayer",
+      txt:"<b>2 valoraciones de salud</b> pendientes desde el registro." },
+    { mun:"Comitán",     t:"",        h:"08:40",
+      txt:"<b>6 constancias</b> emitidas ayer en ventanilla." }
+  ];
+
+  /* ======================================================================
+     4. Arranque
+     ================================================================== */
+  $("#btnGlosa").innerHTML = ico("excel") + "Glosa mensual (Excel)";
+  $("#btnPdf").innerHTML   = ico("pdf") + "PDF";
+
+  pintaSelector();
+  $("#filMun").addEventListener("change", function () {
+    fMun = this.value;
+    pinta();
+    this.focus({ preventScroll:true });
+  });
+
+  /* Atajo de revisión: index.html?mun=Suchiate abre el panel de ese municipio. */
+  var q = new URLSearchParams(location.search).get("mun");
+  if (q) {
+    MUN.forEach(function (m) {
+      if (m.k.toLowerCase().indexOf(q.toLowerCase()) === 0) fMun = m.k;
+    });
+    pintaSelector();
+  }
+
+  pinta();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Registro de Persona · SIMH</title>
+<link rel="icon" href="assets/img/simh-isotipo-96.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/simh.css">
+<style>
+  #icoFoto svg{width:60px;height:60px;stroke-width:1.2}
+  #icoSubir svg{width:26px;height:26px}
+  .visor{position:relative;background:#161616;border-radius:var(--radio);aspect-ratio:4/3;
+         display:grid;place-items:center;overflow:hidden}
+  .doc-fila{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--linea-suave);font-size:13px}
+  .doc-fila:last-child{border-bottom:0}
+  .doc-fila .d-nom{flex:1;line-height:1.3}
+  .ruta-pais{display:grid;grid-template-columns:1.4fr 1fr 1fr auto;gap:0 12px;align-items:end}
+  .exito{max-width:680px;margin:0 auto;text-align:center}
+  .exito .marca-ok{width:64px;height:64px;border-radius:50%;background:var(--jade-050);display:grid;
+    place-items:center;margin:0 auto 16px}
+  .exito .marca-ok svg{width:30px;height:30px;stroke:var(--jade);stroke-width:2.2;fill:none}
+  .exito .folio{font-family:var(--f-texto);font-size:30px;font-weight:600;letter-spacing:-.01em;color:var(--tinta);margin:4px 0 2px}
+  .cta-exito{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:24px}
+  .otras-acc{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--gris-claro);
+    margin:26px 0 10px;text-align:center}
+  .acciones-sig{display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left}
+  .accion-sig{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--linea);border-radius:var(--radio);
+    padding:12px 14px;background:var(--blanco);cursor:pointer;font-size:13px;color:var(--tinta);text-decoration:none}
+  .accion-sig:hover{border-color:var(--jade);background:var(--jade-020);text-decoration:none}
+  .accion-sig svg{width:18px;height:18px;stroke:var(--jade);stroke-width:1.6;fill:none;flex:none;margin-top:2px}
+  .accion-sig b{display:block;margin-bottom:1px}
+</style>
+</head>
+<body>
+
+<main class="contenido">
+  <div class="migas"><a href="index.html">Inicio</a> › Registro de Persona</div>
+
+  <div class="enc">
+    <div class="enc-txt">
+      <h1>Registro de Persona</h1>
+      <div class="enc-sub">Alta de expediente único · Ventanilla Tapachula</div>
+    </div>
+    <div class="enc-acc" id="accEnc">
+      <span class="chip chip-neutro oculto" id="contadorSesion"></span>
+      <button class="btn btn-secundario btn-s" type="button" id="btnBorrador">Guardar borrador</button>
+      <a class="btn btn-texto" href="expedientes.html">Cancelar</a>
+    </div>
+  </div>
+
+  <!-- Confirmación persistente del alta anterior, para no perder el hilo -->
+  <div class="aviso aviso-jade oculto" id="avisoGuardado"></div>
+
+  <!-- =============================== Asistente ========================== -->
+  <div class="pasos" id="pasos"></div>
+
+  <div class="rejilla g-2-1" id="zonaCaptura">
+    <div>
+      <div class="aviso aviso-guinda oculto" id="resumenErrores">
+        <span id="icoErr"></span>
+        <span><strong>Faltan datos obligatorios en este paso</strong><span id="listaErrores"></span></span>
+      </div>
+
+      <!-- ------------------------------ PASO 1 ------------------------- -->
+      <section class="tarjeta paso-panel" data-paso="1">
+        <div class="grafica-enc"><h3>Paso 1 · Identificación y verificación</h3></div>
+        <div class="grafica-sub">Antes de crear un expediente hay que descartar que la persona ya esté registrada.</div>
+
+        <div class="fila-3">
+          <div class="campo"><label>CURP temporal o permanente <span class="opc">(si la tiene)</span></label>
+            <input type="text" placeholder="MACY940318MNEXXX01"></div>
+          <div class="campo"><label>Nombre completo</label><input type="text" placeholder="Nombre y apellidos"></div>
+          <div class="campo"><label>Fecha de nacimiento</label><input type="date"></div>
+        </div>
+        <button class="btn btn-secundario" type="button" id="btnBuscarDup">Buscar coincidencias</button>
+
+        <div class="oculto mt-16" id="resultadoDup">
+          <div class="aviso aviso-jade"><span id="icoOk"></span>
+            <span><strong>Sin coincidencias en la base histórica</strong>
+            No existe expediente previo con esa CURP, nombre o fecha de nacimiento. Puede continuar con el alta.</span>
+          </div>
+          <table class="tabla-datos">
+            <thead><tr><th>Fuente consultada</th><th>Registros comparados</th><th>Resultado</th></tr></thead>
+            <tbody>
+              <tr><td>Expediente único SIMH</td><td>12,480</td><td>Sin coincidencia</td></tr>
+              <tr><td>Base histórica conciliada 2019–2024</td><td>38,914</td><td>Sin coincidencia</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="aviso aviso-neutro mt-16" id="avisoPriv"></div>
+      </section>
+
+      <!-- ------------------------------ PASO 2 ------------------------- -->
+      <section class="tarjeta paso-panel oculto" data-paso="2">
+        <div class="aviso aviso-neutro oculto" id="avisoAcomp"></div>
+        <div class="grafica-enc"><h3>Paso 2 · Datos generales</h3></div>
+        <div class="grafica-sub">Solo cinco campos son obligatorios; lo demás puede completarse después.</div>
+
+        <div class="fila-3">
+          <div class="campo"><label>Nombre(s) <span class="req">•</span></label>
+            <input type="text" data-req data-campo="Nombre(s)" value="Yolanda Esperanza"><span class="msg-error">Capture el nombre</span></div>
+          <div class="campo"><label>Primer apellido <span class="req">•</span></label>
+            <input type="text" data-req data-campo="Primer apellido" value="Martínez"><span class="msg-error">Capture el primer apellido</span></div>
+          <div class="campo"><label>Segundo apellido</label>
+            <input type="text" data-campo="Segundo apellido" value="Cruz"></div>
+        </div>
+
+        <div class="fila-3">
+          <div class="campo"><label>Fecha de nacimiento <span class="req">•</span></label>
+            <!-- La precisión va PEGADA a la fecha, no en otra sección: es
+                 parte del dato. Una fecha aproximada guardada como exacta
+                 miente, y aquí la mentira decide si alguien es NNA. -->
+            <select id="precNac" data-campo="Precisión de la fecha de nacimiento"
+                    style="margin-bottom:6px">
+              <option value="dia">Día exacto</option>
+              <option value="mes">Solo mes y año</option>
+              <option value="anio">Solo el año</option>
+              <option value="aprox">Edad declarada, sin fecha</option>
+            </select>
+            <input type="date" data-req data-campo="Fecha de nacimiento" id="fNac" value="1994-03-18">
+            <input type="month" id="fNacMes" class="oculto" value="1994-03"
+                   aria-label="Mes y año de nacimiento">
+            <input type="number" id="fNacAnio" class="oculto" value="1994" min="1900" max="2026"
+                   placeholder="Año" aria-label="Año de nacimiento">
+            <input type="number" id="fNacEdad" class="oculto" min="0" max="120"
+                   placeholder="Edad declarada en años" aria-label="Edad declarada">
+            <span class="msg-error">Capture la fecha de nacimiento</span>
+            <div class="ayuda" id="edadCalc"></div></div>
+          <div class="campo"><label>Sexo <span class="req">•</span></label>
+            <select data-req data-campo="Sexo"><option>Mujer</option><option>Hombre</option><option>Intersexual</option></select></div>
+          <div class="campo"><label>Identidad de género</label>
+            <select data-campo="Identidad de género">
+              <option>Mujer</option><option>Hombre</option><option>Mujer trans</option><option>Hombre trans</option>
+              <option>No binaria</option><option>Prefiere no decir</option><option>Otra (especificar)</option>
+            </select></div>
+        </div>
+
+        <div class="aviso aviso-guinda oculto" id="avisoMinoria"></div>
+
+        <div class="fila-3">
+          <div class="campo"><label>Nacionalidad <span class="req">•</span></label>
+            <select data-req data-campo="Nacionalidad">
+              <option>Honduras</option><option>Haití</option><option>Venezuela</option><option>Guatemala</option>
+              <option>El Salvador</option><option>Cuba</option><option>México</option><option>Otra</option></select></div>
+          <div class="campo"><label>Estado civil</label>
+            <select data-campo="Estado civil"><option>Soltera</option><option>Casada</option><option>Unión libre</option>
+              <option>Viuda</option><option>Divorciada</option></select></div>
+          <div class="campo"><label>Escolaridad</label>
+            <select data-campo="Escolaridad"><option>Primaria concluida</option><option>Secundaria</option>
+              <option>Bachillerato</option><option>Licenciatura</option><option>Sin escolaridad</option></select></div>
+        </div>
+
+        <details class="plegable">
+          <summary>Datos complementarios (etnia, oficio, datos fiscales)</summary>
+          <div class="cuerpo">
+            <div class="fila-3">
+              <div class="campo"><label>Etnia o pueblo de pertenencia</label>
+                <select data-campo="Etnia"><option>No se autoadscribe</option><option>Maya ch'ortí</option>
+                  <option>Garífuna</option><option>Lenca</option><option>Otro</option></select></div>
+              <div class="campo"><label>Lengua que habla</label><input type="text" data-campo="Lengua" value="Español"></div>
+              <div class="campo"><label>Grado de marginación</label>
+                <select data-campo="Grado de marginación"><option>Alto</option><option>Medio</option>
+                  <option>Bajo</option><option>Muy alto</option></select></div>
+            </div>
+            <div class="fila">
+              <div class="campo"><label>Profesión u oficio en país de origen</label>
+                <input type="text" data-campo="Oficio en origen" value="Costurera"></div>
+              <div class="campo"><label>Ocupación actual</label>
+                <input type="text" data-campo="Ocupación actual" value="Sin ocupación"></div>
+            </div>
+            <div class="fila">
+              <div class="campo"><label>RFC <span class="opc">(opcional)</span></label>
+                <input type="text" data-campo="RFC" placeholder="Se captura después"></div>
+              <div class="campo"><label>Número de Seguridad Social <span class="opc">(opcional)</span></label>
+                <input type="text" data-campo="NSS" placeholder="Se captura después"></div>
+            </div>
+            <p class="txt-min">El sector patronal suele tramitar RFC y NSS después de la contratación.</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- ------------------------------ PASO 3 ------------------------- -->
+      <section class="tarjeta paso-panel oculto" data-paso="3">
+        <div class="grafica-enc"><h3>Paso 3 · Movilidad humana y estatus</h3></div>
+        <div class="grafica-sub">Origen, ruta y situación ante trámites de protección internacional.</div>
+
+        <div class="fila-3">
+          <div class="campo"><label>País de origen <span class="req">•</span></label>
+            <select data-req data-campo="País de origen"><option>Honduras</option><option>Haití</option>
+              <option>Venezuela</option><option>Guatemala</option><option>El Salvador</option><option>Cuba</option></select></div>
+          <div class="campo"><label>Motivo de la migración <span class="req">•</span></label>
+            <select data-req data-campo="Motivo de la migración"><option>Violencia</option><option>Laboral</option>
+              <option>Reunificación familiar</option><option>Desastre natural</option><option>Otro</option></select></div>
+          <div class="campo"><label>Fecha de ingreso a México</label>
+            <select id="precIng" data-campo="Precisión del ingreso" style="margin-bottom:6px">
+              <option value="dia">Día exacto</option>
+              <option value="mes">Solo mes y año</option>
+              <option value="aprox">Aproximada</option>
+            </select>
+            <input type="date" data-campo="Ingreso a México" id="fIng" value="2026-07-28">
+            <input type="month" id="fIngMes" class="oculto" value="2026-07"
+                   aria-label="Mes y año de ingreso a México">
+            <div class="ayuda" id="ayudaIng"></div></div>
+        </div>
+
+        <div class="fila-3">
+          <div class="campo"><label>Punto fronterizo de entrada</label>
+            <select data-campo="Punto de entrada"><option>Ciudad Hidalgo, Suchiate</option>
+              <option>Talismán, Tuxtla Chico</option><option>Frontera Comalapa</option><option>Otro</option></select></div>
+          <div class="campo"><label>Destino final deseado</label>
+            <input type="text" data-campo="Destino deseado" value="Tapachula, Chiapas"></div>
+          <div class="campo"><label>Permanencia estimada en Chiapas</label>
+            <select data-campo="Permanencia estimada"><option>Indefinida</option><option>Menos de 1 mes</option>
+              <option>1 a 6 meses</option><option>Más de 6 meses</option></select></div>
+        </div>
+
+        <fieldset class="fieldset">
+          <legend>Estatus migratorio oficial (RF09)</legend>
+          <div class="fila-3">
+            <div class="campo" style="margin-bottom:0"><label>Estatus <span class="req">•</span></label>
+              <select data-req data-campo="Estatus migratorio" id="selEstatus">
+                <option>Solicitante de refugio</option><option>Refugiado / Residente</option>
+                <option>Naturalizado</option><option>Sin trámite</option></select></div>
+            <div class="campo" style="margin-bottom:0">
+              <label>Número de registro ante la COMAR</label>
+              <input type="text" data-campo="Registro COMAR" placeholder="COMAR/TAP/2026/00000">
+              <div class="ayuda">El que trae impreso la constancia de trámite. Es lo que permite
+                cotejar el caso ante la COMAR; sin él la constancia no se puede verificar.</div></div>
+            <div class="campo" style="margin-bottom:0"><label>Fecha de la constancia</label>
+              <input type="date" data-campo="Fecha COMAR" id="fComar">
+              <div class="ayuda" id="vigComar">La constancia se renueva cada 30 días.</div></div>
+          </div>
+          <div class="aviso aviso-jade" style="margin:14px 0 0" id="avisoEstatus"></div>
+        </fieldset>
+
+        <div class="etiqueta">Ruta migratoria · países transitados</div>
+        <div id="listaPaises"></div>
+        <button class="btn btn-secundario btn-s mt-16" type="button" id="btnAddPais">Agregar país transitado</button>
+      </section>
+
+      <!-- ------------------------------ PASO 4 ------------------------- -->
+      <section class="tarjeta paso-panel oculto" data-paso="4">
+        <div class="grafica-enc"><h3>Paso 4 · Fotografía y documentos</h3></div>
+        <div class="grafica-sub">La fotografía es obligatoria para emitir la constancia de registro.</div>
+
+        <div class="rejilla g-2" style="gap:20px">
+          <div>
+            <div class="etiqueta">Captura en vivo del rostro</div>
+            <div class="visor">
+              <svg viewBox="0 0 320 240" style="position:absolute;inset:0;width:100%;height:100%">
+                <ellipse cx="160" cy="115" rx="68" ry="90" fill="none" stroke="#009887" stroke-width="2.5" stroke-dasharray="9 7"/>
+                <path d="M22 22h24M22 22v24M298 22h-24M298 22v24M22 218h24M22 218v-24M298 218h-24M298 218v-24"
+                      stroke="rgba(255,255,255,.5)" stroke-width="2.5" fill="none"/>
+              </svg>
+              <span style="position:relative;color:rgba(255,255,255,.5);font-size:12.5px" id="txtVisor">Vista previa de la cámara web</span>
+              <span style="position:absolute;top:10px;left:10px;background:rgba(201,1,102,.9);color:#fff;font-size:10.5px;
+                     font-weight:700;padding:2px 8px;border-radius:999px">● EN VIVO</span>
+            </div>
+            <p class="txt-min" style="margin-top:8px">Mire de frente, retire gorra y lentes oscuros. Fondo claro.</p>
+            <div class="flex gap-10">
+              <button class="btn btn-primario" id="btnCapturar" style="flex:1"></button>
+              <button class="btn btn-secundario" type="button" id="btnRepetir">Repetir toma</button>
+            </div>
+          </div>
+
+          <div>
+            <div class="etiqueta">Documentos probatorios</div>
+            <div style="border:2px dashed var(--arena);border-radius:var(--radio);padding:20px;text-align:center;background:var(--hueso-claro)">
+              <div id="icoSubir" style="color:var(--jade)"></div>
+              <p style="margin:8px 0 2px;font-weight:700;font-size:13px">Arrastra aquí el escaneo de identidad</p>
+              <p class="txt-min" style="margin:0">o <a href="#" id="lnkSubir">selecciona un archivo</a> · PDF, JPG o PNG · máx. 10 MB</p>
+            </div>
+            <div id="listaDocs" class="mt-16"></div>
+            <p class="txt-min" style="margin-top:10px">
+              Los documentos conservan versión, fecha de carga y usuario responsable; no se sobrescriben (RNF02).</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ------------------------------ PASO 5 ------------------------- -->
+      <section class="tarjeta paso-panel oculto" data-paso="5">
+        <div class="grafica-enc"><h3>Paso 5 · Contacto y grupo familiar</h3></div>
+        <div class="grafica-sub">Los medios de contacto anteriores nunca se borran: se conservan como historial (RF03).</div>
+
+        <div class="fila-3">
+          <div class="campo"><label>Teléfono principal</label><input type="tel" data-campo="Teléfono" value="962 118 4472"></div>
+          <div class="campo"><label>Tipo de medio</label>
+            <select data-campo="Tipo de medio"><option>Celular propio</option><option>Celular de familiar</option>
+              <option>Albergue</option><option>Red social</option></select></div>
+          <div class="campo"><label>Correo electrónico</label><input type="text" data-campo="Correo" placeholder="opcional"></div>
+        </div>
+
+        <div class="fila">
+          <div class="campo"><label>Municipio de residencia en Chiapas <span class="req">•</span></label>
+            <select data-req data-campo="Municipio de residencia"><option>Tapachula</option><option>Suchiate</option>
+              <option>Frontera Comalapa</option><option>Motozintla</option><option>Tuxtla Gutiérrez</option></select></div>
+          <div class="campo"><label>Domicilio actual o albergue</label>
+            <input type="text" data-campo="Domicilio" value="Albergue Belén, Tapachula"></div>
+        </div>
+
+        <fieldset class="fieldset">
+          <legend>Grupo familiar (RF05)</legend>
+          <div class="check"><input type="radio" name="fam" id="famNo" checked><label for="famNo" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--tinta);font-size:13.5px;margin:0">Viaja sin acompañantes</label></div>
+          <div class="check"><input type="radio" name="fam" id="famNueva"><label for="famNueva" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--tinta);font-size:13.5px;margin:0">Crear grupo familiar y registrar a esta persona como titular</label></div>
+          <div class="check"><input type="radio" name="fam" id="famExiste"><label for="famExiste" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--tinta);font-size:13.5px;margin:0">Vincular a un grupo familiar existente</label></div>
+          <div class="campo oculto mt-16" id="campoFolioFam" style="max-width:340px;margin-bottom:0">
+            <label>Folio del grupo familiar</label><input type="text" placeholder="SIMH-FAM-2026-0341"></div>
+        </fieldset>
+
+        <!-- Bloque condicional: solo si la persona es menor de edad -->
+        <fieldset class="fieldset oculto" id="bloqueNNA" style="border-color:rgba(174,25,45,.3)">
+          <legend style="color:var(--guinda)">Clasificación de niña, niño o adolescente (RF06)</legend>
+          <p class="txt-min" style="margin-top:0">La fecha de nacimiento capturada indica que la persona es menor de edad.</p>
+          <div class="fila-3">
+            <div class="campo" style="margin-bottom:0"><label>Condición <span class="req">•</span></label>
+              <select data-campo="Condición NNA" id="selNNA">
+                <option>Acompañado</option><option>Separado</option><option>No acompañado</option></select></div>
+            <div class="campo" style="margin-bottom:0"><label>Persona adulta responsable</label>
+              <input type="text" data-campo="Adulto responsable" placeholder="Nombre y parentesco"></div>
+            <div class="campo" style="margin-bottom:0"><label>Institución de resguardo</label>
+              <select data-campo="Institución de resguardo"><option>No aplica</option><option>DIF Municipal</option>
+                <option>Albergue especializado</option></select></div>
+          </div>
+          <div class="aviso aviso-guinda oculto" style="margin:14px 0 0" id="avisoNNA"></div>
+        </fieldset>
+
+        <details class="plegable">
+          <summary>Marcadores rápidos de vulnerabilidad (alimentan el módulo de Salud)</summary>
+          <div class="cuerpo">
+            <div class="fila-3">
+              <label class="check"><input type="checkbox"><span>Mujer embarazada</span></label>
+              <label class="check"><input type="checkbox"><span>Persona con discapacidad</span></label>
+              <label class="check"><input type="checkbox"><span>Adulta mayor</span></label>
+              <label class="check"><input type="checkbox"><span>Condición crónica de salud</span></label>
+              <label class="check"><input type="checkbox"><span>Víctima de violencia</span></label>
+              <label class="check"><input type="checkbox"><span>Requiere intérprete</span></label>
+            </div>
+            <p class="txt-min">Marcarlos aquí genera la tarea de valoración en Salud y Vulnerabilidad (RF07); el catálogo
+              completo de la OMS se captura en ese módulo.</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- ------------------------------ PASO 6 ------------------------- -->
+      <section class="tarjeta paso-panel oculto" data-paso="6">
+        <div class="grafica-enc"><h3>Paso 6 · Revisión y consentimiento</h3></div>
+        <div class="grafica-sub">Revise la información antes de guardar. Puede corregir cualquier bloque sin perder lo capturado.</div>
+
+        <div id="resumen"></div>
+
+        <!-- Primera nota de la bitácora del expediente (RF08) -->
+        <div class="grafica-enc mt-16">
+          <h3>Observaciones de la ventanilla</h3><span class="txt-min">Opcional</span>
+        </div>
+        <div class="grafica-sub">Se guarda como la primera nota de la bitácora del expediente. Las notas de bitácora
+          no se editan ni se eliminan: quedan con autor, área y fecha (RF08, RNF02).</div>
+        <div class="compositor">
+          <select id="tipoObs" style="height:34px;border:1px solid var(--arena);border-radius:var(--radio-s);
+                  font-family:var(--f-texto);font-size:13px;padding:0 10px;margin-bottom:9px">
+            <option>Observación general de la captura</option>
+            <option>Documentación pendiente</option>
+            <option>Situación de vulnerabilidad detectada</option>
+            <option>Orientación brindada</option>
+            <option>Requiere canalización</option>
+          </select>
+          <textarea id="observaciones" maxlength="500"
+            placeholder="Ej. La persona llega sin documento de identidad; refiere haber sido despojada durante el trayecto. Se orienta sobre reposición ante COMAR y se agenda cita para el 02/09."></textarea>
+          <div class="c-pie">
+            <span class="txt-min" id="contadorObs">0 / 500 caracteres</span>
+            <span class="txt-min">Se registrará a nombre de María Gómez Pérez · Registro · Tapachula</span>
+          </div>
+        </div>
+
+        <div style="max-height:170px;overflow:auto;border:1px solid var(--linea);border-radius:var(--radio-s);
+                    padding:14px;background:var(--hueso-claro);font-size:12.5px;color:var(--gris);margin-top:16px">
+          <p><b>Aviso de privacidad integral.</b> La Secretaría de la Frontera Sur del Gobierno del Estado de Chiapas es
+          responsable del tratamiento de los datos personales que usted proporcione, protegidos conforme a la
+          normatividad aplicable en materia de protección de datos personales en posesión de sujetos obligados.</p>
+          <p><b>Finalidades.</b> Integrar el expediente único de la persona, brindar acompañamiento humanitario,
+          canalizar a servicios de salud, capacitación y empleo, emitir constancias y oficios, y generar estadística
+          agregada y anonimizada.</p>
+          <p><b>Datos sensibles.</b> Se recaban datos de condición migratoria, salud y vulnerabilidad, cuyo acceso está
+          restringido por permisos y cuyo uso en reportes es siempre anonimizado.</p>
+          <p><b>Derechos ARCO.</b> Puede solicitar acceso, rectificación, cancelación u oposición ante la Unidad de
+          Transparencia de la Secretaría.</p>
+        </div>
+
+        <label class="check" style="margin-top:14px;font-weight:700">
+          <input type="checkbox" id="chkConsentimiento">
+          <span>La persona acepta el tratamiento de sus datos personales conforme al aviso de privacidad
+            <span class="req" style="color:var(--rosa)">•</span></span>
+        </label>
+        <p class="txt-min" style="margin:0">Sin esta aceptación explícita el expediente no puede guardarse (RF04).</p>
+      </section>
+
+      <!-- ------------------------- Barra de acciones -------------------- -->
+      <div class="barra-acciones">
+        <button class="btn btn-secundario" type="button" id="btnAtras"></button>
+        <span class="estado-borrador" id="estadoBorrador"></span>
+        <button class="btn btn-primario btn-grande" type="button" id="btnSiguiente"></button>
+      </div>
+    </div>
+
+    <!-- ============================ Panel lateral ====================== -->
+    <aside>
+      <div class="tarjeta" style="position:sticky;top:calc(var(--topbar-h) + 18px)">
+        <div class="grafica-enc"><h3>Resumen del expediente</h3></div>
+
+        <div id="cajaFoto" style="border:2px dashed var(--arena);border-radius:var(--radio);aspect-ratio:3/4;display:grid;
+                    place-items:center;background:var(--hueso-claro);margin:0 auto 14px;text-align:center;padding:12px;max-width:148px">
+          <div>
+            <div id="icoFoto" style="color:var(--gris-claro)"></div>
+            <p class="txt-min" style="margin:6px 0 0">Fotografía pendiente<br>de captura</p>
+          </div>
+        </div>
+
+        <div class="resumen-dato" style="border:0;padding:0 0 10px">
+          <span class="r-lab">Folio provisional</span>
+          <span class="r-val" style="color:var(--guinda);font-weight:700">SIMH-2026-TAP-0000</span>
+        </div>
+        <div class="resumen-dato" style="border:0;padding:0 0 10px">
+          <span class="r-lab">Persona</span><span class="r-val" id="ladoNombre">—</span>
+        </div>
+        <div class="resumen-dato" style="border:0;padding:0 0 10px">
+          <span class="r-lab">Municipio de captura</span><span class="r-val">Tapachula, Chiapas</span>
+        </div>
+        <div class="resumen-dato" style="border:0;padding:0 0 14px">
+          <span class="r-lab">Capturista</span><span class="r-val">María Gómez Pérez</span>
+        </div>
+
+        <div class="aviso aviso-jade" style="margin:0" id="avisoTiempo"></div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ============================ Pantalla de éxito ==================== -->
+  <section class="tarjeta oculto" id="pantallaExito" style="padding:36px 28px">
+    <div class="exito">
+      <div class="marca-ok" id="icoExito"></div>
+      <h2 style="color:var(--jade-900)">Expediente creado</h2>
+      <div class="folio" id="folioExito">SIMH-2026-TAP-0413</div>
+      <p class="txt-min" id="txtExito"></p>
+      <div class="cta-exito" id="ctaExito"></div>
+      <div class="otras-acc">Otras acciones para este expediente</div>
+      <div class="acciones-sig" id="accionesSig"></div>
+      <p class="txt-min" style="margin-top:22px">
+        El alta quedó registrada en la bitácora de auditoría. Las modificaciones posteriores requieren oficio y
+        autorización del Director de Área (RNF02).</p>
+    </div>
+  </section>
+</main>
+
+<script src="assets/js/simh.js"></script>
+<script>
+(function () {
+  SIMH.chrome("registro");
+  var ico = SIMH.icono, $ = function (s) { return document.querySelector(s); };
+
+  /* ------------------------------------------------- Iconos estáticos --- */
+  $("#icoErr").innerHTML   = ico("alerta");
+  $("#icoOk").innerHTML    = ico("check");
+  $("#icoFoto").innerHTML  = ico("persona");
+  $("#icoSubir").innerHTML = ico("descarga");
+  $("#icoExito").innerHTML = ico("check");
+  $("#btnCapturar").innerHTML = ico("camara") + "Capturar";
+  $("#avisoPriv").innerHTML = ico("candado") +
+    "<span><strong>Aviso de privacidad</strong>Informe a la persona que sus datos serán tratados por la Secretaría " +
+    "de la Frontera Sur. La aceptación explícita se registra en el paso 6, antes de guardar.</span>";
+  $("#avisoTiempo").innerHTML = ico("reloj") +
+    "<span><strong>Tiempo de captura: <span id='reloj'>00:00</span></strong>" +
+    "Meta institucional: menos de 5 minutos por persona (RNF04).</span>";
+
+  /* ---------------------------------------------------- Cronómetro ------ */
+  var seg = 0;
+  setInterval(function () {
+    seg++;
+    var m = String(Math.floor(seg / 60)).padStart(2, "0"), s = String(seg % 60).padStart(2, "0");
+    var r = document.getElementById("reloj"); if (r) r.textContent = m + ":" + s;
+  }, 1000);
+
+  /* --------------------------------------------------- Definición pasos - */
+  var PASOS = [
+    { n:1, t:"Identificación" },
+    { n:2, t:"Datos generales" },
+    { n:3, t:"Movilidad" },
+    { n:4, t:"Fotografía" },
+    { n:5, t:"Contacto" },
+    { n:6, t:"Revisión" }
+  ];
+  var actual = 1, maxVisitado = 1, fotoLista = false;
+  var altasSesion = 0, folioActual = "";
+  var FOTO_HTML = document.getElementById("cajaFoto").innerHTML;
+  var FOTO_ESTILO = document.getElementById("cajaFoto").getAttribute("style");
+
+  function pintarPasos() {
+    $("#pasos").innerHTML = PASOS.map(function (p, i) {
+      var cls = p.n === actual ? "activo" : (p.n < maxVisitado || p.n < actual ? "hecho" : "");
+      return '<button class="paso ' + cls + '" type="button" data-ir="' + p.n + '">' +
+             '<span class="p-num">' + (cls === "hecho" ? "✓" : p.n) + "</span><span>" + p.t + "</span></button>" +
+             (i < PASOS.length - 1 ? '<span class="paso-sep"></span>' : "");
+    }).join("");
+  }
+  $("#pasos").addEventListener("click", function (e) {
+    var b = e.target.closest(".paso");
+    if (b && b.classList.contains("hecho")) irA(+b.getAttribute("data-ir"));
+  });
+
+  /* ------------------------------------------------------- Validación --- */
+  function validar(paso) {
+    var panel = document.querySelector('.paso-panel[data-paso="' + paso + '"]');
+    var faltan = [];
+    panel.querySelectorAll("[data-req]").forEach(function (el) {
+      var vacio = !String(el.value || "").trim();
+      el.closest(".campo").classList.toggle("error", vacio);
+      if (vacio) faltan.push(el.getAttribute("data-campo") || "campo obligatorio");
+    });
+    if (paso === 6 && !$("#chkConsentimiento").checked) faltan.push("Aceptación del aviso de privacidad");
+    var caja = $("#resumenErrores");
+    caja.classList.toggle("oculto", faltan.length === 0);
+    if (faltan.length) {
+      $("#listaErrores").textContent = faltan.join(" · ");
+      caja.scrollIntoView({ behavior:"smooth", block:"center" });
+      var primero = panel.querySelector(".campo.error input, .campo.error select");
+      if (primero) primero.focus();
+    }
+    return faltan.length === 0;
+  }
+
+  /* -------------------------------------------------------- Navegación -- */
+  function irA(p) {
+    actual = p;
+    maxVisitado = Math.max(maxVisitado, p);
+    document.querySelectorAll(".paso-panel").forEach(function (s) {
+      s.classList.toggle("oculto", +s.getAttribute("data-paso") !== p);
+    });
+    $("#resumenErrores").classList.add("oculto");
+    $("#btnAtras").classList.toggle("oculto", p === 1);
+    $("#btnAtras").innerHTML = ico("izq") + "Regresar";
+    $("#btnSiguiente").innerHTML = p === 6 ? ico("guardar") + "Guardar expediente" : "Continuar" + ico("der");
+    if (p === 6) construirResumen();
+    pintarPasos();
+    marcarBorrador();
+    window.scrollTo({ top:0, behavior:"smooth" });
+  }
+
+  $("#btnSiguiente").addEventListener("click", function () {
+    if (!validar(actual)) return;
+    if (actual === 6) { guardar(); return; }
+    irA(actual + 1);
+  });
+  $("#btnAtras").addEventListener("click", function () { irA(Math.max(1, actual - 1)); });
+
+  /* Enter avanza: la captura de ventanilla es primero de teclado */
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" || e.target.tagName === "TEXTAREA") return;
+    if (!e.target.closest(".paso-panel")) return;
+    e.preventDefault();
+    $("#btnSiguiente").click();
+  });
+
+  /* --------------------------------------------------------- Borrador --- */
+  function marcarBorrador() {
+    var h = new Date();
+    $("#estadoBorrador").innerHTML = ico("check") + "Borrador guardado " +
+      String(h.getHours()).padStart(2,"0") + ":" + String(h.getMinutes()).padStart(2,"0");
+  }
+  $("#btnBorrador").addEventListener("click", marcarBorrador);
+
+  /* -------------------------------------------- Paso 1 · duplicados ----- */
+  $("#btnBuscarDup").addEventListener("click", function () {
+    $("#resultadoDup").classList.remove("oculto");
+    this.textContent = "Volver a buscar";
+  });
+
+  /* --------------------------------------- Paso 2 · edad y bloque NNA --- */
+  function edadDe(fecha) {
+    if (!fecha) return null;
+    var n = new Date(fecha), h = new Date("2026-08-24");
+    var a = h.getFullYear() - n.getFullYear();
+    if (h.getMonth() < n.getMonth() || (h.getMonth() === n.getMonth() && h.getDate() < n.getDate())) a--;
+    return a;
+  }
+  /* ----------------------------------------------------------------------
+     Precisión de la fecha de nacimiento.
+
+     Con precisión de mes o de año la edad no es un número, es un intervalo:
+     quien declara "2008" puede tener 17 o 18 años cumplidos hoy. Y ahí está
+     lo que de verdad importa: cuando el intervalo cruza los 18, el sistema
+     NO puede resolverlo a favor de la mayoría de edad. Rige la presunción de
+     minoría de edad —a duda, se trata como NNA hasta que un documento diga
+     otra cosa—, porque equivocarse hacia arriba deja a una persona menor sin
+     la ruta de protección y sin el oficio a la Procuraduría.
+     ------------------------------------------------------------------- */
+  var CAMPOS_NAC = { dia:"#fNac", mes:"#fNacMes", anio:"#fNacAnio", aprox:"#fNacEdad" };
+
+  function edadEntre(prec) {
+    /* Devuelve {min,max} de edad cumplida hoy, o null si falta el dato. */
+    var hoy = new Date(2026, 7, 31);           /* fecha fija del prototipo */
+    if (prec === "dia") {
+      var a = edadDe($("#fNac").value);
+      return a === null ? null : { min:a, max:a };
+    }
+    if (prec === "mes") {
+      var v = $("#fNacMes").value;
+      if (!v) return null;
+      var y = +v.slice(0, 4), m = +v.slice(5, 7) - 1;
+      var eMax = edadEn(new Date(y, m, 1), hoy);      /* nació el día 1 */
+      var eMin = edadEn(new Date(y, m + 1, 0), hoy);  /* nació el último día */
+      return { min:eMin, max:eMax };
+    }
+    if (prec === "anio") {
+      var y2 = parseInt($("#fNacAnio").value, 10);
+      if (isNaN(y2)) return null;
+      return { min:edadEn(new Date(y2, 11, 31), hoy), max:edadEn(new Date(y2, 0, 1), hoy) };
+    }
+    var ed = parseInt($("#fNacEdad").value, 10);
+    if (isNaN(ed)) return null;
+    return { min:ed, max:ed, declarada:true };
+  }
+
+  function edadEn(nac, ref) {
+    var e = ref.getFullYear() - nac.getFullYear();
+    var m = ref.getMonth() - nac.getMonth();
+    if (m < 0 || (m === 0 && ref.getDate() < nac.getDate())) e--;
+    return e;
+  }
+
+  function actualizarEdad() {
+    var prec = $("#precNac").value;
+
+    /* Solo se ve el control que corresponde a la precisión elegida. */
+    Object.keys(CAMPOS_NAC).forEach(function (k) {
+      $(CAMPOS_NAC[k]).classList.toggle("oculto", k !== prec);
+    });
+
+    var r = edadEntre(prec);
+    var caja = $("#avisoMinoria");
+
+    if (!r) {
+      $("#edadCalc").textContent = "";
+      caja.classList.add("oculto");
+      $("#bloqueNNA").classList.add("oculto");
+      $("#selNNA").removeAttribute("data-req");
+      revisarNNA();
+      return;
+    }
+
+    var txt = r.min === r.max
+      ? r.min + " años cumplidos" + (r.declarada ? " · edad declarada, sin documento" : "")
+      : "entre " + r.min + " y " + r.max + " años · la fecha no es exacta";
+    $("#edadCalc").textContent = txt;
+
+    /* Duda que cruza los 18: presunción de minoría de edad. */
+    var duda = r.min < 18 && r.max >= 18;
+    var menor = r.max < 18 || duda;
+
+    caja.classList.toggle("oculto", !duda);
+    if (duda) {
+      caja.innerHTML = ico("alerta") +
+        "<span><strong>Se registra como persona menor de edad</strong>" +
+        "Con la precisión capturada la edad queda entre " + r.min + " y " + r.max + " años, así que " +
+        "no puede afirmarse que sea mayor. Rige la <b>presunción de minoría de edad</b>: se clasifica " +
+        "como NNA y se activa su ruta de protección hasta que un documento acredite lo contrario. " +
+        "Resolverlo hacia la mayoría dejaría a una persona menor sin oficio a la Procuraduría.</span>";
+    }
+
+    $("#bloqueNNA").classList.toggle("oculto", !menor);
+    $("#selNNA").toggleAttribute("data-req", menor);
+    revisarNNA();
+  }
+
+  /* Precisión del ingreso a México: no decide nada legal, pero un día exacto
+     inventado ensucia cualquier estadística de flujo. */
+  function actualizarIngreso() {
+    var prec = $("#precIng").value;
+    $("#fIng").classList.toggle("oculto", prec === "mes");
+    $("#fIngMes").classList.toggle("oculto", prec !== "mes");
+    $("#ayudaIng").textContent = prec === "dia"
+      ? ""
+      : prec === "mes"
+        ? "Se guarda el mes; los informes de flujo la cuentan en el mes, no en un día."
+        : "Se guarda como aproximada y así aparece en el expediente y en los informes.";
+  }
+  function revisarNNA() {
+    var v = $("#selNNA").value, riesgo = v === "No acompañado" || v === "Separado";
+    var caja = $("#avisoNNA");
+    caja.classList.toggle("oculto", !riesgo || $("#bloqueNNA").classList.contains("oculto"));
+    if (riesgo) caja.innerHTML = ico("alerta") +
+      "<span><strong>Se generará oficio automático a la Procuraduría Regional</strong>" +
+      "La clasificación “" + v + "” obliga a notificar en un plazo máximo de 24 horas. El oficio queda en estado " +
+      "<b>Pendiente de envío</b> al guardar el expediente.</span>";
+  }
+  ["#precNac", "#fNac", "#fNacMes", "#fNacAnio", "#fNacEdad"].forEach(function (q) {
+    var el = $(q);
+    if (el) { el.addEventListener("change", actualizarEdad); el.addEventListener("input", actualizarEdad); }
+  });
+  ["#precIng", "#fIng", "#fIngMes"].forEach(function (q) {
+    var el = $(q);
+    if (el) el.addEventListener("change", actualizarIngreso);
+  });
+  $("#selNNA").addEventListener("change", revisarNNA);
+
+  /* La constancia de la COMAR se renueva cada 30 días: decir cuándo vence
+     evita que alguien la dé por vigente seis meses después. */
+  var fc = $("#fComar");
+  if (fc) fc.addEventListener("change", function () {
+    var v = this.value;
+    if (!v) { $("#vigComar").textContent = "La constancia se renueva cada 30 días."; return; }
+    var d = new Date(+v.slice(0, 4), +v.slice(5, 7) - 1, +v.slice(8, 10));
+    d.setDate(d.getDate() + 30);
+    var dd = ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2) +
+             "/" + d.getFullYear();
+    var venc = d < new Date(2026, 7, 31);
+    $("#vigComar").innerHTML = venc
+      ? '<b style="color:var(--guinda-900)">Vencida el ' + dd + ".</b> Hay que renovarla ante la COMAR."
+      : "Vigente hasta el <b>" + dd + "</b>.";
+  });
+
+  actualizarEdad();
+  actualizarIngreso();
+
+  document.querySelectorAll('.paso-panel[data-paso="2"] input').forEach(function (el) {
+    el.addEventListener("input", function () {
+      var nom = document.querySelector('[data-campo="Nombre(s)"]').value;
+      var ap  = document.querySelector('[data-campo="Primer apellido"]').value;
+      $("#ladoNombre").textContent = (nom + " " + ap).trim() || "—";
+    });
+  });
+  $("#ladoNombre").textContent = "Yolanda Esperanza Martínez";
+
+  /* ------------------------------------- Paso 3 · estatus y ruta -------- */
+  function avisoEstatus() {
+    var v = $("#selEstatus").value, c = $("#avisoEstatus");
+    var txt = {
+      "Solicitante de refugio":"Requiere Constancia de Trámite COMAR vigente para inscribirse a cursos de capacitación (RF13).",
+      "Refugiado / Residente":"Adquiere los mismos derechos que una persona mexicana: sin restricción de movilidad estatal.",
+      "Naturalizado":"Adquiere los mismos derechos que una persona mexicana: sin restricción de movilidad estatal.",
+      "Sin trámite":"Sin trámite iniciado: el sistema restringe alertas de movilidad y sugiere canalización a orientación jurídica."
+    }[v];
+    c.innerHTML = ico("info") + "<span>" + txt + "</span>";
+  }
+  $("#selEstatus").addEventListener("change", avisoEstatus);
+  avisoEstatus();
+
+  var paises = [{ p:"Guatemala", d:"2026-07-14", h:"2026-07-27" }];
+  function pintarPaises() {
+    $("#listaPaises").innerHTML = paises.map(function (x, i) {
+      return '<div class="ruta-pais">' +
+        '<div class="campo"><label>' + (i + 1) + "º país transitado</label>" +
+        '<input type="text" value="' + x.p + '"></div>' +
+        '<div class="campo"><label>Llegada</label><input type="date" value="' + x.d + '"></div>' +
+        '<div class="campo"><label>Salida</label><input type="date" value="' + x.h + '"></div>' +
+        '<div class="campo"><button class="btn btn-secundario btn-s" type="button" data-quitar="' + i + '">Quitar</button></div>' +
+        "</div>";
+    }).join("") || '<p class="txt-min">Sin países transitados registrados.</p>';
+  }
+  $("#btnAddPais").addEventListener("click", function () {
+    paises.push({ p:"", d:"", h:"" }); pintarPaises();
+  });
+  $("#listaPaises").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-quitar]");
+    if (b) { paises.splice(+b.getAttribute("data-quitar"), 1); pintarPaises(); }
+  });
+  pintarPaises();
+
+  /* -------------------------------------------- Paso 4 · foto y docs ---- */
+  var docs = [
+    { n:"pasaporte_hn.pdf", t:"Pasaporte", e:"Validado", c:"chip-jade" },
+    { n:"constancia_comar.jpg", t:"Constancia COMAR", e:"Pendiente", c:"chip-neutro" }
+  ];
+  function pintarDocs() {
+    $("#listaDocs").innerHTML = docs.map(function (d) {
+      return '<div class="doc-fila">' + ico("doc") +
+        '<span class="d-nom">' + d.n + '<br><span class="txt-min">' + d.t + " · hoy 11:0" + (docs.indexOf(d) + 4) + " · M. Gómez</span></span>" +
+        '<span class="chip ' + d.c + '">' + d.e + "</span></div>";
+    }).join("");
+  }
+  pintarDocs();
+  $("#lnkSubir").addEventListener("click", function (e) {
+    e.preventDefault();
+    docs.push({ n:"curp_temporal.pdf", t:"CURP", e:"Pendiente", c:"chip-neutro" });
+    pintarDocs();
+  });
+  $("#btnCapturar").addEventListener("click", function () {
+    fotoLista = true;
+    $("#txtVisor").textContent = "Fotografía capturada";
+    $("#cajaFoto").innerHTML =
+      '<div style="text-align:center"><div style="width:74px;height:74px;border-radius:50%;background:var(--jade-050);' +
+      'display:grid;place-items:center;margin:0 auto 8px;color:var(--jade)">' + ico("check") + "</div>" +
+      '<p class="txt-min" style="margin:0">Fotografía capturada<br>hoy 11:12</p></div>';
+    $("#cajaFoto").style.border = "1px solid var(--linea)";
+  });
+  $("#btnRepetir").addEventListener("click", function () { $("#txtVisor").textContent = "Vista previa de la cámara web"; });
+
+  /* ------------------------------------------ Paso 5 · grupo familiar --- */
+  document.querySelectorAll('input[name="fam"]').forEach(function (r) {
+    r.addEventListener("change", function () {
+      $("#campoFolioFam").classList.toggle("oculto", document.getElementById("famExiste").checked === false);
+    });
+  });
+
+  /* -------------------------------------------- Paso 6 · resumen -------- */
+  /* Un campo se omite solo si está dentro de un bloque oculto del propio paso
+     (por ejemplo la clasificación NNA en una persona adulta). El panel del
+     paso siempre está oculto cuando se arma el resumen, así que no cuenta. */
+  function ocultoDentro(el, panel) {
+    var p = el.parentElement;
+    while (p && p !== panel) {
+      if (p.classList.contains("oculto")) return true;
+      p = p.parentElement;
+    }
+    return false;
+  }
+
+  function construirResumen() {
+    var bloques = [
+      { p:2, t:"Datos generales" }, { p:3, t:"Movilidad humana y estatus" },
+      { p:5, t:"Contacto y grupo familiar" }
+    ];
+    var html = bloques.map(function (b) {
+      var panel = document.querySelector('.paso-panel[data-paso="' + b.p + '"]');
+      var datos = [].slice.call(panel.querySelectorAll("[data-campo]"))
+        .filter(function (el) { return !ocultoDentro(el, panel); })  /* omite bloques no aplicables, no el panel */
+        .map(function (el) {
+          var v = String(el.value || "").trim();
+          if (/^\d{4}-\d{2}-\d{2}$/.test(v)) { var d = v.split("-"); v = d[2] + "/" + d[1] + "/" + d[0]; }
+          return '<div class="resumen-dato"><span class="r-lab">' + el.getAttribute("data-campo") + "</span>" +
+            (v ? '<span class="r-val">' + SIMH.esc(v) + "</span>" : '<span class="r-vacio">Sin capturar</span>') + "</div>";
+        }).join("");
+      return '<div class="resumen-grupo"><h4>' + b.t +
+        '<button class="ver-tabla" type="button" data-editar="' + b.p + '">Corregir</button></h4>' +
+        '<div class="resumen-lista">' + datos + "</div></div>";
+    }).join("");
+
+    html += '<div class="resumen-grupo"><h4>Fotografía y documentos' +
+      '<button class="ver-tabla" type="button" data-editar="4">Corregir</button></h4><div class="resumen-lista">' +
+      '<div class="resumen-dato"><span class="r-lab">Fotografía</span>' +
+      (fotoLista ? '<span class="r-val">Capturada</span>' : '<span class="r-vacio">Pendiente de captura</span>') + "</div>" +
+      '<div class="resumen-dato"><span class="r-lab">Documentos cargados</span><span class="r-val">' +
+      docs.length + " documento(s)</span></div></div></div>";
+
+    $("#resumen").innerHTML = html;
+    $("#resumen").querySelectorAll("[data-editar]").forEach(function (b) {
+      b.addEventListener("click", function () { irA(+b.getAttribute("data-editar")); });
+    });
+  }
+
+  /* ------------------------------------------- Observaciones (RF08) ----- */
+  $("#observaciones").addEventListener("input", function () {
+    $("#contadorObs").textContent = this.value.length + " / 500 caracteres";
+  });
+
+  /* --------------------------------------------------------- Guardar ---- */
+  function guardar() {
+    altasSesion++;
+    folioActual = "SIMH-2026-TAP-" + String(412 + altasSesion).padStart(4, "0");
+
+    $("#zonaCaptura").classList.add("oculto");
+    $("#pasos").classList.add("oculto");
+    $("#accEnc").classList.add("oculto");
+    $("#avisoGuardado").classList.add("oculto");
+    $("#pantallaExito").classList.remove("oculto");
+    $("#folioExito").textContent = folioActual;
+
+    var m = String(Math.floor(seg / 60)).padStart(2, "0"), sg = String(seg % 60).padStart(2, "0");
+    var nom = document.querySelector('[data-campo="Nombre(s)"]').value + " " +
+              document.querySelector('[data-campo="Primer apellido"]').value;
+    $("#txtExito").innerHTML = SIMH.esc(nom.trim()) + " · " +
+      SIMH.esc(document.querySelector('[data-campo="Nacionalidad"]').value) + " · Tapachula<br>" +
+      "Tiempo de captura: <b>" + m + ":" + sg + "</b> (meta institucional: 05:00)" +
+      (altasSesion > 1 ? " · <b>" + altasSesion + " altas</b> en esta sesión" : "") +
+      ($("#observaciones").value.trim()
+        ? "<br>Se registró la primera nota en la bitácora del expediente." : "");
+
+    /* La acción más probable en ventanilla es atender a la siguiente persona
+       de la fila: por eso es la acción primaria del cierre.                  */
+    $("#ctaExito").innerHTML =
+      '<button class="btn btn-primario btn-grande" type="button" id="btnOtroRegistro">' +
+        ico("mas") + "Registrar otra persona</button>" +
+      '<button class="btn btn-secundario btn-grande" type="button" id="btnAcompanante">' +
+        ico("familia") + "Registrar acompañante</button>" +
+      '<a class="btn btn-secundario btn-grande" href="expedientes.html">' + ico("expedientes") + "Ir al expediente</a>";
+
+    $("#accionesSig").innerHTML = [
+      { i:"doc",     t:"Imprimir constancia de registro", s:"Genera el gafete en PDF (RF10)" },
+      { i:"salud",   t:"Valorar salud y vulnerabilidad",  s:"Abre el catálogo OMS y la canalización (RF07)" },
+      { i:"capacita",t:"Inscribir a un grupo de capacitación", s:"Valida CURP y constancia COMAR (RF13)" },
+      { i:"inicio",  t:"Volver al panel estadístico",     s:"Indicadores del día y pendientes" }
+    ].map(function (a) {
+      return '<a class="accion-sig" href="' + (a.i === "inicio" ? "index.html" : "#") + '">' + ico(a.i) +
+        "<span><b>" + a.t + '</b><span class="txt-min">' + a.s + "</span></span></a>";
+    }).join("");
+
+    $("#btnOtroRegistro").addEventListener("click", function () { nuevaAlta("nuevo"); });
+    $("#btnAcompanante").addEventListener("click", function () { nuevaAlta("acompanante"); });
+    window.scrollTo({ top:0, behavior:"smooth" });
+  }
+
+  /* --------------------------------------------- Encadenar otra alta ----- */
+  /* modo "nuevo": expediente en blanco.
+     modo "acompanante": conserva los datos de movilidad y residencia del caso
+     anterior y vincula a la persona al mismo grupo familiar, que es como
+     llegan las familias a la ventanilla.                                    */
+  function nuevaAlta(modo) {
+    var acomp = modo === "acompanante";
+    var folioPrevio = folioActual;
+
+    /* Identidad: siempre se limpia, nunca se hereda */
+    ["Nombre(s)", "Primer apellido", "Segundo apellido"].forEach(function (c) {
+      document.querySelector('[data-campo="' + c + '"]').value = "";
+    });
+    $("#fNac").value = "";
+    document.querySelector('[data-campo="Correo"]').value = "";
+    document.querySelector('[data-campo="Registro COMAR"]').value = "";
+    document.querySelector('[data-campo="Fecha COMAR"]').value = "";
+    if (!acomp) {
+      document.querySelector('[data-campo="Teléfono"]').value = "";
+      document.querySelector('[data-campo="Domicilio"]').value = "";
+      paises = [];
+    }
+
+    /* Documentos y fotografía se reinician siempre */
+    docs = [];
+    fotoLista = false;
+    $("#cajaFoto").setAttribute("style", FOTO_ESTILO);
+    $("#cajaFoto").innerHTML = FOTO_HTML;
+    $("#icoFoto").innerHTML = ico("persona");
+    $("#txtVisor").textContent = "Vista previa de la cámara web";
+    pintarDocs();
+    pintarPaises();
+
+    $("#chkConsentimiento").checked = false;
+    $("#observaciones").value = "";
+    $("#contadorObs").textContent = "0 / 500 caracteres";
+    $("#tipoObs").selectedIndex = 0;
+    $("#resultadoDup").classList.add("oculto");
+    $("#btnBuscarDup").textContent = "Buscar coincidencias";
+    $("#ladoNombre").textContent = "—";
+    actualizarEdad();
+
+    /* Grupo familiar: el acompañante queda vinculado al folio anterior */
+    if (acomp) {
+      document.getElementById("famExiste").checked = true;
+      $("#campoFolioFam").classList.remove("oculto");
+      $("#campoFolioFam").querySelector("input").value = "SIMH-FAM-2026-0341";
+      $("#avisoAcomp").classList.remove("oculto");
+      $("#avisoAcomp").innerHTML = ico("familia") +
+        "<span><strong>Registro de acompañante del grupo SIMH-FAM-2026-0341</strong>" +
+        "Se conservan los datos de movilidad y residencia del expediente " + folioPrevio +
+        ". Capture únicamente la identidad de la persona.</span>";
+    } else {
+      document.getElementById("famNo").checked = true;
+      $("#campoFolioFam").classList.add("oculto");
+      $("#avisoAcomp").classList.add("oculto");
+    }
+
+    /* Confirmación persistente del alta anterior */
+    $("#avisoGuardado").classList.remove("oculto");
+    $("#avisoGuardado").innerHTML = ico("check") +
+      "<span><strong>Expediente " + folioPrevio + " guardado</strong>" +
+      "Puede continuar con la siguiente persona. " +
+      '<a href="expedientes.html">Ver el expediente anterior</a> · ' +
+      '<a href="#" id="lnkConstancia">Imprimir su constancia</a></span>';
+
+    /* Contador de productividad de la ventanilla */
+    $("#contadorSesion").classList.remove("oculto");
+    $("#contadorSesion").textContent = altasSesion + (altasSesion === 1 ? " alta" : " altas") + " en esta sesión";
+
+    seg = 0;
+    $("#pantallaExito").classList.add("oculto");
+    $("#zonaCaptura").classList.remove("oculto");
+    $("#pasos").classList.remove("oculto");
+    $("#accEnc").classList.remove("oculto");
+
+    maxVisitado = acomp ? 3 : 1;
+    irA(acomp ? 2 : 1);
+    var primero = document.querySelector('.paso-panel[data-paso="' + actual + '"] input');
+    if (primero) primero.focus();
+  }
+
+  /* Atajo para revisión: registro.html?paso=3 abre ese paso; ?paso=exito, el cierre */
+  var q = new URLSearchParams(location.search).get("paso");
+  if (q === "exito") { maxVisitado = 6; irA(6); $("#chkConsentimiento").checked = true; guardar(); }
+  else if (q && +q >= 1 && +q <= 6) { maxVisitado = +q; irA(+q); }
+  else irA(1);
+})();
+</script>
+</body>
+</html>

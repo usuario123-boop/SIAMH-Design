@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Administración · Usuarios, permisos y bitácora · SIMH</title>
+<link rel="icon" href="assets/img/simh-isotipo-96.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/simh.css">
+<style>
+  /* ======================================================================
+     ADMINISTRACIÓN — Usuarios, permisos y bitácora (RNF01, RNF02)
+     ================================================================== */
+
+  .sec-tit{font-family:var(--f-texto);font-size:14.5px;font-weight:700;color:var(--tinta);
+    text-transform:none;letter-spacing:0;margin:0}
+  .vacio{padding:36px 20px;text-align:center;color:var(--gris);font-size:13px;line-height:1.6}
+  .vacio svg{width:34px;height:34px;stroke-width:1.2;stroke:var(--arena);fill:none;display:block;margin:0 auto 10px}
+
+  /* --- Piso de legibilidad y área táctil, igual que en Empleabilidad --- */
+  .pestana{min-height:44px;font-size:13.5px}
+  .chips-filtro .chip,.filtros-tabla .chip{min-height:36px;padding:0 10px;font-size:12.5px;gap:6px;
+    cursor:pointer;border:0;font-family:var(--f-texto)}
+  .chips-filtro{display:flex;gap:8px;flex-wrap:wrap}
+  .contenido :focus-visible{outline:3px solid var(--jade);outline-offset:2px;border-radius:4px}
+  h2[tabindex]:focus{outline:3px solid var(--jade);outline-offset:4px}
+
+  /* --- Tabla de usuarios --------------------------------------------------
+     Seis columnas, no siete: el cargo vive bajo el nombre en la misma celda,
+     que es la corrección ya aplicada al listado de expedientes. Y siempre
+     table-layout:fixed con colgroup, que es la única cura para el
+     desbordamiento que ya apareció cuatro veces en este prototipo.        */
+  table.t-usr{table-layout:fixed}
+  .t-usr col.c-per{width:31%}
+  .t-usr col.c-are{width:20%}
+  .t-usr col.c-mun{width:12%}
+  .t-usr col.c-rol{width:16%}
+  .t-usr col.c-est{width:11%}
+  .t-usr col.c-acc{width:10%}
+  .t-usr th{white-space:normal}
+  .t-usr td{word-break:break-word}
+  .t-usr tbody tr{cursor:pointer}
+  .t-usr tbody tr.activo{background:var(--jade-050)}
+  .t-usr tbody tr.suspendido .p-nom{color:var(--gris)}
+  /* .btn trae white-space:nowrap, y dentro de una celda del 31% eso vuelve a
+     desbordar la tabla — es la trampa ya documentada. El botón del nombre se
+     compone como texto: alineado a la izquierda, sin alto fijo y con salto. */
+  .t-usr .persona-celda .p-nom{white-space:normal;text-align:left;justify-content:flex-start;
+    padding:0;height:auto;min-height:0;font-size:13px;display:block;word-break:break-word}
+  /* La cuenta con la que se entra. Va bajo el cargo, en la misma celda: una
+     columna más estrecharía las demás y volvería a desbordar la tabla, que
+     es la corrección ya aplicada al listado de expedientes. */
+  .t-usr .p-usu{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--gris);
+    margin-top:3px;font-family:var(--f-texto);word-break:break-all}
+  .t-usr .p-usu svg{width:12px;height:12px;flex:none;stroke:var(--gris-claro);stroke-width:2;fill:none}
+  .t-usr .u-area{font-size:12.5px;line-height:1.4}
+  .t-usr .u-acc{font-size:12.5px;color:var(--gris);line-height:1.4}
+
+  /* --- Matriz de permisos -------------------------------------------------
+     Va a ANCHO COMPLETO bajo la tabla, no en un panel lateral de 380 px: son
+     nueve módulos por cinco acciones y en una columna estrecha la matriz se
+     vuelve ilegible o desborda. Además así el panel aparece siempre en el
+     mismo sitio, como los paneles de captura de Empleabilidad.           */
+  .matriz{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+  .matriz col.c-mod{width:30%}
+  .matriz thead th{background:var(--hueso-claro);color:var(--gris);font-size:10.5px;
+    letter-spacing:.07em;text-transform:uppercase;padding:9px 8px;text-align:center;
+    border-bottom:1px solid var(--linea);white-space:normal}
+  .matriz thead th:first-child{text-align:left;padding-left:14px}
+  .matriz tbody td{padding:9px 8px;border-bottom:1px solid var(--linea-suave);text-align:center}
+  .matriz tbody td:first-child{text-align:left;padding-left:14px}
+  .matriz tbody tr:last-child td{border-bottom:0}
+  .matriz .m-nom{display:block;font-weight:700;font-size:13px;line-height:1.3}
+  .matriz .m-dir{display:block;font-size:11.5px;color:var(--gris);margin-top:2px;line-height:1.35}
+  .matriz tr.aislado td{background:var(--hueso-claro)}
+  .matriz tr.aislado .m-nom{color:var(--gris)}
+
+  /* La celda no es una casilla suelta: dice su estado con glifo + color, y
+     el rótulo completo va en el nombre accesible, no solo en el color.    */
+  .cel{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:6px;
+    border:1px solid transparent}
+  .cel svg{width:15px;height:15px;stroke-width:2;fill:none}
+  .cel.si{background:var(--jade-050);border-color:rgba(0,152,135,.28)}
+  .cel.si svg{stroke:var(--jade-900)}
+  .cel.no{color:var(--gris-claro);font-size:15px;line-height:1}
+  .cel.oficio{background:var(--guinda-050);border-color:rgba(174,25,45,.3)}
+  .cel.oficio svg{stroke:var(--guinda)}
+  .cel.exc{background:var(--rosa-050);border-color:rgba(201,1,102,.32)}
+  .cel.exc svg{stroke:var(--rosa)}
+  /* El candado del aislamiento no se tiñe de guinda como el que pide oficio:
+     no es un permiso que se pueda pedir, es un muro entre direcciones. La
+     diferencia además está escrita en la propia fila, no solo en el tono.  */
+  .cel.aislado{background:var(--arena-050);border-color:var(--linea)}
+  .cel.aislado svg{stroke:var(--gris)}
+  .cel.na{color:var(--gris-claro);font-size:14px;line-height:1}
+
+  .leyenda{display:flex;gap:16px;flex-wrap:wrap;padding:12px 14px;border-top:1px solid var(--linea);
+    background:var(--hueso-claro);font-size:12.5px;color:var(--gris)}
+  .leyenda span{display:inline-flex;align-items:center;gap:7px}
+  .leyenda .cel{width:22px;height:22px}
+  .leyenda .cel svg{width:13px;height:13px}
+
+  /* --- Excepciones documentadas ------------------------------------------ */
+  .exc-item{display:flex;gap:11px;align-items:flex-start;padding:11px 0;
+    border-bottom:1px solid var(--linea-suave)}
+  .exc-item:last-child{border-bottom:0;padding-bottom:0}
+  .exc-item > svg{width:17px;height:17px;stroke-width:2;fill:none;flex:none;margin-top:2px;stroke:var(--rosa)}
+  .exc-item .x-t{display:block;font-size:13.5px;font-weight:700;color:var(--tinta);line-height:1.3}
+  .exc-item .x-n{display:block;font-size:12.5px;color:var(--gris);margin-top:3px;line-height:1.5}
+
+  /* --- Bitácora ----------------------------------------------------------- */
+  table.t-bit{table-layout:fixed}
+  .t-bit col.c-cua{width:14%}
+  .t-bit col.c-qui{width:20%}
+  .t-bit col.c-que{width:38%}
+  .t-bit col.c-don{width:16%}
+  .t-bit col.c-ip{width:12%}
+  .t-bit th{white-space:normal}
+  .t-bit td{word-break:break-word;vertical-align:top}
+  .t-bit .b-fec{display:block;font-size:12.5px;line-height:1.4;font-variant-numeric:tabular-nums}
+  .t-bit .b-hor{display:block;font-size:12px;color:var(--gris);font-variant-numeric:tabular-nums}
+  .t-bit .b-usr{display:block;font-size:13px;font-weight:700;line-height:1.3}
+  .t-bit .b-rol{display:block;font-size:12px;color:var(--gris);margin-top:2px;line-height:1.35}
+  .t-bit .b-acc{display:block;font-size:13px;line-height:1.35}
+  .t-bit .b-reg{display:block;font-size:12.5px;color:var(--gris);margin-top:3px;line-height:1.45}
+  .t-bit .b-reg a{font-weight:700}
+  .t-bit .b-mod{font-size:12.5px;line-height:1.4}
+  .t-bit .b-ip{font-size:12px;color:var(--gris);font-variant-numeric:tabular-nums}
+  .t-bit tr.denegado td{background:var(--guinda-050)}
+  .t-bit tr.denegado .b-acc{color:var(--guinda-900);font-weight:700}
+
+  /* El antes → después es lo que convierte "Editó" en una constancia. */
+  .cambio{display:block;font-size:12.5px;color:var(--gris);margin-top:6px;line-height:1.55;
+    border-left:2px solid var(--linea);padding-left:9px}
+  .cambio b{color:var(--tinta);font-weight:700}
+  .cambio .c-ant{text-decoration:line-through;color:var(--gris-claro)}
+
+  /* .filtros-fila vive ahora en simh.css §20. */
+</style>
+</head>
+<body>
+
+<main class="contenido">
+  <div class="migas"><a href="index.html">Inicio</a> › Administración</div>
+
+  <div class="enc">
+    <div class="enc-txt">
+      <h1>Administración</h1>
+      <div class="enc-sub">Usuarios, matriz de permisos y bitácora de auditoría (RNF01, RNF02)</div>
+    </div>
+    <div class="enc-acc">
+      <button class="btn btn-secundario btn-s" type="button" id="btnXls"></button>
+    </div>
+  </div>
+
+  <details class="plegable" id="avisoPermisos">
+    <summary>Cómo funcionan los permisos en el SIMH</summary>
+    <div class="cuerpo" id="avisoPermisosCuerpo"></div>
+  </details>
+
+  <div class="pestanas" role="tablist" aria-label="Secciones de administración" id="pestanas"></div>
+  <div id="panel"></div>
+
+  <p id="anuncio" class="sr-solo" role="status" aria-live="polite"></p>
+</main>
+
+<script src="assets/js/simh.js"></script>
+<script>
+(function () {
+  "use strict";
+  SIMH.chrome("admin");
+  var ico = SIMH.icono, esc = SIMH.esc;
+  var $ = function (s) { return document.querySelector(s); };
+  var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+
+  /* ======================================================================
+     1. Qué pide el guion y qué no se sostiene
+     --------------------------------------------------------------------
+       · La matriz del guion tiene una columna "ELIMINAR". El sistema
+         entero se sostiene sobre lo contrario: nada se elimina (RNF03), y
+         la palabra "Eliminar" no debe aparecer en ninguna interfaz. Un
+         permiso para una acción que no existe es peor que un error de
+         redacción: legitima la acción. La columna se sustituyó por
+         CERRAR, que es la única forma real de retirar algo de operación
+         —cerrar expediente, cerrar vinculación, cerrar grupo— y conserva
+         el historial.
+
+       · El guion pone casillas por usuario. Los permisos no viven en las
+         personas, viven en los ROLES: una rejilla de 45 casillas por cada
+         una de las personas del sistema es inadministrable y hace creer
+         que cada quien puede tener su combinación. Aquí la matriz es la
+         DEL ROL, y lo que se le concede a una persona en particular es una
+         EXCEPCIÓN con oficio, motivo y vigencia, listada aparte. Eso es
+         además lo que exige RNF02.
+
+       · El aislamiento entre direcciones (RNF01) estaba resuelto como una
+         frase en un aviso. Aquí se ve en la matriz: para quien pertenece a
+         una dirección, los módulos de la otra aparecen como fila bloqueada
+         con su leyenda. La regla se demuestra, no se anuncia.
+
+       · La bitácora del guion es una tabla de siete columnas con filtro por
+         fecha y usuario. Lo que un auditor pregunta no es "lista todo",
+         sino qué le pasó a un expediente y quién lo tocó. Por eso se
+         busca por folio, se filtra por módulo y tipo de acción, cada
+         edición muestra ANTES → DESPUÉS, y los INTENTOS DENEGADOS también
+         se registran: un control que no deja rastro de lo que impidió no
+         demuestra nada.
+     ================================================================== */
+
+  $("#btnXls").innerHTML = ico("excel") + "Exportar bitácora (Excel)";
+
+  $("#avisoPermisosCuerpo").innerHTML =
+    '<div class="resumen-lista">' +
+    '<div class="resumen-dato"><span class="r-lab">Los permisos son del rol</span>' +
+      '<span class="r-val">Cada persona recibe los permisos de su rol. Para cambiárselos se le cambia ' +
+      'el rol; lo que se concede a una persona en concreto es una excepción con oficio, motivo y ' +
+      'fecha de término (RNF02).</span></div>' +
+    '<div class="resumen-dato"><span class="r-lab">Aislamiento entre direcciones</span>' +
+      '<span class="r-val">Las direcciones operan con aislamiento estricto: el área de Salud no puede ' +
+      'consultar información de Empleo ni al revés. No es una restricción de pantalla, es de datos ' +
+      '(RNF01).</span></div>' +
+    '<div class="resumen-dato"><span class="r-lab">No existe el permiso de eliminar</span>' +
+      '<span class="r-val">Ningún registro se borra nunca. Lo que puede hacerse es <b>cerrar</b>: ' +
+      'expedientes, vinculaciones o grupos salen de operación y conservan íntegro su historial ' +
+      '(RNF03). Una cuenta tampoco se elimina: se suspende.</span></div>' +
+    '<div class="resumen-dato"><span class="r-lab">La cuenta no es un correo</span>' +
+      '<span class="r-val">Se entra con una cuenta institucional <b>nombre.apellido</b> que asigna la ' +
+      'Dirección de Área, no con el correo de la persona. Un correo cambia de titular, se comparte y ' +
+      'sobrevive a la adscripción; una cuenta institucional se suspende con la persona y conserva su ' +
+      'rastro en la bitácora. Y lo que abre cada módulo es el <b>rol</b>, no la cuenta.</span></div>' +
+    '<div class="resumen-dato"><span class="r-lab">La bitácora no se edita</span>' +
+      '<span class="r-val">Solo crece. Registra lo que se hizo y también lo que se intentó y el ' +
+      'sistema impidió; nadie, ni el superadministrador, puede modificarla o borrar una línea.</span></div>' +
+    "</div>";
+
+  /* ======================================================================
+     2. Catálogos
+     ================================================================== */
+  var DIRS = { atencion:"Dirección de Atención y Salud",
+               empleo:"Dirección de Capacitación y Empleo" };
+
+  /* dir = a qué dirección pertenece el módulo. null = transversal.
+     acc = qué acciones tienen sentido en ese módulo; el resto se dibuja
+     como "no aplica" y no como un permiso negado, que no es lo mismo.   */
+  var MODULOS = [
+    { id:"panel",       t:"Panel Estadístico",      dir:null,       acc:["ver","exportar"] },
+    { id:"registro",    t:"Registro de Persona",    dir:null,       acc:["ver","crear","editar"] },
+    { id:"expedientes", t:"Expedientes",            dir:null,       acc:["ver","crear","editar","cerrar","exportar"] },
+    { id:"familiar",    t:"Expediente Familiar",    dir:null,       acc:["ver","crear","editar","exportar"] },
+    { id:"salud",       t:"Salud y Vulnerabilidad", dir:"atencion", acc:["ver","crear","editar","exportar"] },
+    { id:"empleo",      t:"Empleabilidad",          dir:"empleo",   acc:["ver","crear","editar","cerrar","exportar"] },
+    { id:"capacita",    t:"Capacitación",           dir:"empleo",   acc:["ver","crear","editar","cerrar","exportar"] },
+    { id:"censo",       t:"Censo Empresarial",      dir:"empleo",   acc:["ver","crear","editar","exportar"] },
+    { id:"canaliza",    t:"Canalizaciones",         dir:null,       acc:["ver","crear","editar","exportar"] },
+    { id:"revalida",    t:"Revalidación de Estudios", dir:null,      acc:["ver","crear","editar","exportar"] },
+    { id:"documenta",   t:"Documentación e Identidad", dir:null,     acc:["ver","editar","exportar"] },
+    { id:"constancia",  t:"Constancias",            dir:null,       acc:["ver","crear","exportar"] }
+  ];
+
+  /* "Cerrar" ocupa el lugar donde el guion pedía "Eliminar". */
+  var ACCIONES = [
+    { id:"ver",      t:"Ver" },
+    { id:"crear",    t:"Crear" },
+    { id:"editar",   t:"Editar" },
+    { id:"cerrar",   t:"Cerrar" },
+    { id:"exportar", t:"Exportar" }
+  ];
+
+  var ROLES = {
+    super:      { t:"Superadmin",           c:"chip-guinda" },
+    director:   { t:"Director de Área",     c:"chip-jade" },
+    capturista: { t:"Capturista Municipal", c:"chip-neutro" },
+    consulta:   { t:"Consulta",             c:"chip-neutro" }
+  };
+
+  /* ======================================================================
+     3. Usuarios. Datos a mano, como en el resto del prototipo.
+     ================================================================== */
+  var USR = [
+    { usu:"jorge.pineda", id:"u1", n:"Mtro. Jorge Pineda Ovalle", cargo:"Subsecretario de Movilidad Humana",
+      rol:"super", dir:null, area:"Secretaría de la Frontera Sur", mun:"Tuxtla Gutiérrez",
+      est:"activo", acc:"2026-08-27 08:14", exc:[] },
+
+    { usu:"adriana.molina", id:"u2", n:"Lic. Adriana Molina Sántiz", cargo:"Directora de Capacitación y Empleo",
+      rol:"director", dir:"empleo", area:DIRS.empleo, mun:"Tapachula",
+      est:"activo", acc:"2026-08-27 10:52", exc:[] },
+
+    { usu:"luis.ramirez", id:"u3", n:"Dr. Luis A. Ramírez Toledo", cargo:"Director de Atención y Salud",
+      rol:"director", dir:"atencion", area:DIRS.atencion, mun:"Tapachula",
+      est:"activo", acc:"2026-08-27 09:31", exc:[] },
+
+    { usu:"maria.gomez", id:"u4", n:"María Gómez Pérez", cargo:"Capturista de ventanilla",
+      rol:"capturista", dir:"atencion", area:"Ventanilla municipal", mun:"Tapachula",
+      est:"activo", acc:"2026-08-27 11:09",
+      /* La excepción es la forma correcta de conceder algo a una persona:
+         con oficio, motivo y fecha de término. Nunca una casilla suelta. */
+      exc:[{ m:"expedientes", a:"editar", oficio:"SFS/0943/2026", hasta:"2026-09-30",
+             motivo:"Corrección de CURP capturadas con error en el piloto de agosto." }] },
+
+    { usu:"ruben.castellanos", id:"u5", n:"Ing. Rubén Castellanos Díaz", cargo:"Brigadista de censo empresarial",
+      rol:"capturista", dir:"empleo", area:DIRS.empleo, mun:"Suchiate",
+      est:"activo", acc:"2026-08-27 07:45", exc:[] },
+
+    { usu:"elena.vazquez", id:"u6", n:"C.P. Elena Vázquez Moreno", cargo:"Analista de información",
+      rol:"consulta", dir:null, area:"Subsecretaría · Unidad de Planeación", mun:"Tuxtla Gutiérrez",
+      est:"activo", acc:"2026-08-26 17:20", exc:[] },
+
+    { usu:"sofia.marquez", id:"u7", n:"Sofía Márquez Ruiz", cargo:"Capturista de ventanilla",
+      rol:"capturista", dir:"atencion", area:"Ventanilla municipal", mun:"Huixtla",
+      est:"suspendido", acc:"2026-08-11 13:02",
+      susp:{ f:"2026-08-12", oficio:"SFS/0874/2026",
+             motivo:"Cambio de adscripción. La cuenta se suspende, no se elimina: sus capturas y su " +
+                    "rastro en la bitácora se conservan." }, exc:[] }
+  ];
+
+  /* ======================================================================
+     4. Cálculo de permisos
+     --------------------------------------------------------------------
+     Un permiso puede estar en cinco estados y no son intercambiables:
+       si       · concedido por el rol
+       no       · el rol no lo tiene
+       oficio   · existe pero requiere oficio y autorización del Director
+                  de Área o del Subsecretario (RNF02)
+       exc      · concedido a esta persona por excepción documentada
+       aislado  · el módulo es de otra dirección (RNF01)
+       na       · la acción no aplica a ese módulo
+     ================================================================== */
+  function permiso(u, m, a) {
+    if (m.acc.indexOf(a) < 0) return "na";
+    if (m.dir && u.dir !== m.dir && u.rol !== "super") return "aislado";
+
+    var e = u.exc.filter(function (x) { return x.m === m.id && x.a === a; })[0];
+    if (e) return "exc";
+
+    if (u.rol === "super")    return "si";
+    if (u.rol === "director") return "si";
+    if (u.rol === "consulta") return (a === "ver" || a === "exportar") ? "si" : "no";
+
+    /* Capturista Municipal: captura y consulta, pero no modifica ni cierra
+       sin oficio, y no exporta datos personales.                         */
+    if (a === "ver" || a === "crear") return "si";
+    if (a === "editar" || a === "cerrar") return "oficio";
+    return m.id === "panel" ? "si" : "no";
+  }
+
+  function aislado(u, m) {
+    return !!(m.dir && u.dir !== m.dir && u.rol !== "super");
+  }
+
+  function fecha(iso) { var p = iso.split("-"); return p[2] + "/" + p[1] + "/" + p[0]; }
+  function fechaHora(s) {
+    var p = s.split(" ");
+    return { f:fecha(p[0]), h:p[1] };
+  }
+  function plural(n, uno, varios) { return n + " " + (n === 1 ? uno : varios); }
+
+  /* ======================================================================
+     5. Bitácora. Append-only: registra lo hecho y lo impedido.
+     ================================================================== */
+  var BIT = [
+    { t:"2026-08-27 11:09", u:"María Gómez Pérez", rol:"capturista", mod:"registro",
+      acc:"Alta de expediente", reg:"SIMH-2026-TAP-0412", ip:"10.24.8.51" },
+
+    { t:"2026-08-27 10:58", u:"María Gómez Pérez", rol:"capturista", mod:"expedientes",
+      acc:"Edición de expediente", reg:"SIMH-2026-TAP-0341", ip:"10.24.8.51",
+      oficio:"SFS/0943/2026",
+      cambio:{ campo:"CURP", antes:"MACY940318MNEXXX01", despues:"MACY940318MCSRRL07" } },
+
+    /* Un intento impedido es evidencia de que el control opera. Sin este
+       renglón, RNF01 solo se puede afirmar; con él, se demuestra.        */
+    { t:"2026-08-27 10:41", u:"Dr. Luis A. Ramírez Toledo", rol:"director", mod:"empleo",
+      acc:"Intento de consulta denegado", reg:"SIMH-2026-TAP-0412", ip:"10.24.8.12",
+      denegado:1, nota:"Aislamiento entre direcciones (RNF01): Atención y Salud no consulta " +
+                       "Empleabilidad." },
+
+    { t:"2026-08-27 10:52", u:"Lic. Adriana Molina Sántiz", rol:"director", mod:"empleo",
+      acc:"Cierre de vinculación laboral", reg:"SIMH-2026-TAP-0658", ip:"10.24.8.33",
+      cambio:{ campo:"Estado de la vinculación", antes:"Colocación vigente", despues:"Concluida · renuncia voluntaria" } },
+
+    { t:"2026-08-27 09:40", u:"Sistema", rol:"—", mod:"canaliza",
+      acc:"Emisión automática de oficio", reg:"SFS/0947/2026", ip:"—",
+      nota:"Canalización al Hospital General de Tapachula, generada por marcador de vulnerabilidad." },
+
+    { t:"2026-08-27 09:31", u:"Dr. Luis A. Ramírez Toledo", rol:"director", mod:"salud",
+      acc:"Registro de condición de salud", reg:"SIMH-2026-TAP-0412", ip:"10.24.8.12" },
+
+    { t:"2026-08-27 08:22", u:"Mtro. Jorge Pineda Ovalle", rol:"super", mod:"admin",
+      acc:"Excepción de permiso otorgada", reg:"María Gómez Pérez", ip:"10.24.1.4",
+      oficio:"SFS/0943/2026",
+      cambio:{ campo:"Editar · Expedientes", antes:"Requiere oficio", despues:"Concedido hasta el 30/09/2026" } },
+
+    { t:"2026-08-27 08:14", u:"Mtro. Jorge Pineda Ovalle", rol:"super", mod:"admin",
+      acc:"Inicio de sesión", reg:"—", ip:"10.24.1.4" },
+
+    { t:"2026-08-26 17:20", u:"C.P. Elena Vázquez Moreno", rol:"consulta", mod:"panel",
+      acc:"Exportación de reporte agregado", reg:"Glosa mensual · agosto 2026", ip:"10.24.5.90",
+      nota:"Reporte anonimizado: sin nombres ni CURP." },
+
+    { t:"2026-08-26 16:05", u:"María Gómez Pérez", rol:"capturista", mod:"expedientes",
+      acc:"Intento de cierre denegado", reg:"SIMH-2026-TAP-0341", ip:"10.24.8.51",
+      denegado:1, nota:"El perfil de Capturista Municipal no cierra expedientes: requiere oficio y " +
+                       "autorización del Director de Área (RNF02)." },
+
+    { t:"2026-08-12 09:15", u:"Mtro. Jorge Pineda Ovalle", rol:"super", mod:"admin",
+      acc:"Suspensión de cuenta", reg:"Sofía Márquez Ruiz", ip:"10.24.1.4",
+      oficio:"SFS/0874/2026",
+      cambio:{ campo:"Estado de la cuenta", antes:"Activa", despues:"Suspendida" } }
+  ];
+
+  var MOD_TXT = {};
+  MODULOS.forEach(function (m) { MOD_TXT[m.id] = m.t; });
+  MOD_TXT.admin = "Administración";
+
+  /* ======================================================================
+     6. Estado de la pantalla
+     ================================================================== */
+  var qs   = new URLSearchParams(location.search);
+  var pest = qs.get("tab") === "bitacora" ? "bitacora" : "usuarios";
+  var sel  = qs.get("u") || null;      /* usuario seleccionado */
+  var fRol = "todos", fEst = "todos", buscaU = "";
+  var bMod = "todos", bAcc = "todos", buscaB = "";
+
+  if (sel && !USR.filter(function (u) { return u.id === sel; }).length) sel = null;
+
+  function usuario() {
+    return USR.filter(function (u) { return u.id === sel; })[0] || null;
+  }
+
+  /* ======================================================================
+     7. Pestañas
+     ================================================================== */
+  var PESTS = [
+    { id:"usuarios", t:"Usuarios y permisos" },
+    { id:"bitacora", t:"Bitácora de auditoría" }
+  ];
+
+  function pintaPestanas() {
+    $("#pestanas").innerHTML = PESTS.map(function (p) {
+      var act = p.id === pest;
+      var cta = p.id === "usuarios"
+        ? '<span class="chip chip-neutro" style="margin-left:8px;padding:1px 7px;font-size:11px">' +
+          USR.length + "</span>"
+        : "";
+      return '<button type="button" role="tab" class="pestana' + (act ? " activa" : "") +
+        '" id="tab-' + p.id + '" data-tab="' + p.id + '" aria-selected="' + act +
+        '" aria-controls="panel" tabindex="' + (act ? "0" : "-1") + '">' + p.t + cta + "</button>";
+    }).join("");
+  }
+
+  /* ======================================================================
+     8. Pestaña: usuarios y permisos
+     ================================================================== */
+  function inic(n) {
+    var w = n.replace(/^(Lic\.|Dr\.|Mtro\.|Ing\.|C\.P\.)\s*/, "").split(" ");
+    return (w[0] || "").charAt(0) + (w[1] || "").charAt(0);
+  }
+
+  function pasaU(u) {
+    if (fRol !== "todos" && u.rol !== fRol) return false;
+    if (fEst !== "todos" && u.est !== fEst) return false;
+    if (buscaU) {
+      var t = buscaU.toLowerCase();
+      if ((u.n + " " + u.usu + " " + u.cargo + " " + u.area + " " + u.mun)
+            .toLowerCase().indexOf(t) < 0) return false;
+    }
+    return true;
+  }
+
+  function filtrosUsuarios() {
+    return '<div class="filtros-fila">' +
+      '<div class="campo f-busca"><label for="bqU">Buscar</label>' +
+        '<input type="text" id="bqU" value="' + esc(buscaU) + '" placeholder="Nombre, cuenta, cargo, área o municipio"></div>' +
+      '<div class="campo f-sel"><label for="fRol">Rol</label><select id="fRol">' +
+        '<option value="todos">Todos los roles</option>' +
+        Object.keys(ROLES).map(function (r) {
+          return '<option value="' + r + '"' + (fRol === r ? " selected" : "") + ">" +
+            ROLES[r].t + "</option>";
+        }).join("") + "</select></div>" +
+      '<div class="campo f-sel"><label for="fEst">Estado</label><select id="fEst">' +
+        ["todos", "activo", "suspendido"].map(function (e) {
+          return '<option value="' + e + '"' + (fEst === e ? " selected" : "") + ">" +
+            (e === "todos" ? "Activos y suspendidos" : e.charAt(0).toUpperCase() + e.slice(1) + "s") +
+            "</option>";
+        }).join("") + "</select></div>" +
+      "</div>";
+  }
+
+  function tablaUsuarios() {
+    var vis = USR.filter(pasaU);
+    var filas = vis.map(function (u) {
+      var R = ROLES[u.rol];
+      /* La fila entera es clicable por comodidad del ratón, pero el control
+         accesible es el botón del nombre: poner role="button" sobre el <tr>
+         destruía la semántica de tabla para un lector de pantalla. Es el
+         mismo criterio del listado de expedientes.                       */
+      return '<tr class="' + (u.id === sel ? "activo " : "") + (u.est === "suspendido" ? "suspendido" : "") +
+        '" data-u="' + u.id + '">' +
+        '<td><span class="persona-celda"><span class="avatar-mini">' + inic(u.n) + "</span>" +
+          '<span><button type="button" class="btn btn-texto p-nom" data-abre="' + u.id +
+          '" aria-expanded="' + (u.id === sel) + '" aria-controls="panelPerm">' + esc(u.n) + "</button>" +
+          '<span class="p-sub">' + esc(u.cargo) + "</span>" +
+          '<span class="p-usu">' + ico("llave") + esc(u.usu) + "</span></span></span></td>" +
+        '<td><span class="u-area">' + esc(u.area) + "</span></td>" +
+        "<td>" + esc(u.mun) + "</td>" +
+        '<td><span class="chip ' + R.c + '">' + R.t + "</span></td>" +
+        "<td>" + (u.est === "activo"
+          ? '<span class="chip chip-jade">' + ico("check") + "Activa</span>"
+          : '<span class="chip chip-neutro">' + ico("candado") + "Suspendida</span>") + "</td>" +
+        '<td><span class="u-acc">' + fechaHora(u.acc).f + "<br>" + fechaHora(u.acc).h + "</span></td>" +
+        "</tr>";
+    }).join("");
+
+    return '<div class="tarjeta" style="padding:0;overflow:hidden">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;' +
+      'flex-wrap:wrap;padding:15px 16px 13px;border-bottom:1px solid var(--linea)">' +
+        '<h2 class="sec-tit" id="tUsuarios">Personas con acceso al sistema</h2>' +
+        '<button class="btn btn-secundario btn-s" type="button" id="btnAlta">' + ico("mas") +
+          "Dar de alta una cuenta</button>" +
+      "</div>" +
+      (vis.length
+        ? '<div style="overflow-x:auto"><table class="tabla t-usr">' +
+          '<colgroup><col class="c-per"><col class="c-are"><col class="c-mun">' +
+          '<col class="c-rol"><col class="c-est"><col class="c-acc"></colgroup><thead><tr>' +
+          "<th>Persona y cargo</th><th>Área o dirección</th><th>Municipio</th>" +
+          "<th>Rol</th><th>Estado</th><th>Último acceso</th>" +
+          "</tr></thead><tbody>" + filas + "</tbody></table></div>"
+        : '<div class="vacio">' + ico("buscar") + "Ninguna cuenta con estos filtros.</div>") +
+      '<div class="tabla-pie"><span>' + plural(vis.length, "cuenta", "cuentas") + " de " + USR.length +
+      "</span><span>Selecciona una fila para ver sus permisos</span></div></div>";
+  }
+
+  /* ------------------------------------------------------ Matriz -------- */
+  var CEL = {
+    si:      { i:"check",   t:"Concedido" },
+    oficio:  { i:"candado", t:"Requiere oficio" },
+    exc:     { i:"llave",   t:"Excepción vigente" },
+    aislado: { i:"candado", t:"Sin acceso: otra dirección" }
+  };
+
+  function celda(est) {
+    if (est === "na") return '<span class="cel na" title="No aplica" aria-label="No aplica">—</span>';
+    if (est === "no") return '<span class="cel no" title="No concedido" aria-label="No concedido">·</span>';
+    var c = CEL[est];
+    return '<span class="cel ' + est + '" title="' + c.t + '" role="img" aria-label="' + c.t + '">' +
+      ico(c.i) + "</span>";
+  }
+
+  function panelPermisos(u) {
+    var R = ROLES[u.rol];
+
+    var filas = MODULOS.map(function (m) {
+      var ais = aislado(u, m);
+      return '<tr class="' + (ais ? "aislado" : "") + '">' +
+        '<td><span class="m-nom">' + esc(m.t) + "</span>" +
+        '<span class="m-dir">' +
+          (ais ? ico("candado") + " Sin acceso · " + esc(DIRS[m.dir])
+               : (m.dir ? esc(DIRS[m.dir]) : "Módulo transversal")) +
+        "</span></td>" +
+        ACCIONES.map(function (a) {
+          return "<td>" + celda(permiso(u, m, a.id)) + "</td>";
+        }).join("") + "</tr>";
+    }).join("");
+
+    var exc = u.exc.map(function (x) {
+      var mt = MOD_TXT[x.m] || x.m;
+      var at = ACCIONES.filter(function (a) { return a.id === x.a; })[0];
+      return '<div class="exc-item">' + ico("llave") +
+        '<div><span class="x-t">' + esc((at ? at.t : x.a) + " · " + mt) + "</span>" +
+        '<span class="x-n">' + esc(x.motivo) + "<br>" +
+        "Oficio <b>" + esc(x.oficio) + "</b> · vigente hasta el " + fecha(x.hasta) +
+        ". Al vencer, el permiso vuelve solo a lo que da el rol.</span></div></div>";
+    }).join("");
+
+    return '<div class="tarjeta mt-16" style="padding:0;overflow:hidden" id="panelPerm">' +
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;' +
+      'flex-wrap:wrap;padding:16px">' +
+        "<div>" +
+          '<h2 class="sec-tit" id="tPerm" tabindex="-1">Permisos de ' + esc(u.n) + "</h2>" +
+          '<div style="font-size:12.5px;color:var(--gris);margin-top:4px;line-height:1.5">' +
+            "Vienen del rol <b>" + R.t + "</b>" + (u.dir ? " · " + esc(DIRS[u.dir]) : "") + ". " +
+            "Para cambiarlos se cambia el rol; lo que se concede a esta persona en particular es una " +
+            "excepción con oficio." +
+          "</div>" +
+        "</div>" +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+          '<button class="btn btn-secundario btn-s" type="button" id="btnRol">' + ico("editar") +
+            "Cambiar de rol</button>" +
+          '<button class="btn btn-secundario btn-s" type="button" id="btnExc">' + ico("llave") +
+            "Registrar excepción</button>" +
+          (u.est === "activo"
+            ? '<button class="btn btn-secundario btn-s" type="button" id="btnSusp">' + ico("candado") +
+              "Suspender cuenta</button>"
+            : '<button class="btn btn-secundario btn-s" type="button" id="btnReact">' + ico("check") +
+              "Reactivar cuenta</button>") +
+        "</div>" +
+      "</div>" +
+
+      (u.susp ? '<div class="aviso aviso-neutro" style="margin:0 16px 16px">' + ico("candado") +
+        "<span><strong>Cuenta suspendida el " + fecha(u.susp.f) + "</strong>" +
+        esc(u.susp.motivo) + " Oficio <b>" + esc(u.susp.oficio) + "</b>.</span></div>" : "") +
+
+      '<div style="overflow-x:auto"><table class="matriz">' +
+        '<colgroup><col class="c-mod">' +
+        ACCIONES.map(function () { return "<col>"; }).join("") + "</colgroup>" +
+        "<thead><tr><th>Módulo</th>" +
+        ACCIONES.map(function (a) { return "<th>" + a.t + "</th>"; }).join("") +
+        "</tr></thead><tbody>" + filas + "</tbody></table></div>" +
+
+      '<div class="leyenda">' +
+        '<span>' + celda("si") + "Concedido</span>" +
+        '<span>' + celda("oficio") + "Requiere oficio y autorización del Director de Área</span>" +
+        '<span>' + celda("exc") + "Excepción documentada</span>" +
+        '<span>' + celda("aislado") + "Sin acceso: módulo de otra dirección</span>" +
+        '<span>' + celda("no") + "No concedido</span>" +
+        '<span>' + celda("na") + "No aplica a ese módulo</span>" +
+      "</div>" +
+
+      (exc ? '<div style="padding:16px;border-top:1px solid var(--linea)">' +
+        '<h3 class="sec-tit" style="margin-bottom:4px">Excepciones vigentes</h3>' + exc + "</div>" : "") +
+
+      '<div class="tabla-pie" style="display:block">' +
+        "No existe permiso de <b>eliminar</b>: ningún registro se borra (RNF03). <b>Cerrar</b> retira " +
+        "de operación un expediente, una vinculación o un grupo, y conserva íntegro su historial." +
+      "</div></div>";
+  }
+
+  function vistaUsuarios() {
+    var u = usuario();
+    return filtrosUsuarios() + tablaUsuarios() + (u ? panelPermisos(u) : "");
+  }
+
+  /* ======================================================================
+     9. Pestaña: bitácora
+     ================================================================== */
+  var ACC_TIPOS = [
+    { id:"todos",    t:"Todas las acciones" },
+    { id:"alta",     t:"Altas y registros" },
+    { id:"edicion",  t:"Ediciones" },
+    { id:"cierre",   t:"Cierres" },
+    { id:"denegado", t:"Intentos denegados" },
+    { id:"export",   t:"Exportaciones" }
+  ];
+
+  function tipoDe(b) {
+    if (b.denegado) return "denegado";
+    var a = b.acc.toLowerCase();
+    if (a.indexOf("exportaci") >= 0) return "export";
+    if (a.indexOf("cierre") >= 0 || a.indexOf("suspensi") >= 0) return "cierre";
+    if (a.indexOf("edici") >= 0 || a.indexOf("excepci") >= 0) return "edicion";
+    return "alta";
+  }
+
+  function pasaB(b) {
+    if (bMod !== "todos" && b.mod !== bMod) return false;
+    if (bAcc !== "todos" && tipoDe(b) !== bAcc) return false;
+    if (buscaB) {
+      var t = buscaB.toLowerCase();
+      if ((b.u + " " + b.acc + " " + b.reg + " " + (b.oficio || "")).toLowerCase().indexOf(t) < 0) return false;
+    }
+    return true;
+  }
+
+  function filtrosBitacora() {
+    return '<div class="filtros-fila">' +
+      '<div class="campo f-busca"><label for="bqB">Buscar</label>' +
+        '<input type="text" id="bqB" value="' + esc(buscaB) +
+        '" placeholder="Folio afectado, persona usuaria u oficio"></div>' +
+      '<div class="campo f-sel"><label for="bMod">Módulo</label><select id="bMod">' +
+        '<option value="todos">Todos los módulos</option>' +
+        Object.keys(MOD_TXT).map(function (k) {
+          return '<option value="' + k + '"' + (bMod === k ? " selected" : "") + ">" +
+            esc(MOD_TXT[k]) + "</option>";
+        }).join("") + "</select></div>" +
+      '<div class="campo f-sel"><label for="bAcc">Tipo de acción</label><select id="bAcc">' +
+        ACC_TIPOS.map(function (a) {
+          return '<option value="' + a.id + '"' + (bAcc === a.id ? " selected" : "") + ">" +
+            a.t + "</option>";
+        }).join("") + "</select></div>" +
+      "</div>";
+  }
+
+  function vistaBitacora() {
+    var vis = BIT.filter(pasaB);
+    var den = BIT.filter(function (b) { return b.denegado; }).length;
+
+    var filas = vis.map(function (b) {
+      var fh = fechaHora(b.t);
+      var R = ROLES[b.rol];
+      var cambio = b.cambio
+        ? '<span class="cambio"><b>' + esc(b.cambio.campo) + "</b><br>" +
+          '<span class="c-ant">' + esc(b.cambio.antes) + "</span> → " +
+          esc(b.cambio.despues) + "</span>"
+        : "";
+      return '<tr class="' + (b.denegado ? "denegado" : "") + '">' +
+        '<td><span class="b-fec">' + fh.f + '</span><span class="b-hor">' + fh.h + "</span></td>" +
+        '<td><span class="b-usr">' + esc(b.u) + "</span>" +
+          '<span class="b-rol">' + (R ? R.t : "Automático") + "</span></td>" +
+        '<td><span class="b-acc">' + (b.denegado ? ico("candado") + " " : "") + esc(b.acc) + "</span>" +
+          '<span class="b-reg">' + (b.reg === "—" ? "—" : esc(b.reg)) +
+          (b.oficio ? " · oficio <b>" + esc(b.oficio) + "</b>" : "") + "</span>" +
+          (b.nota ? '<span class="b-reg">' + esc(b.nota) + "</span>" : "") +
+          cambio + "</td>" +
+        '<td><span class="b-mod">' + esc(MOD_TXT[b.mod] || b.mod) + "</span></td>" +
+        '<td><span class="b-ip">' + esc(b.ip) + "</span></td>" +
+        "</tr>";
+    }).join("");
+
+    return filtrosBitacora() +
+      '<div class="tarjeta" style="padding:0;overflow:hidden">' +
+      '<div style="padding:15px 16px 13px;border-bottom:1px solid var(--linea)">' +
+        '<h2 class="sec-tit">Bitácora de auditoría</h2>' +
+        '<div style="font-size:12.5px;color:var(--gris);margin-top:4px;line-height:1.5">' +
+        "Registro de solo lectura de lo que se hizo y de lo que el sistema impidió. " +
+        (den ? "Hay " + plural(den, "intento denegado", "intentos denegados") + " en el periodo." : "") +
+        "</div></div>" +
+      (vis.length
+        ? '<div style="overflow-x:auto"><table class="tabla t-bit">' +
+          '<colgroup><col class="c-cua"><col class="c-qui"><col class="c-que">' +
+          '<col class="c-don"><col class="c-ip"></colgroup><thead><tr>' +
+          "<th>Fecha y hora</th><th>Quién</th><th>Qué hizo y sobre qué registro</th>" +
+          "<th>Módulo</th><th>Dirección IP</th>" +
+          "</tr></thead><tbody>" + filas + "</tbody></table></div>"
+        : '<div class="vacio">' + ico("buscar") + "Ningún movimiento con estos filtros.</div>") +
+      '<div class="tabla-pie" style="display:block">' +
+        plural(vis.length, "movimiento", "movimientos") + " de " + BIT.length + ". " +
+        "La bitácora <b>solo crece</b>: ninguna línea puede modificarse ni retirarse, tampoco por el " +
+        "superadministrador (RNF02)." +
+      "</div></div>";
+  }
+
+  /* ======================================================================
+     10. Pintado y eventos
+     ================================================================== */
+  function pinta() {
+    pintaPestanas();
+    $("#panel").innerHTML =
+      '<div role="tabpanel" aria-labelledby="tab-' + pest + '" tabindex="0">' +
+      (pest === "usuarios" ? vistaUsuarios() : vistaBitacora()) + "</div>";
+    eventos();
+  }
+
+  function anuncia(t) { $("#anuncio").textContent = t; }
+
+  /* Las acciones de administración no se simulan a medias: cada una exige
+     oficio y queda en la bitácora, así que el prototipo lo declara en vez
+     de fingir un formulario que no guarda nada.                          */
+  function pendiente(q) {
+    anuncia(q + " Requiere oficio y queda registrado en la bitácora.");
+    window.alert(q + "\n\nEn el sistema real esta acción exige oficio y autorización, y queda " +
+      "registrada en la bitácora de auditoría (RNF02). En el prototipo no se ejecuta.");
+  }
+
+  function eventos() {
+    $$("[data-tab]").forEach(function (b) {
+      b.onclick = function () {
+        pest = this.getAttribute("data-tab");
+        pinta();
+        var t = $("#tab-" + pest);
+        if (t) t.focus({ preventScroll:true });
+      };
+      b.onkeydown = function (ev) {
+        var ids = PESTS.map(function (p) { return p.id; });
+        var i = ids.indexOf(this.getAttribute("data-tab")), n = null;
+        if (ev.key === "ArrowRight") n = ids[(i + 1) % ids.length];
+        else if (ev.key === "ArrowLeft") n = ids[(i - 1 + ids.length) % ids.length];
+        else if (ev.key === "Home") n = ids[0];
+        else if (ev.key === "End") n = ids[ids.length - 1];
+        if (!n) return;
+        ev.preventDefault();
+        var d = $("#tab-" + n);
+        if (d) d.click();
+      };
+    });
+
+    function abreUsuario(id) {
+      sel = (sel === id) ? null : id;
+      pinta();
+      var h = $("#tPerm");
+      if (h) {
+        h.focus({ preventScroll:true });
+        h.scrollIntoView({ behavior:"smooth", block:"center" });
+        anuncia("Permisos de " + usuario().n + ".");
+      } else {
+        var b = document.querySelector('[data-abre="' + id + '"]');
+        if (b) b.focus({ preventScroll:true });
+        anuncia("Permisos cerrados.");
+      }
+    }
+
+    $$("[data-abre]").forEach(function (b) {
+      b.onclick = function (ev) {
+        ev.stopPropagation();
+        abreUsuario(this.getAttribute("data-abre"));
+      };
+    });
+
+    $$("[data-u]").forEach(function (tr) {
+      tr.onclick = function () { abreUsuario(this.getAttribute("data-u")); };
+    });
+
+    /* Filtros. Los de texto no repintan en cada tecla para no perder el
+       cursor: repintan al soltar la escritura (change) y con Enter.      */
+    function ligaBusca(id, set) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.onchange = function () { set(this.value); pinta(); foco(id); };
+      el.onkeydown = function (ev) {
+        if (ev.key === "Enter") { set(this.value); pinta(); foco(id); }
+      };
+    }
+    function foco(id) {
+      var d = document.getElementById(id);
+      if (d) { d.focus({ preventScroll:true }); var v = d.value; d.value = ""; d.value = v; }
+    }
+    function ligaSel(id, set) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.onchange = function () { set(this.value); pinta(); foco(id); };
+    }
+
+    ligaBusca("bqU", function (v) { buscaU = v; });
+    ligaSel("fRol", function (v) { fRol = v; });
+    ligaSel("fEst", function (v) { fEst = v; });
+    ligaBusca("bqB", function (v) { buscaB = v; });
+    ligaSel("bMod", function (v) { bMod = v; });
+    ligaSel("bAcc", function (v) { bAcc = v; });
+
+    var u = usuario();
+    var acciones = [
+      ["btnAlta", "Alta de una cuenta nueva."],
+      ["btnRol", u ? "Cambio de rol de " + u.n + "." : ""],
+      ["btnExc", u ? "Excepción de permiso para " + u.n + "." : ""],
+      ["btnSusp", u ? "Suspensión de la cuenta de " + u.n + ". La cuenta no se elimina: se suspende y " +
+        "conserva su rastro en la bitácora." : ""],
+      ["btnReact", u ? "Reactivación de la cuenta de " + u.n + "." : ""]
+    ];
+    acciones.forEach(function (a) {
+      var b = document.getElementById(a[0]);
+      if (b) b.onclick = function () { pendiente(a[1]); };
+    });
+  }
+
+  pinta();
+})();
+</script>
+</body>
+</html>

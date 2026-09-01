@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Censo Empresarial · Captura sin conexión · SIMH</title>
+<link rel="icon" href="assets/img/simh-isotipo-96.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/simh.css">
+<style>
+  /* ======================================================================
+     CENSO EMPRESARIAL OFFLINE (RF15) — la única pantalla móvil del sistema
+     --------------------------------------------------------------------
+     Se llega a ella desde el menú lateral del escritorio, así que no puede
+     ser una página de 390 px suelta dentro de una ventana de 1440: se
+     vería rota. Se presenta el teléfono ENMARCADO, con un panel de
+     revisión al lado que permite ver los dos estados de conexión y las dos
+     vistas que pide el requisito, porque una pantalla que trata sobre la
+     conexión no se puede revisar en un solo estado.
+     Por debajo de 900 px el marco desaparece y la interfaz móvil ocupa
+     todo: es una pantalla móvil de verdad, no la fotografía de una.
+     ================================================================== */
+  /* El par teléfono + panel se compone centrado y con ancho acotado: a todo
+     lo ancho de 1520 px el panel quedaba flotando con medio metro de vacío
+     a la derecha, que se lee como una pantalla sin terminar.             */
+  .g-censo{display:grid;grid-template-columns:410px minmax(0,420px);gap:28px;
+    align-items:start;justify-content:center;max-width:900px;margin:0 auto}
+
+  /* ---------- Marco del dispositivo (solo revisión en escritorio) ------ */
+  .tel{width:390px;margin:0 auto;border:10px solid #23201E;border-radius:38px;
+    background:#23201E;box-shadow:0 0 0 1px var(--linea)}
+  .tel-pantalla{height:844px;overflow:hidden;border-radius:28px;background:var(--hueso);
+    display:flex;flex-direction:column;position:relative}
+  .tel-pie{text-align:center;font-size:12px;color:var(--gris);margin-top:10px}
+
+  /* ---------- Barra superior del teléfono ------------------------------ */
+  .m-top{background:var(--guinda);color:var(--blanco);padding:12px 14px 11px;flex:none;
+    display:flex;align-items:center;gap:10px}
+  .m-top .m-marca{font-family:var(--f-titulo);font-size:12.5px;letter-spacing:.08em;font-weight:700}
+  .m-top .m-sub{display:block;font-family:var(--f-texto);font-size:11px;letter-spacing:0;
+    font-weight:400;opacity:.9;margin-top:1px}
+  .m-top svg{width:22px;height:22px;flex:none}
+
+  /* ---------- Estado de conexión --------------------------------------
+     El guion pedía un chip "SIN CONEXIÓN · 14 registros pendientes". Un
+     chip enuncia el problema y no responde la única pregunta que se hace
+     quien captura en campo: ¿se va a perder lo que llevo? Por eso es un
+     bloque que dice dónde están los datos y cuándo se van a enviar.      */
+  .m-red{display:flex;gap:10px;align-items:flex-start;padding:11px 14px;flex:none;
+    background:var(--arena-050);border-bottom:1px solid var(--linea)}
+  .m-red > svg{width:19px;height:19px;flex:none;stroke-width:1.7;margin-top:1px;stroke:var(--gris)}
+  .m-red .r-tx{flex:1;min-width:0}
+  .m-red .r-t{display:block;font-size:13px;font-weight:700;color:var(--tinta);line-height:1.3}
+  .m-red .r-n{display:block;font-size:12px;color:var(--gris);line-height:1.45;margin-top:2px}
+  .m-red.enlinea{background:var(--jade-050);border-bottom-color:rgba(0,152,135,.24)}
+  .m-red.enlinea > svg{stroke:var(--jade-900)}
+  .m-red.enlinea .r-t{color:var(--jade-900)}
+
+  /* ---------- Cuerpo desplazable --------------------------------------- */
+  .m-cuerpo{flex:1;overflow-y:auto;padding:14px 14px 16px}
+  .m-cuerpo::-webkit-scrollbar{width:5px}
+  .m-cuerpo::-webkit-scrollbar-thumb{background:var(--arena);border-radius:3px}
+
+  /* ---------- Secciones del formulario ---------------------------------
+     Tres secciones tituladas en una sola columna, no diez campos seguidos:
+     el orden es identificar el negocio, responder LO QUE JUSTIFICA EL
+     CENSO, y sólo al final el contacto, que es lo que la persona puede no
+     querer dar. La tercera va plegada.                                   */
+  .m-sec{background:var(--blanco);border:1px solid var(--linea);border-radius:var(--radio);
+    padding:14px;margin-bottom:12px}
+  .m-sec > h3{font-family:var(--f-texto);font-size:14px;font-weight:700;color:var(--tinta);
+    margin:0 0 3px;text-transform:none;letter-spacing:0}
+  .m-sec > .s-n{display:block;font-size:12px;color:var(--gris);line-height:1.45;margin-bottom:13px}
+  .m-sec .campo{margin-bottom:13px}
+  .m-sec .campo:last-child{margin-bottom:0}
+  /* 48 px en campo: el mínimo táctil son 44 y aquí se captura de pie, con
+     una mano y a veces bajo el sol.                                      */
+  .m-sec .campo input,.m-sec .campo select,.m-sec .campo textarea{min-height:48px;font-size:15px}
+  .m-sec .campo textarea{min-height:84px}
+  .m-sec .campo label{font-size:11.5px}
+  .m-num{max-width:130px}
+
+  /* ---------- Opciones grandes (respuestas de una sola pulsación) ------- */
+  .m-ops{display:flex;flex-direction:column;gap:8px}
+  .m-op{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--linea);
+    border-radius:var(--radio-s);background:var(--blanco);padding:12px;cursor:pointer;
+    font-family:var(--f-texto);min-height:48px;text-align:left;width:100%}
+  .m-op input{width:19px;height:19px;accent-color:var(--jade);flex:none;margin-top:1px}
+  .m-op .o-t{display:block;font-size:14px;font-weight:700;color:var(--tinta);line-height:1.3}
+  .m-op .o-n{display:block;font-size:12px;color:var(--gris);line-height:1.4;margin-top:2px}
+  .m-op.sel{border-color:var(--jade);box-shadow:0 0 0 2px var(--jade-050)}
+
+  /* Consecuencia declarada de la respuesta, antes de seguir. */
+  .m-cons{border-left:3px solid var(--jade);background:var(--jade-020);padding:10px 12px;
+    border-radius:0 var(--radio-s) var(--radio-s) 0;font-size:12.5px;line-height:1.5;
+    color:var(--gris);margin-top:11px}
+  .m-cons b{color:var(--tinta)}
+  .m-cons svg{width:14px;height:14px;stroke-width:2;vertical-align:-2px;margin-right:4px;stroke:var(--jade)}
+
+  /* ---------- Adjuntos de campo: foto y ubicación ----------------------- */
+  .m-adj{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .m-adj .btn{width:100%;min-height:48px;flex-direction:column;gap:4px;font-size:12.5px;
+    padding:8px 6px;line-height:1.25;white-space:normal;height:auto}
+  .m-adj .btn svg{width:19px;height:19px}
+  .m-hecho{display:flex;gap:7px;align-items:flex-start;font-size:12px;color:var(--jade-900);
+    line-height:1.45;margin-top:8px;font-weight:700}
+  .m-hecho svg{width:14px;height:14px;stroke-width:2;flex:none;margin-top:2px;stroke:var(--jade-900)}
+  .m-hecho .h-n{display:block;font-weight:400;color:var(--gris);margin-top:1px}
+
+  /* ---------- Vacantes: cada una es un renglón, no un número suelto ----- */
+  .m-vac{display:flex;gap:8px;align-items:flex-start;padding:10px 0;
+    border-bottom:1px solid var(--linea-suave)}
+  .m-vac:last-of-type{border-bottom:0}
+  .m-vac .v-tx{flex:1;min-width:0}
+  .m-vac .v-t{display:block;font-size:13.5px;font-weight:700;color:var(--tinta);line-height:1.3}
+  .m-vac .v-n{display:block;font-size:12px;color:var(--gris);margin-top:2px}
+
+  /* ---------- Barra fija inferior --------------------------------------
+     El guion pedía el primario fijo abajo y, debajo, un "SINCRONIZAR
+     AHORA" DESACTIVADO con su explicación. Un botón muerto es la misma
+     figura que un chip que dice "Vencido": ocupa el lugar de la acción sin
+     poder hacerla. Sin conexión no se dibuja el botón, se dice la regla.  */
+  .m-pie{flex:none;background:var(--blanco);border-top:1px solid var(--linea);padding:11px 14px 13px}
+  .m-pie .btn{width:100%;min-height:50px;font-size:15px}
+  .m-pie .p-n{display:block;font-size:12px;color:var(--gris);line-height:1.45;margin-top:8px;
+    text-align:center}
+  .m-pie .p-n.falta{color:var(--guinda-900);font-weight:700}
+
+  /* ---------- Navegación inferior entre las dos vistas ------------------ */
+  .m-nav{flex:none;display:flex;background:var(--blanco);border-top:1px solid var(--linea)}
+  .m-nav button{flex:1;min-height:52px;background:none;border:0;font-family:var(--f-texto);
+    font-size:12px;font-weight:700;color:var(--gris);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:3px;cursor:pointer;padding:6px 4px;
+    border-top:2px solid transparent}
+  .m-nav button svg{width:19px;height:19px;stroke-width:1.6}
+  .m-nav button.activo{color:var(--jade-900);border-top-color:var(--jade);background:var(--jade-020)}
+  .m-nav .n-pill{position:absolute;transform:translate(14px,-9px);background:var(--guinda);
+    color:var(--blanco);font-size:10px;font-weight:700;min-width:17px;height:17px;
+    border-radius:999px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px}
+
+  /* ---------- Lista de registros del dispositivo ------------------------ */
+  .m-reg{display:block;width:100%;text-align:left;background:var(--blanco);border:1px solid var(--linea);
+    border-radius:var(--radio);padding:12px 13px;margin-bottom:9px;cursor:pointer;
+    font-family:var(--f-texto);min-height:48px}
+  .m-reg .g-nom{display:block;font-size:14px;font-weight:700;color:var(--tinta);line-height:1.3}
+  .m-reg .g-giro{display:block;font-size:12.5px;color:var(--gris);line-height:1.4;margin-top:3px}
+  .m-reg .g-meta{display:block;font-size:12px;color:var(--gris-claro);margin-top:5px}
+  .m-reg .g-mov{display:flex;gap:6px;align-items:flex-start;font-size:12px;margin-top:7px;
+    color:var(--jade-900);font-weight:700;line-height:1.4}
+  .m-reg .g-mov svg{width:13px;height:13px;stroke-width:2;flex:none;margin-top:2px}
+  .m-reg .g-mov.no{color:var(--gris)}
+  .m-reg .g-mov.no svg{stroke:var(--gris)}
+
+  /* Estado del registro: glifo + palabra + color, nunca solo el color. */
+  .est{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;
+    padding:3px 9px;border-radius:999px;border:1px solid var(--linea);background:var(--hueso-claro);
+    color:var(--gris);margin-bottom:8px}
+  .est svg{width:12px;height:12px;stroke-width:2}
+  .est.sinc{background:var(--jade-050);border-color:rgba(0,152,135,.3);color:var(--jade-900)}
+  .est.pend{background:var(--arena-050);border-color:var(--arena);color:var(--gris)}
+  .est.incompleto{background:var(--guinda-050);border-color:rgba(174,25,45,.3);color:var(--guinda-900)}
+
+  .m-tit{font-family:var(--f-texto);font-size:14px;font-weight:700;color:var(--tinta);
+    margin:0 0 10px;text-transform:none;letter-spacing:0}
+  .m-vacio{padding:34px 18px;text-align:center;color:var(--gris);font-size:13px;line-height:1.6}
+  .m-vacio svg{width:32px;height:32px;stroke-width:1.2;stroke:var(--arena);display:block;margin:0 auto 10px}
+
+  /* ---------- Pantalla de acuse ---------------------------------------- */
+  .m-exito{text-align:center;padding:26px 8px 8px}
+  .m-exito .e-ico{width:60px;height:60px;border-radius:50%;background:var(--jade-050);
+    display:grid;place-items:center;margin:0 auto 14px}
+  .m-exito .e-ico svg{width:30px;height:30px;stroke:var(--jade-900);stroke-width:2}
+  .m-exito h3{font-family:var(--f-texto);font-size:17px;color:var(--tinta);margin:0 0 6px;
+    text-transform:none;letter-spacing:0}
+  .m-exito .e-n{font-size:13px;color:var(--gris);line-height:1.55;margin-bottom:18px}
+
+  /* ---------- Panel de revisión (no forma parte de la app móvil) -------- */
+  .rev .r-adv{font-size:12px;color:var(--gris);line-height:1.5;margin-top:10px}
+  .rev .r-grupo{margin-bottom:14px}
+  .rev .r-lab{display:block;font-size:11px;letter-spacing:.07em;text-transform:uppercase;
+    font-weight:700;color:var(--gris);margin-bottom:7px}
+  .rev .r-ops{display:flex;gap:8px;flex-wrap:wrap}
+  .rev .r-ops .chip{cursor:pointer;border:0;font-family:var(--f-texto);min-height:36px;
+    padding:0 12px;font-size:12.5px}
+  .rev :focus-visible{outline:3px solid var(--jade);outline-offset:2px;border-radius:4px}
+  .tel-pantalla :focus-visible{outline:3px solid var(--jade);outline-offset:-1px;border-radius:4px}
+
+  /* ---------- En un teléfono de verdad se quita el marco ---------------- */
+  @media (max-width:900px){
+    .g-censo{grid-template-columns:1fr;gap:16px}
+    .tel{width:auto;border:0;border-radius:0;box-shadow:none;margin:0}
+    .tel-pantalla{height:auto;min-height:78vh;border-radius:var(--radio);
+      border:1px solid var(--linea)}
+    .tel-pie{display:none}
+  }
+</style>
+</head>
+<body>
+
+<main class="contenido">
+  <div class="migas"><a href="index.html">Inicio</a> › Censo Empresarial</div>
+
+  <div class="enc">
+    <div class="enc-txt">
+      <h1>Censo Empresarial</h1>
+      <div class="enc-sub">Captura en campo sin conexión y sincronización diferida (RF15)</div>
+    </div>
+    <div class="enc-acc">
+      <button class="btn btn-secundario btn-s" type="button" id="btnXls"></button>
+    </div>
+  </div>
+
+  <details class="plegable" id="avisoPermisos">
+    <summary>Qué hace este módulo y qué no</summary>
+    <div class="cuerpo" id="avisoPermisosCuerpo"></div>
+  </details>
+
+  <div class="g-censo">
+    <div>
+      <div class="tel">
+        <div class="tel-pantalla" id="app"></div>
+      </div>
+      <p class="tel-pie">Vista de campo · 390 × 844 px</p>
+    </div>
+
+    <!-- El panel de revisión NO es parte de la aplicación móvil: existe
+         para poder ver desde el escritorio los dos estados de conexión y
+         las dos vistas que pide RF15. En el teléfono no se muestra.      -->
+    <aside class="tarjeta rev" aria-labelledby="tRev">
+      <div class="tarjeta-enc"><h3 id="tRev">Panel de revisión</h3></div>
+      <div id="revCuerpo"></div>
+    </aside>
+  </div>
+
+  <p id="anuncio" class="sr-solo" role="status" aria-live="polite"></p>
+</main>
+
+<script src="assets/js/simh.js"></script>
+<script>
+(function () {
+  "use strict";
+  SIMH.chrome("censo");
+  var ico = SIMH.icono, esc = SIMH.esc;
+  var $ = function (s) { return document.querySelector(s); };
+  var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+
+  var HOY = "2026-08-27";
+
+  $("#btnXls").innerHTML = ico("excel") + "Exportar censo (Excel)";
+
+  $("#avisoPermisosCuerpo").innerHTML =
+    '<div class="resumen-lista">' +
+    '<div class="resumen-dato"><span class="r-lab">Qué se levanta aquí</span>' +
+      '<span class="r-val">El padrón de negocios de la franja fronteriza y, sobre todo, si contratan ' +
+      'o contratarían personas en movilidad. Ese dato es el que alimenta la bolsa de vacantes de ' +
+      'Empleabilidad (RF12).</span></div>' +
+    '<div class="resumen-dato"><span class="r-lab">Por qué funciona sin conexión</span>' +
+      '<span class="r-val">El levantamiento es casa por casa y en zonas sin cobertura. Lo capturado se ' +
+      'guarda en el dispositivo y se envía solo cuando hay red: nunca se pierde y nunca se exige ' +
+      'conexión para trabajar (RF15).</span></div>' +
+    '<div class="resumen-dato"><span class="r-lab">Qué no hace esta pantalla</span>' +
+      '<span class="r-val">No consulta expedientes de personas: el censo registra negocios, no ' +
+      'población atendida (RNF01). Un registro ya enviado no se elimina ni se edita desde el ' +
+      'dispositivo; se corrige con oficio, como cualquier otro dato del sistema (RNF02, RNF03).</span></div>' +
+    "</div>";
+
+  /* ======================================================================
+     1. Qué pide RF15 y qué le falta al guion
+     --------------------------------------------------------------------
+     El guion resolvía la pantalla como un formulario de diez campos
+     seguidos, un chip de "SIN CONEXIÓN · 14 registros pendientes", un
+     botón fijo de guardar y un "SINCRONIZAR AHORA" DESACTIVADO. Cuatro
+     cosas no se sostienen:
+
+       · Diez campos de igual peso en 390 px. Esto se captura de pie, en la
+         puerta de un negocio, con una mano y con una persona esperando.
+         El formulario se ordena en tres secciones —identificar, el dato
+         que justifica el censo, y el contacto, que es lo que la persona
+         puede no querer dar— y se puede GUARDAR INCOMPLETO desde el
+         principio, porque la entrevista se interrumpe.
+
+       · "Contrata personas en movilidad (Sí / No)" es el corazón del
+         censo y estaba en el octavo lugar como una casilla. Además el
+         booleano confunde "no contrata" con "no quiso responder", que es
+         exactamente el error de "Contratación (Sí/No)" ya corregido en
+         RF12. Aquí es una pregunta de cuatro respuestas, y el MOTIVO de
+         quien no contrata es el dato de política pública: dice si el
+         obstáculo es legal, de información o de desconfianza.
+
+       · "Vacantes disponibles" como número no sirve para vincular a
+         nadie. Una vacante necesita al menos puesto y cantidad, y por eso
+         se capturan como renglones.
+
+       · Un botón "SINCRONIZAR AHORA" desactivado ocupa el lugar de la
+         acción sin poder hacerla, igual que un chip que dice "Vencido".
+         Sin conexión se enuncia la regla; con conexión aparece el botón
+         de verdad.
+
+     Y el chip de conexión no responde la única pregunta real de quien
+     captura en campo —¿se va a perder lo que llevo?—, así que se
+     convierte en un bloque que dice dónde están los datos y cuándo salen.
+     ================================================================== */
+
+  /* ------------------------------------------------------- Catálogos ---- */
+  var GIROS = ["Abarrotes y tienda de conveniencia", "Agricultura y empaque",
+    "Comercio en mercado público", "Construcción", "Hotelería y hospedaje",
+    "Manufactura de alimentos", "Restaurante y cocina económica", "Servicios de limpieza",
+    "Taller mecánico o herrería", "Textil y confección", "Transporte y carga", "Otro"];
+
+  var MUNICIPIOS = ["Cacahoatán", "Frontera Hidalgo", "Huehuetán", "Huixtla", "Mazatán",
+    "Metapa", "Suchiate", "Tapachula", "Tuxtla Chico", "Unión Juárez"];
+
+  /* El motivo de quien NO contrata es el hallazgo del censo: separa el
+     obstáculo legal del informativo y del de desconfianza. De catálogo,
+     no en texto libre, porque se va a contar.                            */
+  var MOT_NO = ["No requiere personal en este momento",
+    "Desconoce si puede contratar legalmente a una persona extranjera",
+    "No sabe qué documento debe pedir",
+    "Teme una revisión o una sanción",
+    "Tuvo un problema anterior con la documentación",
+    "El negocio es familiar y no contrata a nadie",
+    "Prefirió no explicar el motivo"];
+
+  var DOCS = ["Sí, pide documento que autorice trabajar", "No pide ningún documento",
+    "No sabe qué documento pedir"];
+
+  /* En la barra del teléfono va el nombre corto: a 390 px el grado y los dos
+     apellidos no caben, y quien captura sabe quién es.                   */
+  var BRIGADA = { corto:"Rubén Castellanos", largo:"Ing. Rubén Castellanos Díaz" };
+
+  /* ======================================================================
+     2. Lo que ya está en el dispositivo. Datos a mano, como en el resto
+        del prototipo. El contador de pendientes se DERIVA de esta lista:
+        el guion traía un "14" fijo que no correspondía a nada.
+     ================================================================== */
+  var REG = [
+    { id:"C-0071", neg:"Panificadora El Trigal, S.A. de C.V.", giro:"Manufactura de alimentos",
+      mun:"Tapachula", dir:"5a Poniente 142, col. Centro", est:"sinc", folio:"CEN-2026-TAP-0071",
+      f:"2026-08-24", mov:"si", movN:3, doc:"Sí, pide documento que autorice trabajar",
+      empleados:18, vac:[{ p:"Auxiliar de producción", n:2 }], foto:1, gps:1 },
+
+    { id:"C-0072", neg:"Abarrotes La Frontera", giro:"Abarrotes y tienda de conveniencia",
+      mun:"Suchiate", dir:"Av. Hidalgo s/n, Ciudad Hidalgo", est:"pend",
+      f:"2026-08-26", mov:"antes", movN:0, doc:"No sabe qué documento pedir",
+      empleados:4, vac:[], foto:1, gps:1 },
+
+    { id:"C-0073", neg:"Hotel Loma Real", giro:"Hotelería y hospedaje",
+      mun:"Tapachula", dir:"Carretera Antiguo Aeropuerto km 2.5", est:"pend",
+      f:"2026-08-26", mov:"si", movN:6, doc:"Sí, pide documento que autorice trabajar",
+      empleados:41, vac:[{ p:"Camarista", n:3 }, { p:"Ayudante de cocina", n:1 }], foto:1, gps:1 },
+
+    { id:"C-0074", neg:"Taller Metálico del Soconusco", giro:"Taller mecánico o herrería",
+      mun:"Huixtla", dir:"Prolongación 2a Norte 88", est:"pend",
+      f:"2026-08-27", mov:"no", motNo:"No sabe qué documento debe pedir",
+      empleados:6, vac:[{ p:"Soldador", n:1 }], foto:0, gps:1 },
+
+    /* Incompleto: la entrevista se interrumpió y aun así quedó guardado.
+       Es el caso que el guion no contemplaba y el que más ocurre.        */
+    { id:"C-0075", neg:"Empacadora San Jerónimo", giro:"Agricultura y empaque",
+      mun:"Frontera Hidalgo", dir:"", est:"pend", incompleto:1,
+      f:"2026-08-27", mov:null, empleados:null, vac:[], foto:0, gps:1 }
+  ];
+
+  /* ======================================================================
+     3. Estado de la pantalla
+     ================================================================== */
+  var qs     = new URLSearchParams(location.search);
+  var vista  = "captura";   /* "captura" | "registros" | "exito" */
+  var red    = false;       /* false = sin conexión (estado por omisión en campo) */
+  var ultimo = null;        /* registro recién guardado, para el acuse */
+
+  if (qs.get("vista") === "registros") vista = "registros";
+  if (qs.get("red") === "1") red = true;
+  /* Atajo de revisión: el acuse solo se alcanza guardando, así que se
+     sintetiza con el último registro levantado para poder verlo.        */
+  if (qs.get("vista") === "exito") {
+    vista = "exito";
+    ultimo = REG.filter(function (r) { return r.est === "pend"; }).pop() || REG[0];
+  }
+
+  /* Borrador en captura. Arranca vacío salvo el municipio de la brigada,
+     que es el único dato que no cambia entre negocio y negocio.          */
+  var F = nuevo();
+  function nuevo() {
+    return { neg:"", giro:"", mun:"Tapachula", dir:"", gps:null, foto:0,
+             mov:null, movN:"", doc:"", motNo:"", vac:[], vacP:"", vacN:"",
+             prop:"", tel:"", empleados:"", obs:"" };
+  }
+
+  /* ======================================================================
+     4. Cálculo
+     ================================================================== */
+  function fecha(iso) { var p = iso.split("-"); return p[2] + "/" + p[1] + "/" + p[0]; }
+  function dias(a, b) { return Math.round((new Date(b) - new Date(a)) / 86400000); }
+  function plural(n, uno, varios) { return n + " " + (n === 1 ? uno : varios); }
+
+  /* plural() antepone la cifra, así que no sirve cuando la frase lleva
+     artículo ("los 4 registros…") ni cuando el verbo también declina. Es
+     el mismo defecto de concordancia ya corregido en capacitacion.html.
+     Aquí la cifra va DENTRO de la frase y el verbo se elige aparte.      */
+  function frase(n, uno, varios) {
+    return n === 1 ? uno : varios.replace("%n", n);
+  }
+
+  function pendientes() { return REG.filter(function (r) { return r.est === "pend"; }); }
+  function incompletos() { return REG.filter(function (r) { return r.incompleto; }); }
+  /* Un registro incompleto NO se envía: le falta la pregunta que justifica
+     el censo. Por eso lo enviable y lo pendiente no son el mismo número, y
+     el botón tiene que decir el que de verdad va a mandar.               */
+  function enviables() {
+    return REG.filter(function (r) { return r.est === "pend" && !r.incompleto; });
+  }
+
+  /* La antigüedad del pendiente más viejo es lo que de verdad preocupa:
+     un pendiente de hoy no es lo mismo que uno de hace tres días.        */
+  function masViejo() {
+    var ps = pendientes();
+    if (!ps.length) return null;
+    return ps.map(function (r) { return dias(r.f, HOY); })
+             .sort(function (a, b) { return b - a; })[0];
+  }
+
+  /* Lo mínimo para que un registro sirva de algo. Todo lo demás puede
+     completarse después: la entrevista se interrumpe.                    */
+  function faltantes(f) {
+    var m = [];
+    if (!f.neg.trim()) m.push("el nombre del negocio");
+    if (!f.giro)       m.push("el giro");
+    if (!f.mun)        m.push("el municipio");
+    return m;
+  }
+
+  /* Duplicado: sin conexión solo puede compararse contra lo que ya está
+     en este dispositivo, y la interfaz lo dice en vez de prometer más.   */
+  function duplicado(f) {
+    var n = f.neg.trim().toLowerCase();
+    if (n.length < 4) return null;
+    return REG.filter(function (r) {
+      return r.neg.toLowerCase().indexOf(n) >= 0 || n.indexOf(r.neg.toLowerCase()) >= 0;
+    })[0] || null;
+  }
+
+  var MOV_TXT = {
+    si:     "Contrata actualmente",
+    antes:  "Ha contratado antes",
+    no:     "No contrata",
+    nores:  "Prefirió no responder"
+  };
+
+  /* ======================================================================
+     5. Interfaz móvil
+     ================================================================== */
+  function barraRed() {
+    var ps = pendientes().length, v = masViejo();
+    if (red) {
+      return '<div class="m-red enlinea">' + ico("nubeok") +
+        '<div class="r-tx"><span class="r-t">Con conexión</span>' +
+        '<span class="r-n">' +
+        (ps ? plural(ps, "registro pendiente", "registros pendientes") + " por enviar. " +
+              "Se envían solos; también puedes enviarlos ahora."
+            : "Todo lo capturado en este dispositivo ya está en el sistema.") +
+        "</span></div></div>";
+    }
+    return '<div class="m-red">' + ico("nube") +
+      '<div class="r-tx"><span class="r-t">Sin conexión</span>' +
+      '<span class="r-n">' +
+      (ps ? plural(ps, "registro guardado", "registros guardados") + " en este dispositivo" +
+            (v > 0 ? ", el más antiguo de hace " + plural(v, "día", "días") : "") +
+            ". Se envían solos en cuanto haya red."
+          : "Puedes capturar normalmente: todo se guarda en este dispositivo.") +
+      "</span></div></div>";
+  }
+
+  function campo(id, rot, val, opts) {
+    opts = opts || {};
+    var req = opts.req ? ' <span class="req">•</span>' : "";
+    var opc = opts.opc ? ' <span class="opc">(opcional)</span>' : "";
+    var ctrl;
+    if (opts.lista) {
+      ctrl = '<select id="' + id + '"><option value="">Selecciona…</option>' +
+        opts.lista.map(function (o) {
+          return '<option' + (o === val ? " selected" : "") + ">" + esc(o) + "</option>";
+        }).join("") + "</select>";
+    } else if (opts.area) {
+      ctrl = '<textarea id="' + id + '" placeholder="' + esc(opts.ph || "") + '">' + esc(val) + "</textarea>";
+    } else {
+      ctrl = '<input type="' + (opts.tipo || "text") + '" id="' + id + '" value="' + esc(String(val)) +
+        '" placeholder="' + esc(opts.ph || "") + '"' + (opts.num ? ' class="m-num" inputmode="numeric"' : "") + ">";
+    }
+    return '<div class="campo"><label for="' + id + '">' + esc(rot) + req + opc + "</label>" + ctrl +
+      (opts.ayuda ? '<div class="ayuda">' + opts.ayuda + "</div>" : "") + "</div>";
+  }
+
+  /* --------------------------------------------- Sección 1: el negocio -- */
+  function secNegocio() {
+    var dup = duplicado(F);
+    return '<section class="m-sec">' +
+      "<h3>1 · El negocio</h3>" +
+      '<span class="s-n">Lo mínimo para que el registro sirva. Se puede guardar con esto y ' +
+      "completar el resto después.</span>" +
+      campo("cNeg", "Nombre del negocio", F.neg, { req:1, ph:"Como aparece en el rótulo" }) +
+      (dup ? '<div class="m-cons" style="border-left-color:var(--alerta);background:var(--rosa-050)">' +
+             ico("alerta") + "Ya hay un registro parecido en este dispositivo: <b>" + esc(dup.neg) +
+             "</b> (" + esc(dup.mun) + "). Sin conexión solo puede compararse contra lo capturado " +
+             "aquí, no contra el padrón completo.</div>" : "") +
+      campo("cGiro", "Giro o actividad", F.giro, { req:1, lista:GIROS }) +
+      campo("cMun", "Municipio", F.mun, { req:1, lista:MUNICIPIOS }) +
+      campo("cDir", "Dirección", F.dir, { opc:1, ph:"Calle, número y colonia" }) +
+      '<div class="m-adj">' +
+        '<button class="btn btn-secundario" type="button" id="btnGps">' + ico("mapa") +
+          "<span>" + (F.gps ? "Actualizar ubicación" : "Usar ubicación actual") + "</span></button>" +
+        '<button class="btn btn-secundario" type="button" id="btnFoto">' + ico("camara") +
+          "<span>" + (F.foto ? "Cambiar fotografía" : "Fotografía del local") + "</span></button>" +
+      "</div>" +
+      (F.gps ? '<div class="m-hecho">' + ico("check") +
+        "<span>Ubicación tomada<span class=\"h-n\">14.9012, −92.2635 · precisión 8 m. El GPS no " +
+        "necesita datos: funciona sin conexión.</span></span></div>" : "") +
+      (F.foto ? '<div class="m-hecho">' + ico("check") +
+        "<span>Fotografía adjunta<span class=\"h-n\">1 imagen · 420 KB. Las fotografías se envían " +
+        "al final, cuando haya red suficiente.</span></span></div>" : "") +
+      "</section>";
+  }
+
+  /* ------------------------- Sección 2: por qué existe este censo ------- */
+  function secMovilidad() {
+    var ops = [
+      { id:"si",    t:"Sí, contrata actualmente",  n:"Hay personas en movilidad trabajando hoy en el negocio." },
+      { id:"antes", t:"Sí, lo ha hecho antes",     n:"No en este momento, pero ya contrató antes." },
+      { id:"no",    t:"No contrata",               n:"Se pregunta el motivo: es el hallazgo del censo." },
+      { id:"nores", t:"Prefirió no responder",     n:"Se registra como tal, no como un “no”." }
+    ];
+    var cons = "";
+    if (F.mov === "si" || F.mov === "antes") {
+      cons = '<div class="m-cons">' + ico("check") +
+        "El negocio pasa a la <b>bolsa de vacantes</b> de Empleabilidad y puede recibir " +
+        "postulaciones en cuanto se sincronice.</div>";
+    } else if (F.mov === "no") {
+      cons = '<div class="m-cons">' + ico("info") +
+        "El motivo decide la respuesta institucional: si es por <b>desconocimiento</b> entra a la ruta " +
+        "de orientación al sector patronal; si es por <b>falta de personal</b>, solo al padrón.</div>";
+    }
+
+    return '<section class="m-sec">' +
+      "<h3>2 · Personas en movilidad</h3>" +
+      '<span class="s-n">Es la razón por la que se levanta el censo: sin esta respuesta el registro ' +
+      "no alimenta la bolsa de vacantes.</span>" +
+      '<div class="campo"><label id="lMov">¿Contrata o ha contratado personas en movilidad? ' +
+      '<span class="req">•</span></label>' +
+      '<div class="m-ops" role="radiogroup" aria-labelledby="lMov" id="opsMov">' +
+      ops.map(function (o) {
+        return '<label class="m-op' + (F.mov === o.id ? " sel" : "") + '">' +
+          '<input type="radio" name="mov" value="' + o.id + '"' + (F.mov === o.id ? " checked" : "") + ">" +
+          '<span><span class="o-t">' + esc(o.t) + '</span><span class="o-n">' + esc(o.n) + "</span></span></label>";
+      }).join("") + "</div></div>" +
+      cons +
+
+      (F.mov === "si" ?
+        '<div style="margin-top:13px">' +
+        campo("cMovN", "¿Cuántas personas en movilidad trabajan hoy aquí?", F.movN,
+              { num:1, tipo:"number", opc:1 }) +
+        campo("cDoc", "¿Pide documento que autorice trabajar?", F.doc, { lista:DOCS, opc:1,
+              ayuda:"Sirve para saber si hace falta orientar al patrón, no para sancionarlo." }) +
+        "</div>" : "") +
+
+      (F.mov === "no" ?
+        '<div style="margin-top:13px">' +
+        campo("cMotNo", "Motivo por el que no contrata", F.motNo, { lista:MOT_NO, req:1 }) +
+        "</div>" : "") +
+
+      /* Las vacantes van aquí, no en un campo numérico suelto: un "3" no
+         se puede vincular con nadie; "Camarista · 3" sí.                 */
+      '<div style="margin-top:15px;border-top:1px solid var(--linea-suave);padding-top:13px">' +
+        '<label class="etiqueta">Vacantes disponibles <span class="opc">(opcional)</span></label>' +
+        (F.vac.length ? F.vac.map(function (v, i) {
+          return '<div class="m-vac"><div class="v-tx"><span class="v-t">' + esc(v.p) + "</span>" +
+            '<span class="v-n">' + plural(v.n, "plaza", "plazas") + "</span></div>" +
+            '<button class="btn btn-texto btn-s" type="button" data-quita="' + i + '">Quitar</button></div>';
+        }).join("") : "") +
+        '<div style="display:grid;grid-template-columns:1fr 78px;gap:8px;margin-top:9px">' +
+          '<div class="campo" style="margin:0"><label for="cVacP" class="sr-solo">Puesto</label>' +
+            '<input type="text" id="cVacP" value="' + esc(F.vacP) + '" placeholder="Puesto"></div>' +
+          '<div class="campo" style="margin:0"><label for="cVacN" class="sr-solo">Plazas</label>' +
+            '<input type="number" id="cVacN" value="' + esc(String(F.vacN)) + '" placeholder="N.º" inputmode="numeric"></div>' +
+        "</div>" +
+        '<button class="btn btn-secundario btn-s" type="button" id="btnVac" style="margin-top:9px;width:100%;min-height:44px">' +
+          ico("mas") + "Agregar vacante</button>" +
+      "</div>" +
+      "</section>";
+  }
+
+  /* ------------------------------ Sección 3: lo que puede no darse ------ */
+  function secContacto() {
+    return '<details class="plegable" style="margin-bottom:12px"' + (F.prop || F.tel || F.empleados || F.obs ? " open" : "") + ">" +
+      "<summary>3 · Contacto y detalle (opcional)</summary>" +
+      '<div class="cuerpo" style="padding-bottom:14px">' +
+      '<p style="font-size:12px;color:var(--gris);line-height:1.5;margin:0 0 12px">' +
+      "Va al final a propósito: es lo que una persona puede no querer dar, y no debe frenar el " +
+      "registro del negocio.</p>" +
+      campo("cProp", "Persona propietaria o responsable", F.prop, { opc:1 }) +
+      campo("cTel", "Teléfono", F.tel, { opc:1, tipo:"tel", ph:"10 dígitos" }) +
+      campo("cEmp", "Total de personas empleadas", F.empleados, { opc:1, num:1, tipo:"number",
+            ayuda:"Todas, no solo las personas en movilidad." }) +
+      campo("cObs", "Observaciones", F.obs, { opc:1, area:1,
+            ph:"Lo que convenga dejar asentado de la visita" }) +
+      "</div></details>";
+  }
+
+  function vistaCaptura() {
+    var falta = faltantes(F);
+    return '<div class="m-cuerpo" id="cuerpo">' +
+        secNegocio() + secMovilidad() + secContacto() +
+      "</div>" +
+      '<div class="m-pie">' +
+        '<button class="btn btn-primario' + (falta.length ? " desactivado" : "") +
+          '" type="button" id="btnGuardar"' + (falta.length ? " disabled" : "") + ">" +
+          ico("guardar") + "Guardar en el dispositivo</button>" +
+        '<span class="p-n' + (falta.length ? " falta" : "") + '">' +
+          (falta.length ? "Falta " + falta.join(", ").replace(/,([^,]*)$/, " y$1") + "."
+                        : (F.mov ? "Se guarda aquí y se envía solo cuando haya red."
+                                 : "Puedes guardarlo ya; sin la pregunta 2 quedará como incompleto.")) +
+        "</span>" +
+      "</div>";
+  }
+
+  /* ------------------------------------------- Vista: lo del aparato ---- */
+  var EST = {
+    sinc:       { c:"sinc",       i:"check",  t:"Sincronizado" },
+    pend:       { c:"pend",       i:"reloj",  t:"Pendiente de enviar" },
+    incompleto: { c:"incompleto", i:"alerta", t:"Incompleto" }
+  };
+
+  function chipEstado(r) {
+    var e = EST[r.incompleto ? "incompleto" : r.est];
+    return '<span class="est ' + e.c + '">' + ico(e.i) + e.t + "</span>";
+  }
+
+  function vistaRegistros() {
+    var ps = pendientes().length, inc = incompletos().length, env = enviables().length;
+    var filas = REG.slice().sort(function (a, b) {
+      var pa = a.incompleto ? 0 : (a.est === "pend" ? 1 : 2);
+      var pb = b.incompleto ? 0 : (b.est === "pend" ? 1 : 2);
+      return pa !== pb ? pa - pb : b.f.localeCompare(a.f);
+    }).map(function (r) {
+      var mov = r.mov
+        ? '<span class="g-mov' + (r.mov === "no" || r.mov === "nores" ? " no" : "") + '">' +
+          ico(r.mov === "si" || r.mov === "antes" ? "check" : "info") +
+          "<span>" + MOV_TXT[r.mov] +
+          (r.mov === "si" && r.movN ? " · " + plural(r.movN, "persona", "personas") : "") +
+          (r.vac && r.vac.length ? " · " + plural(r.vac.reduce(function (a, v) { return a + v.n; }, 0),
+            "vacante", "vacantes") : "") + "</span></span>"
+        : '<span class="g-mov no">' + ico("alerta") +
+          "<span>Falta la pregunta de personas en movilidad</span></span>";
+
+      return '<button type="button" class="m-reg" data-r="' + r.id + '">' +
+        chipEstado(r) +
+        '<span class="g-nom">' + esc(r.neg) + "</span>" +
+        '<span class="g-giro">' + esc(r.giro) + " · " + esc(r.mun) + "</span>" +
+        mov +
+        '<span class="g-meta">' + (r.folio ? esc(r.folio) + " · " : "") +
+          "Levantado el " + fecha(r.f) + "</span>" +
+        "</button>";
+    }).join("");
+
+    return '<div class="m-cuerpo">' +
+        '<h2 class="m-tit">En este dispositivo</h2>' +
+        (inc ? '<div class="m-cons" style="border-left-color:var(--guinda);background:var(--guinda-050);margin:0 0 12px">' +
+               ico("alerta") +
+               frase(inc, "Un registro está incompleto: se guardó sin la pregunta de personas en " +
+                          "movilidad y se puede completar antes de enviarlo.",
+                          "%n registros están incompletos: se guardaron sin la pregunta de personas " +
+                          "en movilidad y se pueden completar antes de enviarlos.") +
+               "</div>" : "") +
+        (REG.length ? filas : '<div class="m-vacio">' + ico("censo") +
+          "Todavía no hay negocios levantados en este dispositivo.</div>") +
+      "</div>" +
+      '<div class="m-pie">' +
+        (red
+          ? (env
+              ? '<button class="btn btn-primario" type="button" id="btnSinc">' + ico("arriba") +
+                "Enviar " + plural(env, "registro", "registros") + "</button>" +
+                '<span class="p-n">Cada negocio recibe su folio definitivo al enviarse.' +
+                (inc ? " " + frase(inc, "El registro incompleto se queda aquí hasta que se complete.",
+                                       "Los %n registros incompletos se quedan aquí hasta completarse.") : "") +
+                "</span>"
+              : '<span class="p-n">No hay nada que enviar' +
+                (inc ? ": " + frase(inc, "el único registro pendiente está incompleto",
+                                         "los %n registros pendientes están incompletos") +
+                       " y debe completarse antes." : ".") + "</span>")
+          /* Sin conexión no se dibuja un botón muerto: se dice la regla. */
+          : '<span class="p-n">Sin conexión no se puede enviar. En cuanto el teléfono detecte red, ' +
+            frase(ps, "el registro pendiente se envía solo",
+                      "los %n registros pendientes se envían solos") +
+            "; no hay que hacer nada.</span>") +
+      "</div>";
+  }
+
+  /* -------------------------------------------------- Vista: acuse ------ */
+  function vistaExito() {
+    var r = ultimo || {};
+    return '<div class="m-cuerpo">' +
+        '<div class="m-exito">' +
+          '<div class="e-ico">' + ico("check") + "</div>" +
+          "<h3>Guardado en el dispositivo</h3>" +
+          '<div class="e-n"><b>' + esc(r.neg || "") + "</b><br>" +
+          (r.incompleto
+            ? "Quedó como <b>incompleto</b>: falta la pregunta de personas en movilidad. " +
+              "Puedes completarlo desde la lista antes de que se envíe."
+            : "Se enviará solo en cuanto haya red. No hace falta hacer nada más.") +
+          "</div>" +
+        "</div>" +
+      "</div>" +
+      '<div class="m-pie">' +
+        '<button class="btn btn-primario" type="button" id="btnOtro">' + ico("mas") +
+          "Levantar otro negocio</button>" +
+        '<span class="p-n">' + plural(pendientes().length, "registro pendiente", "registros pendientes") +
+        " en este dispositivo.</span>" +
+      "</div>";
+  }
+
+  /* ---------------------------------------------- Navegación inferior --- */
+  function navInferior() {
+    var ps = pendientes().length;
+    var tabs = [
+      { id:"captura",   t:"Levantar", i:"mas" },
+      { id:"registros", t:"En el dispositivo", i:"censo", pill:ps }
+    ];
+    return '<nav class="m-nav" aria-label="Secciones del censo">' +
+      tabs.map(function (t) {
+        var act = (vista === t.id) || (vista === "exito" && t.id === "captura");
+        return '<button type="button" class="' + (act ? "activo" : "") + '" data-v="' + t.id +
+          '" aria-current="' + (act ? "page" : "false") + '">' +
+          ico(t.i) + (t.pill ? '<span class="n-pill">' + t.pill + "</span>" : "") +
+          "<span>" + t.t + "</span></button>";
+      }).join("") + "</nav>";
+  }
+
+  function pinta() {
+    $("#app").innerHTML =
+      '<header class="m-top">' + SIMH.isotipo(22, true) +
+        "<span><span class=\"m-marca\">SIMH</span>" +
+        '<span class="m-sub">Censo Empresarial · ' + esc(BRIGADA.corto) + "</span></span>" +
+      "</header>" +
+      barraRed() +
+      (vista === "captura" ? vistaCaptura() : (vista === "registros" ? vistaRegistros() : vistaExito())) +
+      navInferior();
+    eventos();
+    pintaRevision();
+  }
+
+  /* ======================================================================
+     6. Panel de revisión (escritorio)
+     ================================================================== */
+  function pintaRevision() {
+    var ps = pendientes().length;
+    $("#revCuerpo").innerHTML =
+      '<div class="r-grupo"><span class="r-lab">Estado de la conexión</span>' +
+        '<div class="r-ops" role="group">' +
+          '<button type="button" class="chip ' + (!red ? "chip-jade" : "chip-neutro") +
+            '" data-red="0" aria-pressed="' + !red + '">Sin conexión</button>' +
+          '<button type="button" class="chip ' + (red ? "chip-jade" : "chip-neutro") +
+            '" data-red="1" aria-pressed="' + red + '">Con conexión</button>' +
+        "</div></div>" +
+
+      '<div class="r-grupo"><span class="r-lab">Vista</span>' +
+        '<div class="r-ops" role="group">' +
+          ["captura", "registros"].map(function (v) {
+            var act = vista === v || (vista === "exito" && v === "captura");
+            return '<button type="button" class="chip ' + (act ? "chip-jade" : "chip-neutro") +
+              '" data-v2="' + v + '" aria-pressed="' + act + '">' +
+              (v === "captura" ? "Levantamiento" : "En el dispositivo") + "</button>";
+          }).join("") +
+        "</div></div>" +
+
+      '<div class="resumen-lista">' +
+        '<div class="resumen-dato"><span class="r-lab">En el dispositivo</span>' +
+          '<span class="r-val">' + plural(REG.length, "negocio levantado", "negocios levantados") +
+          ", " + ps + " sin enviar" + (incompletos().length ? ", de los cuales " +
+          plural(incompletos().length, "está incompleto", "están incompletos") : "") + ".</span></div>" +
+        '<div class="resumen-dato"><span class="r-lab">Por qué se ve un teléfono</span>' +
+          '<span class="r-val">RF15 es la única pantalla del sistema que se usa en campo. Este marco ' +
+          "es solo para revisarla desde el escritorio: abierta en un teléfono, la interfaz ocupa toda " +
+          "la ventana.</span></div>" +
+      "</div>" +
+
+      '<p class="r-adv">Los dos botones de arriba no forman parte de la aplicación: en campo el estado ' +
+      "de la conexión lo decide el teléfono, no la persona que captura.</p>";
+
+    $$("[data-red]").forEach(function (b) {
+      b.onclick = function () {
+        red = this.getAttribute("data-red") === "1";
+        anuncia(red ? "Con conexión." : "Sin conexión.");
+        pinta();
+      };
+    });
+    $$("[data-v2]").forEach(function (b) {
+      b.onclick = function () { vista = this.getAttribute("data-v2"); pinta(); };
+    });
+  }
+
+  function anuncia(t) { $("#anuncio").textContent = t; }
+
+  /* ======================================================================
+     7. Eventos de la interfaz móvil (se reenlazan tras cada repintado)
+     ================================================================== */
+  function liga(id, prop) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.oninput = function () { F[prop] = this.value; };
+    /* Solo repintan los campos que cambian lo dibujado: el nombre (activa
+       el aviso de duplicado) y las dos listas (habilitan el guardado).
+       "change" ya se dispara al salir del campo, así que no hace falta un
+       "blur" aparte — y ese blur perdía el foco en cada salida.          */
+    if (prop === "neg" || prop === "giro" || prop === "mun") {
+      el.onchange = function () { F[prop] = this.value; repinta(id); };
+    }
+  }
+
+  function repinta(foco) {
+    var el = foco && document.getElementById(foco);
+    var pos = el && el.selectionStart;
+    pinta();
+    var d = foco && document.getElementById(foco);
+    if (d) {
+      d.focus({ preventScroll:true });
+      if (pos != null && d.setSelectionRange) { try { d.setSelectionRange(pos, pos); } catch (e) {} }
+    }
+  }
+
+  function eventos() {
+    liga("cNeg", "neg");   liga("cGiro", "giro"); liga("cMun", "mun");
+    liga("cDir", "dir");   liga("cMovN", "movN"); liga("cDoc", "doc");
+    liga("cMotNo", "motNo"); liga("cVacP", "vacP"); liga("cVacN", "vacN");
+    liga("cProp", "prop"); liga("cTel", "tel");   liga("cEmp", "empleados");
+    liga("cObs", "obs");
+
+    var g = $("#btnGps");
+    if (g) g.onclick = function () { F.gps = 1; anuncia("Ubicación tomada."); repinta(); };
+
+    var f = $("#btnFoto");
+    if (f) f.onclick = function () { F.foto = 1; anuncia("Fotografía adjunta."); repinta(); };
+
+    var om = $("#opsMov");
+    if (om) om.addEventListener("change", function (ev) {
+      F.mov = ev.target.value;
+      if (F.mov !== "si") { F.movN = ""; F.doc = ""; }
+      if (F.mov !== "no") F.motNo = "";
+      pinta();
+      var r = document.querySelector('#opsMov input[value="' + F.mov + '"]');
+      if (r) r.focus({ preventScroll:true });
+    });
+
+    var bv = $("#btnVac");
+    if (bv) bv.onclick = function () {
+      var p = ($("#cVacP") || {}).value, n = parseInt(($("#cVacN") || {}).value, 10);
+      if (!p || !p.trim()) { if ($("#cVacP")) $("#cVacP").focus(); return; }
+      F.vac.push({ p:p.trim(), n:(n > 0 ? n : 1) });
+      F.vacP = ""; F.vacN = "";
+      anuncia("Vacante agregada.");
+      repinta("cVacP");
+    };
+
+    $$("[data-quita]").forEach(function (b) {
+      b.onclick = function () {
+        F.vac.splice(parseInt(this.getAttribute("data-quita"), 10), 1);
+        repinta();
+      };
+    });
+
+    var bg = $("#btnGuardar");
+    if (bg) bg.onclick = function () {
+      if (faltantes(F).length) return;
+      var r = {
+        id:"C-" + (76 + REG.length), neg:F.neg.trim(), giro:F.giro, mun:F.mun, dir:F.dir,
+        est:"pend", f:HOY, mov:F.mov, movN:parseInt(F.movN, 10) || 0, doc:F.doc, motNo:F.motNo,
+        empleados:parseInt(F.empleados, 10) || null, vac:F.vac.slice(),
+        foto:F.foto, gps:F.gps, incompleto:F.mov ? 0 : 1
+      };
+      REG.unshift(r);
+      ultimo = r;
+      F = nuevo();
+      vista = "exito";
+      anuncia("Guardado en el dispositivo. " + plural(pendientes().length,
+        "registro pendiente", "registros pendientes") + ".");
+      pinta();
+    };
+
+    var bo = $("#btnOtro");
+    if (bo) bo.onclick = function () {
+      vista = "captura"; pinta();
+      var n = $("#cNeg");
+      if (n) n.focus({ preventScroll:true });
+    };
+
+    var bs = $("#btnSinc");
+    if (bs) bs.onclick = function () {
+      var n = 0;
+      REG.forEach(function (r) {
+        if (r.est === "pend" && !r.incompleto) {
+          r.est = "sinc";
+          r.folio = "CEN-2026-" + r.mun.slice(0, 3).toUpperCase() + "-" + r.id.slice(2);
+          n++;
+        }
+      });
+      anuncia(plural(n, "registro enviado", "registros enviados") + ".");
+      pinta();
+    };
+
+    /* Un registro pendiente se abre para completarlo. Nada se elimina
+       (RNF03): lo que ya se envió solo se corrige con oficio.            */
+    $$("[data-r]").forEach(function (b) {
+      b.onclick = function () {
+        var id = this.getAttribute("data-r");
+        var r = REG.filter(function (x) { return x.id === id; })[0];
+        if (!r) return;
+        anuncia(r.est === "sinc"
+          ? r.neg + ". Ya enviado: se corrige con oficio, no desde el dispositivo."
+          : r.neg + ". Pendiente de enviar; puede completarse.");
+      };
+    });
+
+    $$("[data-v]").forEach(function (b) {
+      b.onclick = function () { vista = this.getAttribute("data-v"); pinta(); };
+    });
+  }
+
+  pinta();
+})();
+</script>
+</body>
+</html>

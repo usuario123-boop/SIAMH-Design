@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Iniciar sesión · SIMH</title>
+<link rel="icon" href="assets/img/simh-isotipo-96.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/simh.css">
+</head>
+<body>
+
+<div class="login">
+  <!-- ------------------------------------------------ Columna de marca -- -->
+  <section class="login-marca">
+    <!-- Fondo en movimiento: mudo, en bucle y con imagen de respaldo. No
+         transmite información, así que queda fuera del árbol de accesibilidad. -->
+    <video class="login-video" autoplay muted loop playsinline preload="auto"
+           poster="assets/video/login-fondo.jpg" aria-hidden="true" tabindex="-1">
+      <source src="assets/video/login-fondo.mp4" type="video/mp4">
+    </video>
+    <div class="login-velo" aria-hidden="true"></div>
+    <img class="marca-agua" src="assets/img/simh-isotipo.png" alt="" aria-hidden="true">
+
+    <p class="marca-tope">Gobierno de Chiapas · 2024–2030</p>
+
+    <div class="marca-cuerpo">
+      <h1>Secretaría de la<br>Frontera Sur</h1>
+      <div class="cenefa" aria-hidden="true"></div>
+      <p>Registro único y seguimiento de las personas en contexto de
+         movilidad humana atendidas en el estado.</p>
+    </div>
+
+    <div class="marca-pie">
+      <div class="marca-firma">HUMANISMO QUE TRANSFORMA<br>GOBIERNO DE CHIAPAS 2024–2030</div>
+      <span class="marca-entorno">Prototipo v2 · entorno de demostración</span>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------- Columna de acceso ---- -->
+  <section class="login-form">
+    <div class="caja">
+      <img class="login-lockup" src="assets/img/simh-lockup.png"
+           alt="SIAMH · Sistema de Monitoreo y Gestión para Personas en Contexto de Movilidad · Secretaría de la Frontera Sur, Chiapas"
+           width="760" height="300">
+
+      <div class="aviso aviso-jade oculto" id="avisoSalida" style="margin-bottom:16px"></div>
+
+      <form class="tarjeta" id="formAcceso" novalidate>
+        <h2>Iniciar sesión</h2>
+        <p class="txt-min" style="margin-bottom:22px">
+          Ingresa con las credenciales asignadas por tu Dirección de Área.
+        </p>
+
+        <!-- Región de error única: se anuncia una vez, no campo por campo -->
+        <div class="error-form" id="errorForm" role="alert"></div>
+
+        <div class="campo">
+          <label for="usuario">Usuario</label>
+          <input id="usuario" name="usuario" type="text" placeholder="nombre.apellido"
+                 autocomplete="username" autocapitalize="none" spellcheck="false" autofocus>
+          <!-- El usuario NO es un correo: es la cuenta institucional que asigna
+               la Dirección de Área, y lo que da acceso es el rol, no la cuenta
+               de correo de la persona. Decirlo aquí evita que en la ventanilla
+               se intente entrar con el correo personal. -->
+          <div class="ayuda">Cuenta institucional que asigna tu Dirección de Área. No es un correo
+            electrónico, y lo que abre cada módulo es tu rol, no tu cuenta.</div>
+        </div>
+
+        <div class="campo">
+          <label for="clave">Contraseña</label>
+          <div class="campo-clave">
+            <input id="clave" name="clave" type="password" placeholder="••••••••••"
+                   autocomplete="current-password">
+            <button type="button" class="ver-clave" id="verClave"
+                    aria-pressed="false" aria-label="Mostrar contraseña" title="Mostrar contraseña"></button>
+          </div>
+          <p class="aviso-caps" id="avisoCaps">Bloq Mayús está activado.</p>
+        </div>
+
+        <label class="check" style="margin:2px 0 6px">
+          <input type="checkbox" id="recordar">
+          <span>Recordar este equipo</span>
+        </label>
+        <p class="txt-min" style="margin:0 0 20px 26px">
+          No lo actives en equipos compartidos de ventanilla.
+        </p>
+
+        <button type="submit" class="btn btn-primario btn-bloque btn-grande">Entrar</button>
+
+        <p class="txt-min" style="text-align:center;margin:18px 0 0">
+          <a href="#">¿Olvidaste tu contraseña?</a>
+        </p>
+      </form>
+
+      <div class="aviso aviso-neutro" id="avisoAcceso" style="margin-top:18px"></div>
+    </div>
+
+    <div class="login-pie">
+      <div class="cenefa-fina" style="width:150px;margin:0 auto 12px"></div>
+      <p class="txt-min" style="margin:0">
+        Mesa de ayuda · <a href="#">soporte.sfs@chiapas.gob.mx</a> · ext. 2140<br>
+        Lunes a viernes de 8:00 a 18:00 h
+      </p>
+    </div>
+  </section>
+</div>
+
+<script src="assets/js/simh.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var clave     = document.getElementById("clave");
+  var usuario   = document.getElementById("usuario");
+  var verClave  = document.getElementById("verClave");
+  var errorForm = document.getElementById("errorForm");
+  var avisoCaps = document.getElementById("avisoCaps");
+
+  verClave.innerHTML = SIMH.icono("ojo");
+
+  document.getElementById("avisoAcceso").innerHTML = SIMH.icono("candado") +
+    "<span><strong>Acceso exclusivo para personal autorizado.</strong> " +
+    "Todas las acciones quedan registradas en la bitácora de auditoría con usuario, " +
+    "fecha, hora y dirección IP.</span>";
+
+  /* Vuelta desde "Cerrar sesión": se confirma que la sesión terminó. ------ */
+  if (/[?&]salir=1/.test(location.search)) {
+    var s = document.getElementById("avisoSalida");
+    s.innerHTML = SIMH.icono("check") +
+      "<span>Cerraste sesión correctamente. Tu sesión anterior quedó registrada en la bitácora.</span>";
+    s.classList.remove("oculto");
+  }
+
+  /* Mostrar u ocultar la contraseña -------------------------------------- */
+  verClave.addEventListener("click", function () {
+    var ver = clave.type === "password";
+    clave.type = ver ? "text" : "password";
+    verClave.setAttribute("aria-pressed", ver ? "true" : "false");
+    var t = ver ? "Ocultar contraseña" : "Mostrar contraseña";
+    verClave.setAttribute("aria-label", t);
+    verClave.setAttribute("title", t);
+    clave.focus();
+  });
+
+  /* Bloq Mayús: la causa más común de un acceso fallido ------------------- */
+  function caps(e) {
+    var on = e.getModifierState && e.getModifierState("CapsLock");
+    avisoCaps.classList.toggle("visible", !!on);
+  }
+  clave.addEventListener("keydown", caps);
+  clave.addEventListener("keyup", caps);
+  clave.addEventListener("blur", function () { avisoCaps.classList.remove("visible"); });
+
+  /* Validación: un solo mensaje y foco en el primer campo faltante -------- */
+  document.getElementById("formAcceso").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var faltan = [];
+    [[usuario, "usuario"], [clave, "contraseña"]].forEach(function (par) {
+      var vacio = !par[0].value.trim();
+      par[0].closest(".campo").classList.toggle("error", vacio);
+      if (vacio) faltan.push(par[1]);
+    });
+
+    if (faltan.length) {
+      errorForm.innerHTML = SIMH.icono("alerta") +
+        "<span>Falta capturar " + faltan.join(" y ") + ".</span>";
+      errorForm.classList.add("visible");
+      (faltan[0] === "usuario" ? usuario : clave).focus();
+      return;
+    }
+    errorForm.classList.remove("visible");
+    location.href = "index.html";
+  });
+
+  /* Si la persona pidió menos movimiento, el video no se reproduce -------- */
+  var v = document.querySelector(".login-video");
+  if (v && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    v.pause();
+    v.removeAttribute("autoplay");
+  }
+})();
+</script>
+</body>
+</html>

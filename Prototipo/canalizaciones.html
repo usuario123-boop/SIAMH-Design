@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canalizaciones · SIMH</title>
+<link rel="icon" href="assets/img/simh-isotipo-96.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/simh.css">
+<style>
+  /* ======================================================================
+     OFICIOS Y CONSTANCIAS — RF11 (emisión automatizada de oficios) y
+     RF10 (constancia de registro).
+     Los componentes compartidos viven en simh.css: `.filtros-fila` (§20),
+     `.accion` (§21) y `.oficio-hoja` (§22). Aquí solo va lo propio de esta
+     pantalla.
+     ================================================================== */
+
+  /* --- Registro de oficios ------------------------------------------------
+     table-layout:fixed con colgroup es la única cura para el desbordamiento
+     que ya apareció cuatro veces en este prototipo. Y ojo con `.btn`, que
+     trae white-space:nowrap y vuelve a desbordar dentro de una celda: aquí
+     ninguna celda lleva botón.                                           */
+  table.t-ofi{table-layout:fixed}
+  .t-ofi col.c-fol{width:16%}
+  .t-ofi col.c-asu{width:32%}
+  .t-ofi col.c-des{width:21%}
+  .t-ofi col.c-est{width:14%}
+  .t-ofi col.c-pla{width:17%}
+  .t-ofi th{white-space:normal}
+  .t-ofi td{word-break:break-word;vertical-align:top}
+  .t-ofi tbody tr{cursor:pointer}
+  .t-ofi tbody tr.activo{background:var(--jade-050)}
+  .t-ofi tbody tr.cancelado .o-asu{color:var(--gris)}
+  .t-ofi .o-ref{display:block;font-weight:700;font-size:13px;line-height:1.3;
+    font-variant-numeric:tabular-nums;word-break:break-word}
+  .t-ofi .o-ser{display:block;font-size:11.5px;color:var(--gris);margin-top:3px;line-height:1.4}
+  .t-ofi .o-asu{display:block;font-size:13px;line-height:1.35;color:var(--tinta)}
+  .t-ofi .o-per{display:block;font-size:12.5px;color:var(--gris);margin-top:3px;line-height:1.45}
+  .t-ofi .o-des{font-size:12.5px;line-height:1.45}
+  .t-ofi .o-pla{display:block;font-size:12.5px;line-height:1.45;color:var(--gris)}
+  .t-ofi .o-pla.urge{color:var(--guinda-900);font-weight:700}
+  .t-ofi .o-pla.pronto{color:#7d0140;font-weight:700}
+
+  /* --- Detalle y composición ---------------------------------------------
+     La hoja membretada queda SIEMPRE en la misma columna, lo mismo al
+     consultar un oficio que al redactarlo: es el mismo documento visto en
+     dos momentos, y cambiarlo de sitio obliga a volver a buscarlo.       */
+  .g-ofi{display:grid;grid-template-columns:1fr 392px;gap:22px;align-items:start}
+  @media (max-width:1180px){ .g-ofi{grid-template-columns:1fr} }
+
+  /* `.oficio-hoja` está calculada para la columna de 306 px de Salud. Aquí la
+     columna mide 392 px, así que la escala sube desde la pantalla; el
+     componente del sistema no se toca.                                   */
+  .hoja-lectura{font-size:10.5px}
+  .hoja-lectura .o-inst{font-size:9px}
+  .hoja-lectura .o-membrete{padding:15px 18px 12px}
+  .hoja-lectura .o-cuerpo{padding:16px 18px 18px}
+  .hoja-lectura .o-pie{padding:10px 18px;font-size:9px}
+  .hoja-lectura .o-firma{margin-top:22px}
+
+  /* Dato tomado del expediente. El guion pedía enseñar {{nombre_persona}} en
+     el cuerpo; eso es enseñar la maquinaria. Lo que necesita ver quien firma
+     es qué parte del texto NO se escribió a mano.                        */
+  .o-var{background:var(--jade-020);border-bottom:1px dotted rgba(0,152,135,.65);
+    color:var(--tinta);font-weight:700}
+  .o-pend{background:var(--arena-050);border-bottom:1px dotted var(--arena);
+    color:var(--gris-claro);font-style:italic}
+  .o-marca{display:flex;align-items:center;gap:7px;justify-content:center;margin-top:9px;
+    font-size:11px;color:var(--gris-claro);line-height:1.45}
+  .o-marca i{width:15px;height:10px;flex:none;background:var(--jade-020);
+    border-bottom:1px dotted rgba(0,152,135,.65)}
+
+  /* Sello de estado en la cara de la hoja: un borrador que se ve idéntico a
+     un oficio firmado es una trampa. El documento dice si ya vale.       */
+  .o-sello{display:flex;align-items:center;gap:7px;padding:7px 14px;font-size:11px;
+    font-weight:700;line-height:1.4;border-bottom:1px solid var(--linea-suave)}
+  .o-sello svg{width:14px;height:14px;stroke-width:2;fill:none;flex:none}
+  .o-sello.bor{background:var(--arena-050);color:var(--gris)}
+  .o-sello.bor svg{stroke:var(--gris)}
+  .o-sello.fir{background:var(--rosa-050);color:#7d0140}
+  .o-sello.fir svg{stroke:var(--rosa)}
+  .o-sello.can{background:var(--guinda-050);color:var(--guinda-900)}
+  .o-sello.can svg{stroke:var(--guinda)}
+
+  /* --- Plantillas --------------------------------------------------------- */
+  .pl-lista{border:1px solid var(--linea);border-radius:var(--radio);overflow:hidden;
+    background:var(--blanco)}
+  .pl-item{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;
+    padding:12px 14px;min-height:44px;background:none;border:0;cursor:pointer;
+    border-bottom:1px solid var(--linea-suave);font-family:var(--f-texto)}
+  .pl-item:last-child{border-bottom:0}
+  .pl-item:hover{background:var(--hueso-claro)}
+  .pl-item[aria-selected="true"]{background:var(--jade-050)}
+  .pl-item > svg{width:17px;height:17px;flex:none;margin-top:2px;stroke:var(--gris);
+    stroke-width:1.6;fill:none}
+  .pl-item[aria-selected="true"] > svg{stroke:var(--jade-900)}
+  .pl-t{display:block;font-size:13.5px;font-weight:700;color:var(--tinta);line-height:1.3}
+  .pl-n{display:block;font-size:12px;color:var(--gris);margin-top:3px;line-height:1.45}
+
+</style>
+</head>
+<body>
+
+<main class="contenido">
+  <div class="migas"><a href="index.html">Inicio</a> › Canalizaciones</div>
+
+  <div class="enc">
+    <div class="enc-txt">
+      <h1>Canalizaciones</h1>
+      <div class="enc-sub">Registro, firma y acuse de los oficios que salen de la Secretaría (RF11)</div>
+    </div>
+    <div class="enc-acc" id="encAcc"></div>
+  </div>
+
+  <details class="plegable" id="avisoDocs">
+    <summary>Cómo se emite y se controla una canalización</summary>
+    <div class="cuerpo" id="avisoDocsCuerpo"></div>
+  </details>
+
+  <div id="panel"></div>
+
+  <p id="anuncio" class="sr-solo" role="status" aria-live="polite"></p>
+</main>
+
+<script src="assets/js/simh.js"></script>
+<script src="assets/js/simh-datos.js"></script>
+<script>
+(function () {
+  "use strict";
+  SIMH.chrome("canaliza");
+  var ico = SIMH.icono, esc = SIMH.esc;
+  /* Reloj, permisos y catálogo de personas: assets/js/simh-datos.js, que
+     comparten los cuatro módulos de documentos. Cuatro copias del mismo
+     catálogo serían cuatro sitios donde una edad o un folio pueden dejar de
+     coincidir. */
+  var D = window.DATOS;
+  var HOY = D.HOY, fecha = D.fecha, hora = D.hora, fechaHora = D.fechaHora;
+  var horas = D.horas, dias = D.dias, horasTxt = D.horasTxt, edad = D.edad;
+  var plural = D.plural, persona = D.persona;
+  var YO = D.YO, DIRECTOR = D.DIRECTOR, PERS = D.PERS;
+  /* Los casos de revalidación se leen, no se editan aquí: el oficio de
+     educación cita la negativa registrada en el otro módulo. */
+  var REVAL = D.REVAL, NIVELES = D.NIVELES, negAbierta = D.negAbierta;
+  var $ = function (s) { return document.querySelector(s); };
+  var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+
+  /* ======================================================================
+     1. Qué pide el guion y qué no se sostiene
+     --------------------------------------------------------------------
+     El guion llamaba a esta pantalla "emisión automatizada de oficios". La
+     Dirección la renombró CANALIZACIONES, y tiene razón: el oficio es el
+     instrumento, la canalización es lo que de verdad hacen. Los otros tres
+     módulos de documentos —Revalidación de Estudios, Documentación e
+     Identidad y Constancias— son pantallas propias con su entrada de menú,
+     no pestañas de esta.
+
+     · EL GUION HACE EDITABLE EL CUERPO DEL OFICIO, con las variables a la
+       vista como {{nombre_persona}}. Eso no es "emisión automatizada"
+       (RF11), es un editor de plantillas, y pone a la ventanilla a redactar
+       texto con efectos legales. Aquí el cuerpo lo arma la plantilla con los
+       datos del expediente; lo que se captura es un conjunto acotado de
+       variables. En la vista previa los datos tomados del expediente se
+       marcan, para que quien firma vea qué NO se escribió a mano — que es
+       la misma regla que ya rige las cifras de las demás pantallas.
+
+     · EL GUION ASIGNA EL FOLIO AL ABRIR EL FORMULARIO ("autogenerado y
+       bloqueado"). Un folio de una serie consecutiva no puede nacer con el
+       borrador: si el borrador se abandona, el folio queda quemado y la
+       serie tiene un hueco, que es justo lo que un auditor busca. Aquí el
+       borrador lleva referencia interna (BOR-####) y el FOLIO SE ASIGNA AL
+       FIRMAR. Lo que existe antes de la firma no es un oficio.
+
+     · EL GUION PONE TRES BOTONES AL MISMO NIVEL: "Guardar borrador",
+       "Generar oficio (PDF)" y "Enviar a firma". Son tres puntos de no
+       retorno distintos dibujados igual, y el orden sugiere que se puede
+       producir el PDF definitivo sin firma: un PDF con folio real
+       circulando sin firmar es exactamente el modo de fallo. Aquí hay UNA
+       acción principal por estado del documento, y la manda el estado.
+
+     · AL GUION LE FALTA EL ANTES Y EL DESPUÉS. Salud y Expediente Familiar
+       ya emiten oficios; si esta pantalla fuera solo un compositor,
+       duplicaría esa lógica. Su trabajo principal es el REGISTRO: la serie
+       consecutiva, qué está esperando firma, qué salió sin acuse y qué se
+       canceló. Las plantillas cuyo dato vive en otro módulo no se capturan
+       aquí: se dice dónde se emiten y se enlaza.
+
+     · NADIE PIDE EL ACUSE. Un oficio que sale y nunca se acusa es el riesgo
+       real de operación —sobre todo el de la Procuraduría, que tiene plazo
+       legal—, así que el acuse es un estado propio con su fecha esperada.
+
+     · LA CONSTANCIA DEL GUION OFRECE "Formato: Imprimible / Digital". Para
+       una población sin acceso a dispositivos móviles —la misma razón por
+       la que no hay QR— esa distinción no significa nada. Lo que de verdad
+       cambia es el SOPORTE: gafete de 54 × 86 mm u hoja carta, que es la
+       decisión abierta en AVANCES §5.3. Se ofrecen los dos y la vista
+       previa cambia de forma, para decidir mirando.
+
+     · LA CONSTANCIA NO DECÍA QUÉ NO ES. Sin esa frase se va a usar como
+       documento migratorio. Y quitar el QR sin poner otra vía deja el
+       documento inverificable: la verificación es por folio y sello en
+       ventanilla, y así lo dice el impreso.
+     ================================================================== */
+
+  /* ======================================================================
+     5. Plantillas de oficio (RF11)
+     --------------------------------------------------------------------
+     `origen` dice dónde se compone cada una. Las tres primeras NO se
+     capturan aquí: sus variables son el expediente de otro módulo, y
+     volver a pedirlas abriría la puerta a emitir un oficio sin que el
+     expediente lo respalde. Se enuncia la regla y se enlaza.
+     ================================================================== */
+  var PLANTILLAS = [
+    { id:"canaliza", t:"Canalización a servicios de salud",
+      n:"Deriva a una persona a una institución de salud con motivo y fecha de cita.",
+      fund:"Artículo 8 de la Ley de Migración · RF07",
+      dest:"Institución de salud del catálogo",
+      origen:"salud", href:"salud.html", modulo:"Salud y Vulnerabilidad",
+      porque:"El oficio se arma con los marcadores de vulnerabilidad, la condición valorada y la " +
+             "fecha de cita, que solo existen en el expediente de Salud." },
+
+    { id:"nna", t:"Notificación a la Procuraduría Regional por NNA",
+      n:"Aviso obligatorio cuando hay una persona menor de edad separada o no acompañada.",
+      fund:"RF06 · Ley General de los Derechos de NNA, artículos 89 y 111",
+      dest:"Procuraduría Regional de Protección de NNA",
+      plazoH:24,
+      origen:"familiar", href:"familiar.html", modulo:"Expediente Familiar",
+      porque:"Lo dispara la clasificación de NNA dentro del grupo familiar. Capturarla otra vez " +
+             "aquí permitiría emitir la notificación sin que el grupo la respalde, y el plazo de " +
+             "24 horas se cuenta desde esa clasificación." },
+
+    { id:"vinculacion", t:"Oficio de vinculación laboral",
+      n:"Presenta a la persona ante la unidad económica y formaliza la colocación.",
+      fund:"RF12",
+      dest:"Unidad económica empleadora",
+      origen:"empleo", href:"empleabilidad.html", modulo:"Empleabilidad",
+      porque:"Depende de la etapa de la vinculación y de las verificaciones de 15 y 30 días. " +
+             "Además su constancia está reservada al Enlace de Vinculación (RNF02)." },
+
+    { id:"educacion", t:"Canalización o gestión ante autoridad educativa",
+      n:"Reclama la inscripción o el trámite de revalidación de una persona a la que una escuela " +
+        "o autoridad educativa no quiso atender.",
+      fund:"Art. 3.º constitucional · Ley General de Educación, art. 7 y 9 · Acuerdo 286 de la SEP",
+      dest:"Autoridad educativa estatal o plantel",
+      origen:"oficios", aqui:true, caso:"reval" },
+
+    { id:"modificacion", t:"Solicitud de modificación de expediente",
+      n:"Pide autorización para corregir un dato ya asentado. Es la vía que exige RNF02.",
+      fund:"RNF02 · nada se modifica sin oficio y autorización",
+      dest:"Dirección de Área que autoriza",
+      origen:"oficios", aqui:true },
+
+    { id:"institucional", t:"Comunicación institucional",
+      n:"Oficio de texto libre para lo que no cubre ninguna plantilla.",
+      fund:"Sin fundamento preasignado: lo redacta y lo asume quien firma",
+      dest:"Institución destinataria",
+      origen:"oficios", aqui:true, libre:true }
+  ];
+
+  function plantilla(id) {
+    return PLANTILLAS.filter(function (p) { return p.id === id; })[0] || null;
+  }
+
+  /* ======================================================================
+     6. Registro de oficios
+     --------------------------------------------------------------------
+     La serie asciende con la fecha de firma, que es lo que la vuelve
+     auditable: `ref` es la referencia interna del borrador y `folio` solo
+     existe a partir de la firma. Un oficio cancelado conserva su folio y
+     su rastro (RNF03); lo sustituye otro, no se borra.
+     ================================================================== */
+  var OFI = [
+    { id:"o1", ref:"BOR-0034", folio:null, pl:"nna", est:"firma",
+      asunto:"Notificación por dos personas menores de edad clasificadas como separadas",
+      per:"SIMH-2026-TAP-0410",
+      dest:{ inst:"Procuraduría Regional de Protección de Niñas, Niños y Adolescentes",
+             cargo:"Titular de la Procuraduría Regional", mun:"Región Soconusco, Tapachula" },
+      origen:"familiar",
+      creado:{ por:"María Gómez Pérez", rol:"Capturista Municipal", t:"2026-08-27 14:20" },
+      enviado:{ t:"2026-08-27 14:26" },
+      plazo:"2026-08-28 14:20",
+      plazoNota:"El plazo de 24 horas corre desde que se clasificó a la segunda persona menor de " +
+                "edad del grupo, el 27/08/2026 a las 14:20 (RF06).",
+      datos:{ grupo:"SIMH-FAM-2026-0338", mun:"Tapachula", clasif:"separados",
+              nna:[{ n:"Keiner Alexander Rojas Mora", e:16 }, { n:"Dariana Rojas Mora", e:7 }] } },
+
+    { id:"o2", ref:"BOR-0035", folio:null, pl:"institucional", est:"borrador",
+      asunto:"Solicitud de apertura de un segundo grupo de electricidad básica",
+      per:null,
+      dest:{ inst:"Instituto de Capacitación y Vinculación Tecnológica de Chiapas (ICATECH)",
+             cargo:"Coordinación Académica", mun:"Unidad Tapachula" },
+      origen:"oficios",
+      creado:{ por:"Lic. Adriana Molina Sántiz", rol:"Directora de Capacitación y Empleo",
+               t:"2026-08-28 08:50" },
+      datos:{ cuerpo:"Derivado de la demanda registrada en el módulo de Capacitación, solicito a " +
+                     "esa Coordinación valorar la apertura de un segundo grupo de electricidad " +
+                     "básica en la Unidad Tapachula para el periodo septiembre–noviembre de 2026." } },
+
+    { id:"o3", ref:"BOR-0030", folio:"SFS/0947/2026", est:"emitido", pl:"canaliza",
+      asunto:"Canalización por embarazo sin control prenatal",
+      per:"SIMH-2026-TAP-0412",
+      dest:{ inst:"Hospital General de Tapachula", cargo:"Dirección Médica", mun:"Tapachula" },
+      origen:"salud",
+      creado:{ por:"María Gómez Pérez", rol:"Capturista Municipal", t:"2026-08-27 09:40" },
+      firmado:{ por:DIRECTOR.n, cargo:DIRECTOR.cargo, t:"2026-08-27 17:40" },
+      acusePlazo:"2026-09-03",
+      datos:{ motivo:"Valoración por embarazo de 24 semanas sin control prenatal.",
+              cita:"2026-09-03", acomp:"Sí, personal de la Secretaría" } },
+
+    { id:"o4", ref:"BOR-0029", folio:"SFS/0946/2026", est:"emitido", pl:"institucional",
+      asunto:"Solicitud de sede alterna para el pase de lista del grupo ICA-021",
+      per:null,
+      dest:{ inst:"Instituto de Capacitación y Vinculación Tecnológica de Chiapas (ICATECH)",
+             cargo:"Coordinación Académica", mun:"Unidad Tapachula" },
+      origen:"oficios",
+      creado:{ por:"Lic. Adriana Molina Sántiz", rol:"Directora de Capacitación y Empleo",
+               t:"2026-08-27 08:40" },
+      firmado:{ por:"Lic. Adriana Molina Sántiz", cargo:"Directora de Capacitación y Empleo",
+                t:"2026-08-27 09:30" },
+      acusePlazo:"2026-09-03",
+      datos:{ cuerpo:"Solicito a esa Coordinación autorizar una sede alterna para el pase de lista " +
+                     "del grupo ICA-021, en razón de que el aula asignada quedó fuera de servicio." } },
+
+    /* El oficio con retraso de acuse: la fila que hace trabajar la pantalla. */
+    { id:"o5", ref:"BOR-0026", folio:"SFS/0942/2026", est:"emitido", pl:"canaliza",
+      asunto:"Canalización por valoración de salud mental",
+      per:"SIMH-2026-TAP-0411",
+      dest:{ inst:"Jurisdicción Sanitaria VII", cargo:"Coordinación de Salud Mental", mun:"Tapachula" },
+      origen:"salud",
+      creado:{ por:"María Gómez Pérez", rol:"Capturista Municipal", t:"2026-08-23 10:05" },
+      firmado:{ por:DIRECTOR.n, cargo:DIRECTOR.cargo, t:"2026-08-23 13:15" },
+      acusePlazo:"2026-08-27",
+      sustituyeA:"SFS/0938/2026",
+      datos:{ motivo:"Valoración de salud mental posterior a episodio de violencia en ruta.",
+              cita:"2026-09-08", acomp:"Sí, intérprete de creol" } },
+
+    { id:"o6", ref:"BOR-0022", folio:"SFS/0938/2026", est:"cancelado", pl:"canaliza",
+      asunto:"Canalización por valoración de salud mental",
+      per:"SIMH-2026-TAP-0411",
+      dest:{ inst:"Hospital General de Huixtla", cargo:"Dirección Médica", mun:"Huixtla" },
+      origen:"salud",
+      creado:{ por:"María Gómez Pérez", rol:"Capturista Municipal", t:"2026-08-22 09:30" },
+      firmado:{ por:DIRECTOR.n, cargo:DIRECTOR.cargo, t:"2026-08-22 11:00" },
+      cancel:{ t:"2026-08-23 13:15", por:"SFS/0942/2026",
+               motivo:"Institución destinataria equivocada: la persona reside en Tapachula y la " +
+                      "cita se había dirigido a Huixtla." },
+      datos:{ motivo:"Valoración de salud mental posterior a episodio de violencia en ruta.",
+              cita:"2026-09-08", acomp:"Sí, intérprete de creol" } },
+
+    { id:"o7", ref:"BOR-0027", folio:"SFS/0943/2026", est:"acusado", pl:"institucional",
+      asunto:"Autorización de excepción de permisos para corrección de CURP",
+      per:null,
+      dest:{ inst:"Subsecretaría de Movilidad Humana", cargo:"Titular de la Subsecretaría",
+             mun:"Tuxtla Gutiérrez" },
+      origen:"admin",
+      creado:{ por:DIRECTOR.n, rol:"Director de Atención y Salud", t:"2026-08-26 09:10" },
+      firmado:{ por:DIRECTOR.n, cargo:DIRECTOR.cargo, t:"2026-08-26 10:05" },
+      acuse:{ t:"2026-08-26 12:30", quien:"Lic. Hilda Nájera Toledo",
+              cargo:"Oficialía de Partes de la Subsecretaría", medio:"Entrega en oficialía" },
+      datos:{ cuerpo:"Solicito autorizar a la C. María Gómez Pérez, Capturista Municipal adscrita a " +
+                     "la ventanilla de Tapachula, la facultad de editar expedientes con vigencia al " +
+                     "30 de septiembre de 2026, para corregir las CURP capturadas con error durante " +
+                     "el piloto de agosto." } },
+
+    /* El oficio que nace de una negativa de inscripción. Es el caso que la
+       Dirección puso sobre la mesa: la escuela condiciona la inscripción a
+       papeles que la norma no exige. */
+    { id:"o10", ref:"BOR-0028", folio:"SFS/0944/2026", est:"emitido", pl:"educacion",
+      asunto:"Inscripción de persona menor de edad negada por falta de documentos",
+      per:"SIMH-2026-TAP-0408",
+      dest:{ inst:"Secretaría de Educación del Estado de Chiapas",
+             cargo:"Subsecretaría de Educación Estatal · Región Soconusco", mun:"Tapachula" },
+      origen:"oficios", folioDep:"VENT-TAP/2026/118",
+      creado:{ por:"María Gómez Pérez", rol:"Capturista Municipal", t:"2026-08-26 12:05" },
+      firmado:{ por:DIRECTOR.n, cargo:DIRECTOR.cargo, t:"2026-08-26 16:20" },
+      acusePlazo:"2026-09-02",
+      datos:{ nivel:"Educación básica (primaria)", plantel:"Escuela Primaria Federal Belisario Domínguez",
+              negativa:"El plantel condicionó la inscripción a la presentación de CURP y acta de " +
+                       "nacimiento apostillada.",
+              pide:"la inscripción inmediata en el grado que determine la valoración de la escuela, " +
+                   "y la regularización posterior del expediente" } },
+
+    { id:"o8", ref:"BOR-0019", folio:"SFS/0931/2026", est:"acusado", pl:"canaliza",
+      asunto:"Canalización a atención psicológica por violencia de género",
+      per:"SIMH-2026-FCO-0094",
+      dest:{ inst:"Jurisdicción Sanitaria VII · atención a víctimas",
+             cargo:"Coordinación de Atención a Víctimas", mun:"Frontera Comalapa" },
+      origen:"salud",
+      creado:{ por:"María Gómez Pérez", rol:"Capturista Municipal", t:"2026-08-20 11:40" },
+      firmado:{ por:DIRECTOR.n, cargo:DIRECTOR.cargo, t:"2026-08-20 15:05" },
+      acuse:{ t:"2026-08-21 09:15", quien:"Psic. Rebeca Ordóñez Gómez",
+              cargo:"Coordinación de Atención a Víctimas", medio:"Correo institucional" },
+      datos:{ motivo:"Atención psicológica por violencia de género.",
+              cita:"2026-09-05", acomp:"Sí, personal de la Secretaría" } },
+
+    { id:"o9", ref:"BOR-0008", folio:"SFS/0912/2026", est:"acusado", pl:"canaliza",
+      asunto:"Canalización para control prenatal",
+      per:"SIMH-2026-TAP-0412",
+      dest:{ inst:"Centro de Salud Urbano de Tapachula", cargo:"Dirección", mun:"Tapachula" },
+      origen:"salud",
+      creado:{ por:"María Gómez Pérez", rol:"Capturista Municipal", t:"2026-08-11 15:30" },
+      firmado:{ por:DIRECTOR.n, cargo:DIRECTOR.cargo, t:"2026-08-11 17:10" },
+      acuse:{ t:"2026-08-12 09:40", quien:"Dra. Alma Delia Pérez Guzmán", cargo:"Dirección",
+              medio:"Entrega en ventanilla" },
+      datos:{ motivo:"Control prenatal de primer trimestre.",
+              cita:"2026-09-12", acomp:"No" } }
+  ];
+
+  /* Contadores de serie: la referencia interna y el folio son dos series
+     distintas, y por eso se cuentan por separado. El folio solo avanza
+     cuando alguien firma.                                              */
+  var refSec = 35;
+  var folioSec = 947;
+  var consSec = 768;
+
+  /* ======================================================================
+     7. Estado de la pantalla
+     ================================================================== */
+  var qs   = new URLSearchParams(location.search);
+  var modo = "registro";                       /* registro | nuevo */
+  var sel  = null;                             /* oficio seleccionado */
+  var panelAcuse = false;
+  var busca = "", fEst = "todos", fPl = "todos";
+
+  function nuevoVacio() {
+    return { pl:null, exp:"", campo:"", valor:"", prueba:"", motivo:"",
+             inst:"", cargo:"", asunto:"", cuerpo:"", folioDep:"", caso:"", destEdu:"" };
+  }
+  var nuevo = nuevoVacio();
+
+
+  /* ======================================================================
+     8. Estados de un documento
+     --------------------------------------------------------------------
+     Glifo, palabra y color, nunca color solo. "Emitido" y "Acusado" están en
+     la misma familia de tono porque los dos son buenos; lo que los separa es
+     la palabra y el glifo, y la urgencia vive en otra columna.
+     ================================================================== */
+  var EST = {
+    borrador:  { t:"Borrador",  c:"chip-neutro", i:"editar" },
+    firma:     { t:"En firma",  c:"chip-rosa",   i:"reloj" },
+    emitido:   { t:"Emitido",   c:"chip-jade",   i:"doc" },
+    acusado:   { t:"Acusado",   c:"chip-jade",   i:"check" },
+    cancelado: { t:"Cancelado", c:"chip-guinda", i:"alerta" }
+  };
+  var EST_ORDEN = ["borrador", "firma", "emitido", "acusado", "cancelado"];
+
+  function chipEstado(o) {
+    var e = EST[o.est];
+    return '<span class="chip ' + e.c + '">' + ico(e.i) + e.t + "</span>";
+  }
+
+  /* Plazo y acuse: el estado dice en qué punto va el documento, esta columna
+     dice si va a tiempo. Son dos cosas distintas y por eso son dos celdas. */
+  function plazo(o) {
+    if (o.est === "cancelado") return { txt:"Cancelado el " + fecha(o.cancel.t), tono:"" };
+    if (o.est === "borrador")  return { txt:"Sin enviar a firma", tono:"" };
+    if (o.est === "firma") {
+      if (!o.plazo) return { txt:"En espera de firma", tono:"" };
+      var h = horas(o.plazo);
+      if (h < 0)  return { txt:"Plazo vencido hace " + horasTxt(-h), tono:"urge" };
+      if (h < 24) return { txt:"Vence hoy a las " + hora(o.plazo), tono:"urge" };
+      return { txt:"Vence el " + fecha(o.plazo), tono:"pronto" };
+    }
+    if (o.est === "acusado") return { txt:"Acuse del " + fecha(o.acuse.t), tono:"" };
+    if (!o.acusePlazo) return { txt:"Sin acuse por recibir", tono:"" };
+    var d = dias(o.acusePlazo);
+    if (d < 0)  return { txt:"Sin acuse · " + plural(-d, "día", "días") + " de retraso", tono:"urge" };
+    if (d === 0) return { txt:"Acuse esperado hoy", tono:"pronto" };
+    return { txt:"Acuse esperado el " + fecha(o.acusePlazo), tono:"" };
+  }
+
+  /* Peso de lo pendiente: menor es más urgente. Sirve para ordenar la tabla
+     y para elegir la única barra de acción de la pantalla.               */
+  function peso(o) {
+    if (o.est === "firma" && o.plazo)  return horas(o.plazo) < 24 ? 1 : 3;
+    if (o.est === "emitido" && o.acusePlazo && dias(o.acusePlazo) < 0) return 2;
+    if (o.est === "firma")    return 4;
+    if (o.est === "borrador") return 5;
+    if (o.est === "emitido")  return 6;
+    if (o.est === "acusado")  return 7;
+    return 8;
+  }
+  function pendientes() {
+    return OFI.filter(function (o) { return peso(o) <= 5; }).length;
+  }
+
+  /* ======================================================================
+     9. La hoja del oficio
+     --------------------------------------------------------------------
+     El cuerpo lo arma la plantilla. Lo que viene del expediente se envuelve
+     en `.o-var` y lo que aún falta en `.o-pend`, así que la vista previa
+     enseña de un vistazo qué está resuelto y qué no, sin mostrar la
+     sintaxis de las variables.
+     ================================================================== */
+  function v(t)  { return '<span class="o-var">' + esc(t) + "</span>"; }
+  function vf(t) { return '<span class="o-pend">' + esc(t) + "</span>"; }
+  function dato(valor, faltante) {
+    return valor ? v(valor) : vf(faltante);
+  }
+
+  function cuerpoOficio(o) {
+    var d = o.datos || {};
+    var p = o.per ? persona(o.per) : null;
+
+    if (o.pl === "canaliza") {
+      return "<p>Por medio del presente y con fundamento en el artículo 8 de la Ley de Migración, " +
+        "me permito canalizar a la persona " + (p ? v(p.n) : vf("— sin expediente —")) + ", de " +
+        (p ? v(edad(p.nac) + " años") : vf("— edad —")) + ", registrada en el Sistema Integral de " +
+        "Movilidad Humana con folio " + (p ? v(p.f) : vf("— folio —")) + ", para su atención por el " +
+        "motivo siguiente:</p>" +
+        "<p>" + dato(d.motivo, "— motivo pendiente de capturar —") + "</p>" +
+        "<p>Fecha de cita: " + dato(d.cita ? fecha(d.cita) : "", "por agendar") +
+        ". Acompañamiento: " + dato(d.acomp, "— por definir —") + ".</p>" +
+        "<p>Sin otro particular, agradezco las atenciones brindadas.</p>";
+    }
+
+    if (o.pl === "nna") {
+      var lista = (d.nna || []).map(function (x) { return x.n + " (" + x.e + " años)"; }).join("; ");
+      return "<p>Con fundamento en los artículos 89 y 111 de la Ley General de los Derechos de Niñas, " +
+        "Niños y Adolescentes, y dentro del plazo de 24 horas que fija el procedimiento de atención, " +
+        "notifico a esa Procuraduría Regional que en el grupo familiar " + dato(d.grupo, "— grupo —") +
+        ", registrado en " + dato(d.mun, "— municipio —") + ", se identificaron " +
+        v(plural((d.nna || []).length, "persona menor de edad", "personas menores de edad")) +
+        " clasificadas como <b>" + esc(d.clasif || "—") + "</b>:</p>" +
+        "<p>" + dato(lista, "— sin integrantes capturados —") + "</p>" +
+        "<p>Solicito a esa Procuraduría la designación de representación en suplencia y la " +
+        "determinación del plan de restitución de derechos que corresponda.</p>";
+    }
+
+    if (o.pl === "educacion") {
+      var pe = o.per ? persona(o.per) : null;
+      return "<p>Con fundamento en el artículo 3.º de la Constitución y en los artículos 7 y 9 de la " +
+        "Ley General de Educación, que garantizan el acceso a la educación con independencia de la " +
+        "situación migratoria y de la documentación disponible, me dirijo a esa autoridad en " +
+        "relación con " + (pe ? v(pe.n) : vf("— persona —")) + ", de " +
+        (pe ? v(edad(pe.nac) + " años") : vf("— edad —")) + ", con expediente " +
+        (pe ? v(pe.f) : vf("— folio —")) + ", en el nivel de " +
+        dato(d.nivel, "— nivel —") + ".</p>" +
+        "<p>Se hace constar el siguiente hecho, registrado por esta Secretaría en " +
+        dato(d.plantel, "— plantel —") + ": " + dato(d.negativa, "— negativa pendiente de capturar —") +
+        "</p>" +
+        "<p>El Acuerdo 286 de la Secretaría de Educación Pública y la normativa de inclusión " +
+        "educativa impiden condicionar la inscripción a la entrega de documentos. Por lo anterior, " +
+        "solicito a esa autoridad " + dato(d.pide, "— lo que se solicita —") + ".</p>";
+    }
+
+    if (o.pl === "modificacion") {
+      var pm = d.exp ? persona(d.exp) : null;
+      return "<p>Con fundamento en el criterio de auditoría y modificaciones del Sistema Integral de " +
+        "Movilidad Humana (RNF02), solicito a usted autorizar la modificación del expediente " +
+        (pm ? v(pm.f) : vf("— expediente —")) + ", correspondiente a " +
+        (pm ? v(pm.n) : vf("— persona —")) + ", en el campo " +
+        dato(d.campo, "— campo —") + ".</p>" +
+        "<p>Valor asentado: " + dato(d.actual, "— sin dato —") + ". Valor correcto: " +
+        dato(d.valor, "— pendiente de capturar —") + ".</p>" +
+        "<p>Motivo: " + dato(d.motivo, "— motivo pendiente —") + ". Documento probatorio: " +
+        dato(d.prueba, "— sin anexo —") + ".</p>" +
+        "<p>De autorizarse, la modificación quedará asentada en la bitácora de auditoría con el " +
+        "valor anterior y el nuevo, conforme a RNF02.</p>";
+    }
+
+    if (o.pl === "vinculacion") {
+      return "<p>Por medio del presente presento ante esa unidad económica a la persona " +
+        (p ? v(p.n) : vf("— persona —")) + ", con folio " + (p ? v(p.f) : vf("— folio —")) +
+        ", para la formalización de la vinculación laboral registrada en el módulo de " +
+        "Empleabilidad.</p>";
+    }
+
+    /* Comunicación institucional: el único caso en que el cuerpo es autoría
+       de quien lo redacta. Por eso no lleva ningún dato marcado: no hay nada
+       que el sistema pueda responder por él.                             */
+    return "<p>" + (d.cuerpo ? esc(d.cuerpo) : vf("— cuerpo pendiente de redactar —")) + "</p>" +
+      "<p>Sin otro particular, reciba un cordial saludo.</p>";
+  }
+
+  function selloHoja(o) {
+    if (o.est === "borrador")
+      return '<div class="o-sello bor">' + ico("editar") +
+        "Borrador · sin folio y sin validez hasta la firma</div>";
+    if (o.est === "firma")
+      return '<div class="o-sello fir">' + ico("reloj") +
+        "En firma · el folio se asigna cuando el Director de Área firme</div>";
+    if (o.est === "cancelado")
+      return '<div class="o-sello can">' + ico("alerta") +
+        "Cancelado · sustituido por el oficio " + esc(o.cancel.por) + "</div>";
+    return "";
+  }
+
+  function hoja(o, clase) {
+    var pl = plantilla(o.pl);
+    var fol = o.folio
+      ? "Oficio " + o.folio
+      : o.ref + " · sin folio hasta la firma";
+    var fechaDoc = o.firmado ? fecha(o.firmado.t) : fecha(HOY);
+
+    return '<div class="oficio-hoja ' + (clase || "") + '">' +
+      selloHoja(o) +
+      '<div class="o-membrete">' +
+        '<span class="o-inst">Gobierno del Estado de Chiapas</span>' +
+        '<span class="o-inst">Secretaría de la Frontera Sur</span>' +
+        '<span class="o-inst" style="color:var(--gris-claro)">' +
+          (pl && pl.origen === "empleo" ? "Dirección de Capacitación y Empleo"
+                                        : "Dirección de Atención a Personas en Movilidad") +
+        "</span>" +
+        '<div class="cenefa-fina" style="margin-top:7px"></div>' +
+      "</div>" +
+      '<div class="o-cuerpo">' +
+        '<span class="o-folio">' + esc(fol) +
+          (o.folioDep ? "<br>Ref. dependencia " + esc(o.folioDep) : "") +
+          "<br>Tapachula, Chiapas, a " + fechaDoc + "</span>" +
+        '<span class="o-dest">' + esc(o.dest.inst) + "<br>" + esc(o.dest.cargo) +
+          "<br>P R E S E N T E</span>" +
+        (o.asunto ? "<p><b>Asunto:</b> " + esc(o.asunto) + "</p>" : "") +
+        cuerpoOficio(o) +
+        '<div class="o-firma"><span class="o-raya"></span>' +
+          (o.firmado ? esc(o.firmado.por) + "<br>" + esc(o.firmado.cargo)
+                     : "Pendiente de firma<br>" + esc(DIRECTOR.cargo)) +
+        "</div>" +
+      "</div>" +
+      '<div class="o-pie">Documento con datos personales. Su validación se realiza por folio y sello ' +
+        "ante la Secretaría de la Frontera Sur; no incluye código QR.</div>" +
+    "</div>" +
+    '<div class="o-marca"><i></i>Lo marcado se toma del expediente y no se escribe a mano.</div>';
+  }
+
+  /* ======================================================================
+     10. Barra de acción única del módulo
+     --------------------------------------------------------------------
+     Un solo bloque dice qué hay que hacer hoy con los documentos. Se deriva
+     del oficio de menor peso; no hay ningún número escrito a mano.
+     ================================================================== */
+  function barraAccion() {
+    var ord = OFI.slice().sort(function (a, b) { return peso(a) - peso(b); });
+    var o = ord[0];
+    if (!o || peso(o) > 5) {
+      return '<div class="accion ok">' + ico("check") +
+        '<div class="a-tx"><span class="a-t">Ningún documento pendiente</span>' +
+        '<span class="a-n">Todos los oficios emitidos tienen acuse y no hay borradores en espera ' +
+        "de firma.</span></div></div>";
+    }
+
+    var p = o.per ? persona(o.per) : null;
+    var quien = p ? p.n : o.dest.inst;
+    var tono = "tibia", t, n, btn = "Abrir el oficio";
+
+    if (o.est === "firma" && o.plazo) {
+      var h = horas(o.plazo);
+      tono = h < 24 ? "urge" : "tibia";
+      t = h < 0
+        ? "El oficio a la Procuraduría lleva " + horasTxt(-h) + " fuera de plazo"
+        : "El oficio a la Procuraduría vence hoy a las " + hora(o.plazo);
+      n = "Está esperando la firma del Director de Área desde el " + fechaHora(o.enviado.t) +
+          ". " + o.plazoNota + " Este perfil redacta y manda a firma, pero no firma: la firma es " +
+          "un acto del Director de Área (RNF02).";
+    } else if (o.est === "emitido") {
+      tono = "urge";
+      t = "El oficio " + o.folio + " lleva " + plural(-dias(o.acusePlazo), "día", "días") +
+          " sin acuse de recibo";
+      n = "Se emitió el " + fecha(o.firmado.t) + " a " + o.dest.inst + " por " + quien.toLowerCase() +
+          ". Sin acuse no hay constancia de que la institución lo recibió, y el expediente queda " +
+          "con una canalización que nadie confirmó.";
+      btn = "Registrar el acuse";
+    } else {
+      tono = "tibia";
+      t = "Hay un borrador sin enviar a firma";
+      n = o.asunto + ". Lo abrió " + o.creado.por + " el " + fechaHora(o.creado.t) +
+          ". Mientras no se envíe a firma no tiene folio ni existe como oficio.";
+      btn = "Continuar el borrador";
+    }
+
+    return '<div class="accion ' + tono + '">' + ico(tono === "urge" ? "alerta" : "reloj") +
+      '<div class="a-tx"><span class="a-t">' + esc(t) + "</span>" +
+      '<span class="a-n">' + esc(n) + "</span></div>" +
+      '<div class="a-acc"><button class="btn ' + (tono === "urge" ? "btn-peligro" : "btn-primario") +
+        '" type="button" data-ir="' + o.id + '">' + esc(btn) + "</button></div></div>";
+  }
+
+  /* ======================================================================
+     11. Registro de oficios
+     ================================================================== */
+  function pasa(o) {
+    if (fEst !== "todos" && o.est !== fEst) return false;
+    if (fPl !== "todos" && o.pl !== fPl) return false;
+    if (busca) {
+      var p = o.per ? persona(o.per) : null;
+      var t = [o.ref, o.folio || "", o.asunto, o.dest.inst, p ? p.n : "", p ? p.f : ""]
+        .join(" ").toLowerCase();
+      if (t.indexOf(busca.toLowerCase()) < 0) return false;
+    }
+    return true;
+  }
+
+  function filtros() {
+    return '<div class="filtros-fila">' +
+      '<div class="campo f-busca"><label for="bq">Buscar</label>' +
+        '<input type="text" id="bq" value="' + esc(busca) +
+        '" placeholder="Folio, referencia, persona, expediente o destinatario"></div>' +
+      '<div class="campo f-sel"><label for="fEst">Estado</label><select id="fEst">' +
+        '<option value="todos">Todos los estados</option>' +
+        EST_ORDEN.map(function (k) {
+          return '<option value="' + k + '"' + (fEst === k ? " selected" : "") + ">" +
+            EST[k].t + "</option>";
+        }).join("") + "</select></div>" +
+      '<div class="campo f-sel"><label for="fPl">Plantilla</label><select id="fPl">' +
+        '<option value="todos">Todas las plantillas</option>' +
+        PLANTILLAS.map(function (p) {
+          return '<option value="' + p.id + '"' + (fPl === p.id ? " selected" : "") + ">" +
+            esc(p.t) + "</option>";
+        }).join("") + "</select></div>" +
+      "</div>";
+  }
+
+  function tablaOficios() {
+    var vis = OFI.filter(pasa).sort(function (a, b) { return peso(a) - peso(b); });
+
+    var filas = vis.map(function (o) {
+      var p = o.per ? persona(o.per) : null;
+      var pl = plantilla(o.pl);
+      var pz = plazo(o);
+      return '<tr data-o="' + o.id + '" class="' + (o.id === sel ? "activo " : "") +
+          (o.est === "cancelado" ? "cancelado" : "") + '">' +
+        '<td><span class="o-ref">' + esc(o.folio || o.ref) + "</span>" +
+          '<span class="o-ser">' + (o.folio ? "Serie 2026" : "Referencia interna") + "</span></td>" +
+        '<td><span class="o-asu">' + esc(o.asunto) + "</span>" +
+          '<span class="o-per">' + (p ? esc(p.n) + " · " + esc(p.f) : esc(pl.t)) + "</span></td>" +
+        '<td><span class="o-des">' + esc(o.dest.inst) + "</span></td>" +
+        "<td>" + chipEstado(o) + "</td>" +
+        '<td><span class="o-pla ' + pz.tono + '">' + esc(pz.txt) + "</span></td>" +
+        "</tr>";
+    }).join("");
+
+    return '<div class="tarjeta" style="padding:0;overflow:hidden">' +
+      '<div style="padding:15px 16px 13px;border-bottom:1px solid var(--linea)">' +
+        '<h2 class="sec-tit" id="tRegistro">Registro de oficios</h2>' +
+        '<div style="font-size:12.5px;color:var(--gris);margin-top:4px;line-height:1.5">' +
+        "Serie consecutiva de 2026. Un oficio cancelado conserva su folio y su rastro: lo sustituye " +
+        "otro, no se retira (RNF03).</div></div>" +
+      (vis.length
+        ? '<div style="overflow-x:auto"><table class="tabla t-ofi">' +
+          '<colgroup><col class="c-fol"><col class="c-asu"><col class="c-des">' +
+          '<col class="c-est"><col class="c-pla"></colgroup><thead><tr>' +
+          "<th>Folio o referencia</th><th>Asunto y persona</th><th>Destinatario</th>" +
+          "<th>Estado</th><th>Plazo y acuse</th>" +
+          "</tr></thead><tbody>" + filas + "</tbody></table></div>"
+        : '<div class="vacio">' + ico("buscar") + "Ningún documento con estos filtros.</div>") +
+      '<div class="tabla-pie" style="display:block">' +
+        plural(vis.length, "documento", "documentos") + " de " + OFI.length + ". " +
+        "Exportar el registro corresponde al Director de Área: el perfil de " + esc(YO.rol) +
+        " consulta y captura, pero no exporta datos personales (RNF01)." +
+      "</div></div>";
+  }
+
+  /* ======================================================================
+     12. Detalle de un documento
+     --------------------------------------------------------------------
+     UNA acción principal por estado, y la manda el estado, no el botón. Lo
+     que este perfil no puede hacer no se dibuja apagado: se enuncia la
+     regla y qué la desbloquea.
+     ================================================================== */
+  function accionesDoc(o) {
+    if (o.est === "borrador") {
+      return { tono:"tibia", ico:"editar",
+        t:"Este borrador todavía no es un oficio",
+        n:"No tiene folio y no puede circular. Al enviarlo a firma se le asigna el folio " +
+          "consecutivo y pasa a la bandeja del Director de Área.",
+        btn:'<button class="btn btn-primario" type="button" id="btnFirma">' + ico("der") +
+            "Enviar a firma</button>" };
+    }
+    if (o.est === "firma") {
+      if (YO.puedeFirmar) {
+        return { tono:"tibia", ico:"reloj", t:"Pendiente de tu firma", n:"",
+          btn:'<button class="btn btn-primario" type="button" id="btnFirmar">Firmar y emitir</button>' };
+      }
+      var h = o.plazo ? horas(o.plazo) : null;
+      var tp = h === null ? "En firma, sin plazo legal"
+             : h < 0      ? "El plazo venció hace " + horasTxt(-h) + " y sigue sin firma"
+             : h < 24     ? "Vence hoy a las " + hora(o.plazo) + " y sigue sin firma"
+                          : "En firma · el plazo vence el " + fecha(o.plazo);
+      return { tono: (h !== null && h < 24) ? "urge" : "tibia", ico:"reloj",
+        t:tp,
+        n:"El perfil de " + YO.rol + " redacta el oficio y lo manda a firma, pero no lo firma: " +
+          "la firma es un acto del Director de Área y sin ella no hay folio (RNF02). Lo que sí " +
+          "procede desde aquí es avisar a la Dirección de que el plazo corre.",
+        btn:'<button class="btn btn-secundario" type="button" id="btnRecordar">' + ico("campana") +
+            "Avisar a la Dirección</button>" };
+    }
+    if (o.est === "emitido") {
+      var d = o.acusePlazo ? dias(o.acusePlazo) : null;
+      return { tono: (d !== null && d < 0) ? "urge" : "ok", ico: (d !== null && d < 0) ? "alerta" : "check",
+        t: (d !== null && d < 0)
+             ? "Emitido y sin acuse desde hace " + plural(-d, "día", "días")
+             : "Emitido y en espera del acuse",
+        n:"Firmado por " + o.firmado.por + " el " + fechaHora(o.firmado.t) + ". Registrar el acuse " +
+          "no modifica el oficio: agrega un hecho sobre él, y eso sí corresponde a este perfil.",
+        btn:'<button class="btn btn-primario" type="button" id="btnAcuse">' + ico("check") +
+            "Registrar acuse de recibo</button>" +
+            '<button class="btn btn-secundario" type="button" id="btnPdf">' + ico("pdf") +
+            "Descargar PDF</button>" };
+    }
+    if (o.est === "acusado") {
+      return { tono:"ok", ico:"check", t:"Documento cerrado",
+        n:"Acusado de recibido el " + fechaHora(o.acuse.t) + " por " + o.acuse.quien + " (" +
+          o.acuse.cargo + "), vía " + o.acuse.medio.toLowerCase() + ".",
+        btn:'<button class="btn btn-secundario" type="button" id="btnPdf">' + ico("pdf") +
+            "Descargar PDF</button>" };
+    }
+    var sust = OFI.filter(function (x) { return x.folio === o.cancel.por; })[0];
+    return { tono:"urge", ico:"alerta", t:"Oficio cancelado, no eliminado",
+      n:o.cancel.motivo + " El folio " + o.folio + " queda consumido y conserva su rastro; lo " +
+        "sustituye el oficio " + o.cancel.por + " (RNF03).",
+      btn: sust ? '<button class="btn btn-secundario" type="button" data-ir="' + sust.id + '">' +
+                  ico("der") + "Ver el oficio que lo sustituye</button>" : "" };
+  }
+
+  function recorrido(o) {
+    var h = [];
+    h.push({ t:o.creado.t, tit:"Borrador abierto",
+      txt:o.creado.por + " · " + o.creado.rol + ". Referencia interna " + o.ref +
+          ", todavía sin folio." });
+    if (o.enviado) h.push({ t:o.enviado.t, tit:"Enviado a firma",
+      txt:"Pasa a la bandeja del Director de Área. El plazo legal, si lo hay, ya está corriendo." });
+    if (o.firmado) h.push({ t:o.firmado.t, tit:"Firmado y emitido · folio " + o.folio,
+      txt:o.firmado.por + " · " + o.firmado.cargo + ". El folio se asigna en este momento, no antes." });
+    if (o.acuse) h.push({ t:o.acuse.t, tit:"Acuse de recibo registrado",
+      txt:o.acuse.quien + " · " + o.acuse.cargo + ". Vía " + o.acuse.medio.toLowerCase() + "." });
+    if (o.cancel) h.push({ t:o.cancel.t, tit:"Cancelado por el oficio " + o.cancel.por,
+      txt:o.cancel.motivo });
+
+    return '<div class="timeline">' + h.map(function (x) {
+      return '<div class="tl-item"><div class="tl-caja">' +
+        '<div class="tl-meta"><span class="tl-autor">' + esc(x.tit) + "</span>" +
+        "<span>" + fechaHora(x.t) + "</span></div>" +
+        '<div style="font-size:12.5px;line-height:1.5;color:var(--gris)">' + esc(x.txt) + "</div>" +
+        "</div></div>";
+    }).join("") + "</div>";
+  }
+
+  function panelAcuseHtml(o) {
+    return '<div class="tarjeta" id="cajaAcuse" style="margin-top:16px">' +
+      '<div class="tarjeta-enc"><h3 id="tAcuse" tabindex="-1">Registrar el acuse del oficio ' +
+        esc(o.folio) + "</h3></div>" +
+      '<p style="font-size:12.5px;color:var(--gris);line-height:1.55;margin-bottom:14px">' +
+        "El acuse deja constancia de quién recibió el oficio en la institución destinataria. " +
+        "No modifica el documento ni su folio: se agrega al expediente del oficio y a la bitácora.</p>" +
+      '<div class="fila-3">' +
+        '<div class="campo"><label for="aFecha">Fecha de recepción <span class="req">*</span></label>' +
+          '<input type="date" id="aFecha" value="' + HOY.slice(0, 10) + '"></div>' +
+        '<div class="campo"><label for="aHora">Hora <span class="req">*</span></label>' +
+          '<input type="text" id="aHora" value="' + hora(HOY) + '" placeholder="hh:mm"></div>' +
+        '<div class="campo"><label for="aMedio">Medio</label><select id="aMedio">' +
+          "<option>Entrega en oficialía</option><option>Entrega en ventanilla</option>" +
+          "<option>Correo institucional</option><option>Mensajería oficial</option>" +
+          "</select></div>" +
+      "</div>" +
+      '<div class="fila">' +
+        '<div class="campo"><label for="aQuien">Quién recibió <span class="req">*</span></label>' +
+          '<input type="text" id="aQuien" placeholder="Nombre de quien firma el acuse"></div>' +
+        '<div class="campo"><label for="aCargo">Cargo <span class="req">*</span></label>' +
+          '<input type="text" id="aCargo" placeholder="Cargo o área receptora"></div>' +
+      "</div>" +
+      '<div class="barra-acciones">' +
+        '<span class="estado-borrador">' + ico("info") +
+          "El acuse queda en la bitácora con tu usuario y la hora del sistema.</span>" +
+        '<span class="flex gap-8">' +
+          '<button class="btn btn-secundario" type="button" id="btnAcuseNo">Cancelar</button>' +
+          '<button class="btn btn-primario" type="button" id="btnAcuseSi">' + ico("check") +
+            "Confirmar el acuse</button></span>" +
+      "</div></div>";
+  }
+
+  function detalle(o) {
+    var a = accionesDoc(o);
+    var pl = plantilla(o.pl);
+    var p = o.per ? persona(o.per) : null;
+
+    var ficha = '<div class="tarjeta">' +
+      '<div class="tarjeta-enc"><h2 class="sec-tit" id="tDetalle" tabindex="-1">' +
+        esc(o.asunto) + "</h2>" + chipEstado(o) + "</div>" +
+      '<div class="resumen-grupo"><h4>Trazabilidad</h4><div class="resumen-lista">' +
+        rd("Folio", o.folio || "Sin folio: se asigna al firmar") +
+        rd("Referencia interna", o.ref) +
+        rd("Folio de la dependencia", o.folioDep || "No se capturó") +
+        rd("Plantilla", pl.t) +
+        rd("Fundamento", pl.fund) +
+        rd("Destinatario", o.dest.inst + " · " + o.dest.cargo) +
+        rd("Se emite desde", o.origen === "oficios" ? "Canalizaciones y Documentos"
+            : ({ salud:"Salud y Vulnerabilidad", familiar:"Expediente Familiar",
+                 empleo:"Empleabilidad", admin:"Administración" })[o.origen]) +
+        (p ? rd("Persona", p.n + " · " + p.f) : "") +
+        rd("Redactó", o.creado.por + " · " + o.creado.rol) +
+        rd("Firmó", o.firmado ? o.firmado.por + " · " + o.firmado.cargo : "Pendiente") +
+        (o.sustituyeA ? rd("Sustituye a", o.sustituyeA) : "") +
+      "</div></div>" +
+      '<h4 style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--gris);' +
+        'font-weight:700;margin:18px 0 10px">Recorrido del documento</h4>' +
+      recorrido(o) +
+      "</div>";
+
+    return '<div class="accion ' + a.tono + '">' + ico(a.ico) +
+        '<div class="a-tx"><span class="a-t">' + esc(a.t) + "</span>" +
+        (a.n ? '<span class="a-n">' + esc(a.n) + "</span>" : "") + "</div>" +
+        (a.btn ? '<div class="a-acc">' + a.btn + "</div>" : "") + "</div>" +
+      (panelAcuse ? panelAcuseHtml(o) : "") +
+      '<div class="g-ofi" style="margin-top:16px">' +
+        "<div>" + ficha + "</div>" +
+        '<div><div class="etiqueta" style="margin-bottom:6px">El documento</div>' +
+          hoja(o, "hoja-lectura") + "</div>" +
+      "</div>" +
+      '<div style="margin-top:18px">' +
+        '<button class="btn btn-texto" type="button" id="btnVolver">' + ico("izq") +
+        "Volver al registro</button></div>";
+  }
+
+  function rd(lab, val) {
+    return '<div class="resumen-dato"><span class="r-lab">' + esc(lab) + "</span>" +
+      '<span class="r-val">' + esc(val) + "</span></div>";
+  }
+
+  /* ======================================================================
+     13. Redactar una canalización nueva
+     --------------------------------------------------------------------
+     La plantilla se elige primero porque define todo lo demás: fundamento,
+     destinatario, plazo y —sobre todo— si el oficio se compone aquí o en el
+     módulo dueño del dato.
+     ================================================================== */
+  var CAMPOS = [
+    { id:"nombre", t:"Nombre completo",       k:"n",    tipo:"text" },
+    { id:"nac",    t:"Fecha de nacimiento",   k:"nac",  tipo:"date" },
+    { id:"curp",   t:"CURP",                  k:"curp", tipo:"text" },
+    { id:"pais",   t:"Nacionalidad",          k:"pais", tipo:"text" },
+    { id:"mun",    t:"Municipio de captura",  k:"mun",  tipo:"text" }
+  ];
+  /* A quien se dirige y que se pide: catalogo, no texto libre. Un oficio de
+     educacion que pide "lo que proceda" no obliga a nada.               */
+  var DEST_EDU = [
+    { id:"sub",   t:"Subsecretaría de Educación Estatal · Región Soconusco",
+      inst:"Secretaría de Educación del Estado de Chiapas",
+      cargo:"Subsecretaría de Educación Estatal · Región Soconusco" },
+    { id:"reval", t:"Departamento de Revalidación y Equivalencias",
+      inst:"Secretaría de Educación del Estado de Chiapas",
+      cargo:"Departamento de Revalidación y Equivalencias" },
+    { id:"plantel", t:"El plantel que negó la atención",
+      inst:null,        /* lo toma de la negativa registrada */
+      cargo:"Dirección del plantel" }
+  ];
+  function destEdu(id) {
+    return DEST_EDU.filter(function (x) { return x.id === id; })[0] || DEST_EDU[0];
+  }
+  var PIDE_EDU = [
+    "la inscripción inmediata en el grado que determine la valoración de la escuela, y la regularización posterior del expediente",
+    "que se reciba la solicitud de revalidación parcial sin exigir apostilla, resolviéndola por cotejo",
+    "que se informe por escrito el motivo de la negativa y el fundamento que la sostiene",
+    "que se aplique la exención del pago de derechos por situación de vulnerabilidad acreditada",
+    "que se asigne lugar en un plantel de la zona y se comunique a esta Secretaría"
+  ];
+
+  var PRUEBAS = ["Acta de nacimiento", "Pasaporte vigente", "Documento de identidad consular",
+                 "Constancia de la COMAR", "Cotejo con el acta del país de origen"];
+  var MOTIVOS = ["Error de captura en ventanilla",
+                 "El documento probatorio contradice el dato asentado",
+                 "La persona presentó documentación posterior al registro",
+                 "Homonimia detectada en la verificación de duplicados"];
+
+  function campoDe(id) { return CAMPOS.filter(function (c) { return c.id === id; })[0] || null; }
+
+  function valorActual() {
+    var p = nuevo.exp ? persona(nuevo.exp) : null, c = campoDe(nuevo.campo);
+    if (!p || !c) return "";
+    return c.tipo === "date" ? fecha(p[c.k]) : p[c.k];
+  }
+
+  /* La consecuencia se calcula, no se escribe: corregir una fecha de
+     nacimiento puede sacar a una persona de la clasificación de NNA, y eso
+     cierra una ruta de protección con plazo legal. Se declara antes de
+     confirmar, igual que en Capacitación y en Empleabilidad.            */
+  function consecuencia() {
+    if (nuevo.campo !== "nac" || !nuevo.exp || !nuevo.valor) return null;
+    var p = persona(nuevo.exp);
+    if (!p) return null;
+    var antes = edad(p.nac), despues = edad(nuevo.valor);
+    if (antes < 18 && despues >= 18) {
+      return "Con la fecha propuesta la persona pasa de " + antes + " a " + despues + " años. " +
+        "Al aplicarse deja de ser NNA: se cierra su clasificación como " + (p.nna || "NNA") +
+        " y la ruta de protección que la acompaña. Si es la única persona menor de edad del " +
+        "grupo " + p.grupo + ", el grupo deja de tener NNA a cargo.";
+    }
+    if (antes >= 18 && despues < 18) {
+      return "Con la fecha propuesta la persona pasa de " + antes + " a " + despues + " años. " +
+        "Al aplicarse se convierte en NNA y hay que clasificarla; si resulta separada o no " +
+        "acompañada, se dispara el oficio a la Procuraduría con plazo de 24 horas (RF06).";
+    }
+    return "Con la fecha propuesta la persona pasa de " + antes + " a " + despues +
+      " años. La clasificación de edad no cambia.";
+  }
+
+  function oficioEnObra() {
+    var d = {}, asunto = "", per = null, dest = null;
+
+    if (nuevo.pl === "modificacion") {
+      d = { exp:nuevo.exp, campo:campoDe(nuevo.campo) ? campoDe(nuevo.campo).t : "",
+            actual:valorActual(),
+            valor:nuevo.valor && campoDe(nuevo.campo) && campoDe(nuevo.campo).tipo === "date"
+                    ? fecha(nuevo.valor) : nuevo.valor,
+            motivo:nuevo.motivo, prueba:nuevo.prueba };
+      asunto = "Solicitud de modificación de expediente" + (nuevo.exp ? " " + nuevo.exp : "");
+      dest = { inst:DIRECTOR.cargo, cargo:DIRECTOR.n, mun:"" };
+
+    } else if (nuevo.pl === "educacion") {
+      /* Todo lo que dice el oficio sale del caso registrado: nivel, plantel
+         y la negativa. Aquí solo se elige a quién se dirige y qué se pide. */
+      var c = REVAL.filter(function (x) { return x.id === nuevo.caso; })[0];
+      var na = c ? (negAbierta(c) || c.neg[c.neg.length - 1]) : null;
+      var dd = destEdu(nuevo.destEdu);
+      d = { nivel: c ? NIVELES[c.nivel].t : "",
+            plantel: na ? na.inst : "",
+            negativa: na ? na.motivo + ". " + na.detalle : "",
+            pide: nuevo.motivo };
+      per = c ? c.per : null;
+      asunto = c
+        ? (NIVELES[c.nivel].revalida
+             ? "Trámite de revalidación rechazado por la autoridad educativa"
+             : "Inscripción de persona menor de edad negada por falta de documentos")
+        : "";
+      dest = { inst: dd.inst || (na ? na.inst : "— plantel —"), cargo: dd.cargo, mun:"" };
+
+    } else {
+      d = { cuerpo:nuevo.cuerpo };
+      asunto = nuevo.asunto || "";
+      dest = { inst: nuevo.inst || "— destinatario —",
+               cargo: nuevo.cargo || "— cargo —", mun:"" };
+    }
+
+    return {
+      id:"nuevo", ref:"BOR-" + ("000" + (refSec + 1)).slice(-4), folio:null, pl:nuevo.pl,
+      est:"borrador", asunto:asunto, per:per, dest:dest,
+      origen:"oficios", folioDep:nuevo.folioDep,
+      creado:{ por:YO.n, rol:YO.rol, t:HOY },
+      datos:d
+    };
+  }
+
+  function listaPlantillas() {
+    return '<div class="pl-lista" role="listbox" aria-label="Plantillas de oficio">' +
+      PLANTILLAS.map(function (p) {
+        var s = p.id === nuevo.pl;
+        return '<button class="pl-item" type="button" role="option" aria-selected="' + s +
+          '" data-pl="' + p.id + '">' + ico(p.aqui ? "editar" : "candado") +
+          '<span><span class="pl-t">' + esc(p.t) + "</span>" +
+          '<span class="pl-n">' + esc(p.aqui ? p.n : "Se emite desde " + p.modulo + ".") +
+          "</span></span></button>";
+      }).join("") + "</div>";
+  }
+
+  function formularioNuevo() {
+    var pl = plantilla(nuevo.pl);
+    if (!pl) {
+      return '<div class="tarjeta"><div class="vacio">' + ico("doc") +
+        "Elige una plantilla para empezar. La plantilla define el fundamento, el destinatario y " +
+        "el plazo del oficio.</div></div>";
+    }
+
+    /* Plantilla de otro módulo: no se duplica el formulario, se dice dónde
+       vive el dato y se enlaza. */
+    if (!pl.aqui) {
+      return '<div class="tarjeta">' +
+        '<div class="tarjeta-enc"><h3>' + esc(pl.t) + "</h3></div>" +
+        '<div class="aviso aviso-neutro">' + ico("candado") +
+          "<span><strong>Este oficio no se redacta aquí</strong>" + esc(pl.porque) + "</span></div>" +
+        '<div class="resumen-grupo"><h4>Ficha de la plantilla</h4><div class="resumen-lista">' +
+          rd("Fundamento", pl.fund) + rd("Destinatario", pl.dest) +
+          rd("Se emite desde", pl.modulo) +
+          rd("Plazo", pl.plazoH ? pl.plazoH + " horas desde el hecho que lo dispara" : "Sin plazo legal") +
+        "</div></div>" +
+        '<div class="barra-acciones"><span class="estado-borrador">' + ico("info") +
+          "Los oficios ya emitidos con esta plantilla se consultan en el registro.</span>" +
+          '<a class="btn btn-primario" href="' + pl.href + '">' + ico("der") +
+          "Ir a " + esc(pl.modulo) + "</a></div></div>";
+    }
+
+    if (pl.id === "educacion") {
+      var c = REVAL.filter(function (x) { return x.id === nuevo.caso; })[0];
+      var na = c ? (negAbierta(c) || c.neg[c.neg.length - 1]) : null;
+      return '<div class="tarjeta">' +
+        '<div class="tarjeta-enc"><h3>' + esc(pl.t) + "</h3></div>" +
+        '<p style="font-size:12.5px;color:var(--gris);line-height:1.55;margin-bottom:14px">' +
+          "El oficio no se redacta desde cero: cita el hecho registrado en " +
+          '<a href="revalidacion.html">Revalidación de Estudios</a>. Si la negativa no está ' +
+          "registrada ahí, aquí no hay nada que reclamar.</p>" +
+        '<div class="campo"><label for="nCaso">Caso que se reclama <span class="req">*</span></label>' +
+          '<select id="nCaso"><option value="">Elige un caso con negativa registrada…</option>' +
+          REVAL.filter(function (x) { return x.neg.length && !x.resuelto; }).map(function (x) {
+            var pp = persona(x.per);
+            return '<option value="' + x.id + '"' + (nuevo.caso === x.id ? " selected" : "") + ">" +
+              esc(pp.n + " · " + NIVELES[x.nivel].t.split(" · ")[0]) + "</option>";
+          }).join("") + "</select></div>" +
+        (na
+          ? '<div class="aviso aviso-guinda">' + ico("alerta") +
+            "<span><strong>Hecho que se cita</strong>" + esc(na.inst) + ", " + fecha(na.t) + ": " +
+            esc(na.motivo.toLowerCase()) + ". " + esc(na.detalle) + "</span></div>"
+          : '<div class="aviso aviso-neutro">' + ico("info") +
+            "<span><strong>Sin caso elegido</strong>El cuerpo del oficio se arma con la negativa " +
+            "registrada: institución, fecha y qué alegaron.</span></div>") +
+        '<div class="fila">' +
+          '<div class="campo"><label for="nDestEdu">A quién se dirige <span class="req">*</span></label>' +
+            '<select id="nDestEdu">' +
+            DEST_EDU.map(function (dd) {
+              return '<option value="' + dd.id + '"' +
+                (nuevo.destEdu === dd.id ? " selected" : "") + ">" + esc(dd.t) + "</option>";
+            }).join("") + "</select>" +
+            '<div class="ayuda">Si el plantel ya negó una vez, la gestión sube a la autoridad ' +
+            "estatal: repetir ante quien negó no es un segundo intento, es el mismo.</div></div>" +
+        "</div>" +
+        '<div class="campo"><label for="nPide">Qué se solicita <span class="req">*</span></label>' +
+          '<select id="nPide"><option value="">Elige lo que se pide…</option>' +
+          PIDE_EDU.map(function (m) {
+            return "<option" + (nuevo.motivo === m ? " selected" : "") + ">" + esc(m) + "</option>";
+          }).join("") + "</select></div>" +
+        campoFolioDep() +
+        barraNuevo();
+    }
+
+    if (pl.id === "modificacion") {
+      var c = campoDe(nuevo.campo);
+      var cons = consecuencia();
+      return '<div class="tarjeta">' +
+        '<div class="tarjeta-enc"><h3>' + esc(pl.t) + "</h3></div>" +
+        '<p style="font-size:12.5px;color:var(--gris);line-height:1.55;margin-bottom:14px">' +
+          "Ningún dato del expediente se modifica sin oficio y autorización del Director de Área " +
+          "(RNF02). El valor asentado no se teclea: lo trae el expediente.</p>" +
+        '<div class="fila">' +
+          '<div class="campo"><label for="nExp">Expediente <span class="req">*</span></label>' +
+            '<select id="nExp"><option value="">Elige un expediente…</option>' +
+            PERS.filter(function (p) { return p.est === "activo"; }).map(function (p) {
+              return '<option value="' + p.f + '"' + (nuevo.exp === p.f ? " selected" : "") + ">" +
+                esc(p.n + " · " + p.f) + "</option>";
+            }).join("") + "</select></div>" +
+          '<div class="campo"><label for="nCampo">Campo a corregir <span class="req">*</span></label>' +
+            '<select id="nCampo"><option value="">Elige un campo…</option>' +
+            CAMPOS.map(function (x) {
+              return '<option value="' + x.id + '"' + (nuevo.campo === x.id ? " selected" : "") + ">" +
+                esc(x.t) + "</option>";
+            }).join("") + "</select></div>" +
+        "</div>" +
+        '<div class="fila">' +
+          '<div class="campo"><label for="nAct">Valor asentado hoy</label>' +
+            '<input type="text" id="nAct" value="' + esc(valorActual()) + '" readonly ' +
+            'style="background:var(--hueso-claro);color:var(--gris)">' +
+            '<div class="ayuda">Lo trae el expediente; no se escribe a mano.</div></div>' +
+          '<div class="campo"><label for="nVal">Valor correcto <span class="req">*</span></label>' +
+            '<input type="' + (c && c.tipo === "date" ? "date" : "text") + '" id="nVal" value="' +
+            esc(nuevo.valor) + '"' + (c ? "" : " disabled") + "></div>" +
+        "</div>" +
+        (cons ? '<div class="aviso aviso-guinda">' + ico("alerta") +
+          "<span><strong>Qué pasa si se autoriza</strong>" + esc(cons) + "</span></div>" : "") +
+        '<div class="fila">' +
+          '<div class="campo"><label for="nMot">Motivo <span class="req">*</span></label>' +
+            '<select id="nMot"><option value="">Elige un motivo del catálogo…</option>' +
+            MOTIVOS.map(function (m) {
+              return "<option" + (nuevo.motivo === m ? " selected" : "") + ">" + esc(m) + "</option>";
+            }).join("") + "</select></div>" +
+          '<div class="campo"><label for="nPru">Documento probatorio <span class="req">*</span></label>' +
+            '<select id="nPru"><option value="">Elige el anexo…</option>' +
+            PRUEBAS.map(function (m) {
+              return "<option" + (nuevo.prueba === m ? " selected" : "") + ">" + esc(m) + "</option>";
+            }).join("") + "</select></div>" +
+        "</div>" +
+        campoFolioDep() +
+        barraNuevo();
+    }
+
+    /* Comunicación institucional: el único cuerpo de autoría propia. */
+    return '<div class="tarjeta">' +
+      '<div class="tarjeta-enc"><h3>' + esc(pl.t) + "</h3></div>" +
+      '<div class="aviso aviso-rosa">' + ico("info") +
+        "<span><strong>Este es el único oficio cuyo texto se redacta a mano</strong>" +
+        "Las demás plantillas arman el cuerpo con datos del expediente y el sistema responde por " +
+        "ellos. Aquí no: lo que se escriba lo asume quien firma, y por eso se revisa palabra por " +
+        "palabra antes de la firma.</span></div>" +
+      '<div class="fila">' +
+        '<div class="campo"><label for="nInst">Institución destinataria <span class="req">*</span></label>' +
+          '<input type="text" id="nInst" value="' + esc(nuevo.inst) + '"></div>' +
+        '<div class="campo"><label for="nCargo">Cargo del destinatario <span class="req">*</span></label>' +
+          '<input type="text" id="nCargo" value="' + esc(nuevo.cargo) + '"></div>' +
+      "</div>" +
+      '<div class="campo"><label for="nAsunto">Asunto <span class="req">*</span></label>' +
+        '<input type="text" id="nAsunto" value="' + esc(nuevo.asunto) +
+        '" placeholder="Una línea: de qué trata el oficio"></div>' +
+      '<div class="campo"><label for="nCuerpo">Cuerpo del oficio <span class="req">*</span></label>' +
+        '<textarea id="nCuerpo" maxlength="900" placeholder="Redacta el cuerpo. El membrete, el ' +
+        'folio, la fecha y el bloque de firma los pone el sistema.">' + esc(nuevo.cuerpo) +
+        "</textarea>" +
+        '<div class="ayuda"><span id="cnt">' + nuevo.cuerpo.length + "</span> de 900 caracteres. " +
+        "El membrete, la fecha y la firma no se escriben.</div></div>" +
+      campoFolioDep() +
+      barraNuevo();
+  }
+
+  /* Campo comun a las tres plantillas que se redactan aqui. */
+  function campoFolioDep() {
+    return '<div class="campo"><label for="nFolDep">Folio de la dependencia ' +
+      '<span class="opc">(opcional)</span></label>' +
+      '<input type="text" id="nFolDep" value="' + esc(nuevo.folioDep) +
+      '" placeholder="Ej. VENT-TAP/2026/119">' +
+      '<div class="ayuda">El número que este oficio lleva en el libro de la ventanilla. El folio ' +
+      "del SIMH es aparte y se asigna al firmar: el municipio cita el suyo y la Secretaría el " +
+      "de la serie, y el registro los guarda juntos.</div></div>";
+  }
+
+  function barraNuevo() {
+    return '<div class="barra-acciones">' +
+      '<span class="estado-borrador">' + ico("info") +
+        "El folio se asigna al firmar, no ahora: un borrador abandonado dejaría un hueco en la serie." +
+      "</span>" +
+      '<span class="flex gap-8">' +
+        '<button class="btn btn-secundario" type="button" id="btnCancelar">Descartar</button>' +
+        '<button class="btn btn-primario" type="button" id="btnEnviar">' + ico("der") +
+        "Enviar a firma</button></span></div></div>";
+  }
+
+  function vistaNuevo() {
+    var o = oficioEnObra();
+    return '<div class="accion">' + ico("doc") +
+        '<div class="a-tx"><span class="a-t">Nuevo oficio · ' + esc(o.ref) + "</span>" +
+        '<span class="a-n">Mientras es borrador no tiene folio y no puede circular. El folio ' +
+        "consecutivo se asigna en el momento de la firma del Director de Área.</span></div>" +
+        '<div class="a-acc"><button class="btn btn-secundario" type="button" id="btnVolver">' +
+        ico("izq") + "Volver al registro</button></div></div>" +
+      '<div class="g-ofi">' +
+        "<div>" +
+          '<div class="etiqueta" style="margin-bottom:6px">1 · Plantilla</div>' +
+          listaPlantillas() +
+          '<div class="etiqueta" style="margin:18px 0 6px">2 · Datos del oficio</div>' +
+          formularioNuevo() +
+        "</div>" +
+        '<div><div class="etiqueta" style="margin-bottom:6px">Vista previa</div>' +
+          (nuevo.pl && plantilla(nuevo.pl).aqui
+            ? hoja(o, "hoja-lectura")
+            : '<div class="tarjeta"><div class="vacio">' + ico("doc") +
+              "La vista previa aparece cuando la plantilla se redacta en esta pantalla.</div></div>") +
+        "</div>" +
+      "</div>";
+  }
+
+  /* ======================================================================
+     14. Pintado y eventos
+     ================================================================== */
+  function pintaEnc() {
+    /* Exportar no se dibuja: este perfil no exporta (RNF01) y un botón
+       apagado ocuparía el lugar de una acción que no puede hacer.       */
+    $("#encAcc").innerHTML = (modo === "registro" && YO.puedeCrear)
+      ? '<button class="btn btn-primario btn-s" type="button" id="btnNuevo">' + ico("mas") +
+        "Nueva canalización</button>"
+      : "";
+  }
+
+  $("#avisoDocsCuerpo").innerHTML =
+    '<div class="resumen-lista">' +
+    '<div class="resumen-dato"><span class="r-lab">El folio nace con la firma</span>' +
+      '<span class="r-val">Un borrador lleva referencia interna. El folio de la serie consecutiva ' +
+      "se asigna en el momento en que el Director de Área firma: si se asignara antes, cada " +
+      "borrador abandonado dejaría un hueco en la serie.</span></div>" +
+    '<div class="resumen-dato"><span class="r-lab">El cuerpo no se teclea</span>' +
+      '<span class="r-val">Cada plantilla arma el texto con los datos del expediente y en la vista ' +
+      "previa se marca lo que viene de ahí. La única excepción es la comunicación institucional, " +
+      "cuyo texto lo asume quien firma.</span></div>" +
+    '<div class="resumen-dato"><span class="r-lab">Cada oficio vive en su módulo</span>' +
+      '<span class="r-val">La canalización se emite desde Salud, la notificación por NNA desde el ' +
+      "Expediente Familiar y el oficio de vinculación desde Empleabilidad, porque ahí están los " +
+      "datos que lo respaldan. Este registro los reúne todos.</span></div>" +
+    '<div class="resumen-dato"><span class="r-lab">Nada se elimina</span>' +
+      '<span class="r-val">Un oficio equivocado no se borra: se cancela y lo sustituye otro, y el ' +
+      "folio consumido conserva su rastro (RNF03). Una constancia reimpresa deja registro del " +
+      "motivo, porque si no, no se distingue de una falsificada.</span></div>" +
+    '<div class="resumen-dato"><span class="r-lab">Sin códigos QR</span>' +
+      '<span class="r-val">Restricción explícita del proyecto: la población atendida no tiene acceso ' +
+      "a dispositivos móviles. La verificación es por folio y sello en ventanilla, y así lo dice el " +
+      "propio documento.</span></div>" +
+    "</div>";
+
+  function anuncia(t) { $("#anuncio").textContent = t; }
+
+  function noSimulado(q) {
+    anuncia(q);
+    window.alert(q + "\n\nEn el prototipo la acción no se ejecuta.");
+  }
+
+  function pinta() {
+    pintaEnc();
+    var cuerpo;
+    if (modo === "nuevo") cuerpo = vistaNuevo();
+    else if (sel)         cuerpo = detalle(OFI.filter(function (o) { return o.id === sel; })[0]);
+    else                  cuerpo = barraAccion() + filtros() + tablaOficios();
+
+    $("#panel").innerHTML = cuerpo;
+    eventos();
+  }
+
+  /* --------------------------------------------------------- Eventos --- */
+  function abre(id) {
+    sel = id; modo = "registro"; panelAcuse = false;
+    pinta();
+    var h = $("#tDetalle");
+    if (h) { h.focus({ preventScroll:true }); window.scrollTo({ top:0, behavior:"smooth" }); }
+    var o = OFI.filter(function (x) { return x.id === id; })[0];
+    if (o) anuncia("Oficio " + (o.folio || o.ref) + ". " + EST[o.est].t + ".");
+  }
+
+  function eventos() {
+    $$("[data-ir]").forEach(function (b) {
+      b.onclick = function (ev) { ev.stopPropagation(); abre(this.getAttribute("data-ir")); };
+    });
+    $$("[data-o]").forEach(function (tr) {
+      tr.onclick = function () { abre(this.getAttribute("data-o")); };
+    });
+
+    var bNuevo = $("#btnNuevo");
+    if (bNuevo) bNuevo.onclick = function () {
+      modo = "nuevo"; sel = null; pinta();
+      anuncia("Nuevo oficio. Elige una plantilla.");
+    };
+
+    var bVolver = $("#btnVolver");
+    if (bVolver) bVolver.onclick = function () {
+      modo = "registro"; sel = null; panelAcuse = false; pinta();
+      var h = $("#tRegistro");
+      if (h) h.focus({ preventScroll:true });
+      anuncia("Registro de oficios.");
+    };
+
+    /* Filtros. Los de texto repintan al soltar la escritura y con Enter,
+       no en cada tecla, para no perder el cursor.                        */
+    function foco(id) {
+      var d = document.getElementById(id);
+      if (d) { d.focus({ preventScroll:true }); var val = d.value; d.value = ""; d.value = val; }
+    }
+    function ligaBusca(id, set) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.onchange = function () { set(this.value); pinta(); foco(id); };
+      el.onkeydown = function (ev) {
+        if (ev.key === "Enter") { set(this.value); pinta(); foco(id); }
+      };
+    }
+    function ligaSel(id, set) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.onchange = function () { set(this.value); pinta(); foco(id); };
+    }
+    ligaBusca("bq", function (v) { busca = v; });
+    ligaSel("fEst", function (v) { fEst = v; });
+    ligaSel("fPl", function (v) { fPl = v; });
+
+    eventosDetalle();
+    eventosNuevo();
+  }
+
+  function eventosDetalle() {
+    var o = sel ? OFI.filter(function (x) { return x.id === sel; })[0] : null;
+    if (!o) return;
+
+    var bFirma = $("#btnFirma");
+    if (bFirma) bFirma.onclick = function () {
+      o.est = "firma";
+      o.enviado = { t:HOY };
+      pinta();
+      anuncia("Borrador " + o.ref + " enviado a firma del Director de Área.");
+    };
+
+    var bRec = $("#btnRecordar");
+    if (bRec) bRec.onclick = function () {
+      noSimulado("Aviso a la Dirección de Área: el oficio " + o.ref + " lleva " +
+        (o.plazo && horas(o.plazo) < 0 ? "el plazo vencido" : "el plazo corriendo") +
+        " y espera firma. El aviso queda en la bitácora.");
+    };
+
+    var bPdf = $("#btnPdf");
+    if (bPdf) bPdf.onclick = function () {
+      noSimulado("Descarga del oficio " + o.folio + " en PDF, con el sello y la firma del Director " +
+        "de Área.");
+    };
+
+    var bAc = $("#btnAcuse");
+    if (bAc) bAc.onclick = function () {
+      panelAcuse = true; pinta();
+      var h = $("#tAcuse");
+      if (h) { h.focus({ preventScroll:true }); h.scrollIntoView({ behavior:"smooth", block:"center" }); }
+    };
+    var bNo = $("#btnAcuseNo");
+    if (bNo) bNo.onclick = function () { panelAcuse = false; pinta(); };
+
+    var bSi = $("#btnAcuseSi");
+    if (bSi) bSi.onclick = function () {
+      var f = $("#aFecha").value, hr = $("#aHora").value.trim();
+      var q = $("#aQuien").value.trim(), c = $("#aCargo").value.trim();
+      if (!q)  { $("#aQuien").focus(); anuncia("Falta el nombre de quien recibió el oficio."); return; }
+      if (!c)  { $("#aCargo").focus(); anuncia("Falta el cargo de quien recibió el oficio."); return; }
+      if (!/^\d{2}:\d{2}$/.test(hr)) { $("#aHora").focus(); anuncia("La hora va en formato hh:mm."); return; }
+      o.est = "acusado";
+      o.acuse = { t:f + " " + hr, quien:q, cargo:c, medio:$("#aMedio").value };
+      panelAcuse = false;
+      pinta();
+      anuncia("Acuse del oficio " + o.folio + " registrado. El documento queda cerrado.");
+    };
+  }
+
+  function eventosNuevo() {
+    if (modo !== "nuevo") return;
+
+    $$("[data-pl]").forEach(function (b) {
+      b.onclick = function () {
+        nuevo.pl = this.getAttribute("data-pl");
+        /* La plantilla de educación llega con destinatario por omisión: el
+           select no puede quedar en un valor que el estado no conoce. */
+        if (nuevo.pl === "educacion" && !nuevo.destEdu) nuevo.destEdu = DEST_EDU[0].id;
+        pinta();
+        anuncia("Plantilla " + plantilla(nuevo.pl).t + " seleccionada.");
+      };
+    });
+
+    /* Los selects repintan porque la vista previa y la consecuencia dependen
+       de ellos; el texto libre no repinta en cada tecla.                  */
+    function liga(id, set, repinta) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.onchange = function () {
+        set(this.value);
+        if (repinta) { pinta(); var d = document.getElementById(id); if (d) d.focus({ preventScroll:true }); }
+      };
+    }
+    liga("nExp",   function (val) { nuevo.exp = val; nuevo.valor = ""; }, true);
+    liga("nCampo", function (val) { nuevo.campo = val; nuevo.valor = ""; }, true);
+    liga("nVal",   function (val) { nuevo.valor = val; }, true);
+    liga("nMot",   function (val) { nuevo.motivo = val; }, true);
+    liga("nPru",   function (val) { nuevo.prueba = val; }, true);
+    liga("nInst",  function (val) { nuevo.inst = val; }, true);
+    liga("nCargo", function (val) { nuevo.cargo = val; }, true);
+    liga("nAsunto",function (val) { nuevo.asunto = val; }, true);
+    liga("nCaso",  function (val) { nuevo.caso = val; }, true);
+    liga("nDestEdu", function (val) { nuevo.destEdu = val; }, true);
+    liga("nPide",  function (val) { nuevo.motivo = val; }, true);
+
+    /* El folio de la dependencia no repinta en cada tecla: es texto libre y
+       repintar movería el cursor. Se recoge al salir del campo. */
+    var fd = $("#nFolDep");
+    if (fd) {
+      fd.onchange = function () { nuevo.folioDep = this.value; pinta();
+        var d = $("#nFolDep"); if (d) d.focus({ preventScroll:true }); };
+    }
+
+    var cu = $("#nCuerpo");
+    if (cu) {
+      cu.oninput = function () {
+        nuevo.cuerpo = this.value;
+        var c = $("#cnt");
+        if (c) c.textContent = this.value.length;
+      };
+      cu.onchange = function () {
+        nuevo.cuerpo = this.value;
+        pinta();
+        var d = $("#nCuerpo");
+        if (d) { d.focus({ preventScroll:true }); d.setSelectionRange(d.value.length, d.value.length); }
+      };
+    }
+
+    var bCan = $("#btnCancelar");
+    if (bCan) bCan.onclick = function () {
+      nuevo = nuevoVacio();
+      modo = "registro"; pinta();
+      anuncia("Borrador descartado. No consumió folio.");
+    };
+
+    /* El botón no se dibuja apagado: se dibuja y, si falta algo, lleva el
+       foco al campo que falta y lo anuncia. */
+    var bEnv = $("#btnEnviar");
+    if (bEnv) bEnv.onclick = function () {
+      var falta = null;
+      if (nuevo.pl === "modificacion") {
+        if (!nuevo.exp)    falta = ["nExp", "Elige el expediente que se va a corregir."];
+        else if (!nuevo.campo)  falta = ["nCampo", "Elige el campo a corregir."];
+        else if (!nuevo.valor)  falta = ["nVal", "Falta el valor correcto."];
+        else if (!nuevo.motivo) falta = ["nMot", "Falta el motivo del catálogo."];
+        else if (!nuevo.prueba) falta = ["nPru", "Falta el documento probatorio."];
+      } else if (nuevo.pl === "educacion") {
+        if (!nuevo.caso)        falta = ["nCaso", "Elige el caso con la negativa que se reclama."];
+        else if (!nuevo.destEdu) falta = ["nDestEdu", "Elige a quién se dirige el oficio."];
+        else if (!nuevo.motivo) falta = ["nPide", "Elige qué se le solicita a la autoridad."];
+      } else {
+        if (!nuevo.inst)   falta = ["nInst", "Falta la institución destinataria."];
+        else if (!nuevo.cargo)  falta = ["nCargo", "Falta el cargo del destinatario."];
+        else if (!nuevo.asunto) falta = ["nAsunto", "Falta el asunto."];
+        else if (!nuevo.cuerpo.trim()) falta = ["nCuerpo", "Falta el cuerpo del oficio."];
+      }
+      if (falta) {
+        var d = document.getElementById(falta[0]);
+        if (d) d.focus();
+        anuncia(falta[1]);
+        return;
+      }
+
+      var o = oficioEnObra();
+      refSec += 1;
+      o.id = "n" + refSec;
+      o.est = "firma";
+      o.enviado = { t:HOY };
+      OFI.push(o);
+      nuevo = nuevoVacio();
+      abre(o.id);
+      anuncia("Oficio " + o.ref + " enviado a firma. Todavía sin folio: se asigna cuando firme el " +
+        "Director de Área.");
+    };
+  }
+
+  /* ======================================================================
+     15. Arranque y atajos de revisión
+     ================================================================== */
+  var qNuevo = qs.get("nuevo");
+  if (qNuevo) {
+    modo = "nuevo";
+    if (plantilla(qNuevo)) nuevo.pl = qNuevo;
+  }
+
+  var qo = qs.get("o");
+  if (qo) {
+    OFI.forEach(function (o) {
+      if ((o.folio || "").indexOf(qo) >= 0 || o.ref.indexOf(qo) >= 0) sel = o.id;
+    });
+    if (sel) modo = "registro";
+  }
+
+  /* Revalidación manda aquí con el caso ya elegido cuando hay que reclamar
+     una negativa por oficio: `?nuevo=educacion&caso=r2`. El caso se guarda
+     en sessionStorage porque el cuerpo del oficio se arma con la negativa
+     registrada, que vive en el otro módulo. */
+  var qCaso = qs.get("caso");
+  if (qCaso) nuevo.caso = qCaso;
+  try {
+    var traido = sessionStorage.getItem("simh-caso-edu");
+    if (traido && nuevo.pl === "educacion" && !nuevo.caso) nuevo.caso = traido;
+    if (traido) sessionStorage.removeItem("simh-caso-edu");
+  } catch (e) { /* sin sessionStorage el compositor abre en blanco */ }
+
+  pinta();
+})();
+</script>
+</body>
+</html>

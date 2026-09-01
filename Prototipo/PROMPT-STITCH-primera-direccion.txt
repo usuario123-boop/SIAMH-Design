@@ -1,0 +1,469 @@
+================================================================================
+PROMPT DE DISENO PARA STITCH (Google Stitch)
+Sistema Integral de Movilidad Humana (SIMH) - PRIMERA DIRECCION
+Secretaria de la Frontera Sur - Gobierno de Chiapas 2024-2030
+Fuente: SRS v3.0 (Primera direccion, RF01-RF15 / RNF01-RNF06)
+Identidad: Manual "Humanismo que Transforma" 2024-2030
+================================================================================
+
+COMO USAR ESTE ARCHIVO
+1. Configura Stitch en modo WEB / DESKTOP (1440 x 1024), salvo la PANTALLA 11
+   (Censo Empresarial Offline) que va en modo MOBILE (390 x 844).
+2. Pega SIEMPRE primero el BLOQUE 0 (sistema de diseño). Es la base de estilo.
+3. Despues pega UNA pantalla a la vez (Pantalla 1, luego 2, etc.). Stitch da
+   mejores resultados con una pantalla por prompt que con todo junto.
+4. Orden sugerido de generacion: P2 (Inicio / Estadisticas) primero, luego P1
+   (Login), P3, P4, P5 y el resto. La P2 es la pantalla clave que pidio la
+   Direccion.
+5. Si Stitch pierde el estilo entre pantallas, vuelve a pegar el BLOQUE 0
+   resumido (los 6 colores + tipografia) al inicio del prompt de esa pantalla.
+
+================================================================================
+BLOQUE 0 - SISTEMA DE DISENO (PEGAR PRIMERO, SIEMPRE)
+================================================================================
+
+Diseña un sistema web institucional del Gobierno del Estado de Chiapas, Mexico,
+llamado "SIMH - Sistema Integral de Movilidad Humana", operado por la Secretaria
+de la Frontera Sur. Es un sistema interno de ventanilla para registrar y dar
+seguimiento a personas en contexto de movilidad (personas migrantes, refugiadas
+y solicitantes de refugio) en Tapachula y municipios de la franja fronteriza.
+
+TODOS los textos de la interfaz deben estar en ESPANOL (Mexico).
+
+TONO Y CARACTER VISUAL
+- Institucional, sobrio, calido y digno. Gubernamental, NO corporativo, NO
+  estilo startup, NO tema oscuro. Debe transmitir respeto por la persona
+  atendida.
+- Interfaz limpia, mucho aire, alta legibilidad, contraste fuerte.
+- Densidad de datos media-alta: es un sistema de captura de ventanilla donde el
+  personal debe dar de alta a una persona en menos de 5 minutos.
+- Estetica inspirada en el textil chiapaneco: geometria de rombos y grecas usada
+  SOLO como detalle discreto, nunca como fondo dominante.
+
+PALETA DE COLOR OFICIAL (usar exactamente estos valores)
+- Verde jade    #009887  -> color primario de accion: botones principales,
+                            enlaces activos, iconos activos, indicadores
+                            positivos.
+- Rojo guinda   #AE192D  -> color institucional: barra superior, titulos de
+                            seccion, encabezados de tabla, estados criticos.
+- Rosa mexicano #C90166  -> acento: alertas de atencion, etiquetas de prioridad,
+                            una serie de datos en las graficas.
+- Beige arena   #D3C2B4  -> bordes suaves, separadores, estados deshabilitados.
+- Hueso         #EFEDE8  -> fondo general de la aplicacion (nunca blanco puro).
+- Negro tinta   #1A1A1A  -> texto principal. Texto secundario: #5A5A5A.
+- Blanco        #FFFFFF  -> fondo de tarjetas, paneles y tablas.
+
+Reglas de color:
+- Fondo de pagina SIEMPRE hueso #EFEDE8; tarjetas blancas con esquinas
+  redondeadas de 12 px y sombra muy suave.
+- NO usar degradados. NO usar azul, morado ni naranja fuera de paleta.
+- Semaforo de estados derivado de la paleta: exito o positivo = jade #009887;
+  advertencia = rosa #C90166; critico o urgente = guinda #AE192D; neutro o
+  inactivo = beige #D3C2B4 con texto gris.
+
+TIPOGRAFIA
+- Titulares y encabezados: "Novecento Wide" en MAYUSCULAS, peso bold, con
+  letter-spacing amplio (0.08em). Si no esta disponible, usar Montserrat Bold en
+  mayusculas con el mismo letter-spacing.
+- Texto de interfaz, formularios, tablas y datos: "Gilroy" (Regular / Bold).
+  Si no esta disponible, usar Poppins o Archivo.
+- Escala: titulo de pantalla 28 px; titulo de seccion 20 px; etiqueta de campo
+  13 px en mayusculas con letter-spacing; cuerpo 15 px; dato numerico grande de
+  KPI 40 px bold.
+
+MARCA Y ELEMENTOS GRAFICOS
+- Isotipo institucional: dos manos estilizadas en verde jade que forman un
+  corazon o rombo con greca en rosa mexicano (simbolo textil maya). Colocalo en
+  la esquina superior izquierda junto al nombre del sistema.
+- Bloque de firma en el pie: "HUMANISMO QUE TRANSFORMA - GOBIERNO DE CHIAPAS
+  2024-2030" en mayusculas, tamaño pequeño, color guinda.
+- Cenefa decorativa: una franja horizontal delgada (4 px) con patron de grecas y
+  rombos en jade y rosa. Usala SOLO en: borde inferior de la barra superior, y
+  como remate en la pantalla de inicio de sesion y en los documentos
+  imprimibles. En ningun otro lugar.
+- Iconografia: lineal, trazo de 1.5 px, esquinas ligeramente redondeadas,
+  monocromatica (jade cuando esta activa, gris #5A5A5A cuando no).
+
+ESTRUCTURA GLOBAL (repetir en todas las pantallas de escritorio)
+- Barra superior fija (72 px) en rojo guinda #AE192D con: isotipo mas el texto
+  "SIMH - Secretaria de la Frontera Sur" en blanco a la izquierda; buscador
+  global al centro con marcador de posicion "Buscar por folio, CURP o nombre";
+  a la derecha campana de notificaciones con contador, y avatar con nombre del
+  usuario y su rol (ejemplo: "Capturista Municipal - Tapachula"). Borde inferior
+  con la cenefa de grecas.
+- Menu lateral izquierdo fijo (256 px), fondo blanco, con iconos y texto:
+  Inicio, Registro de Persona, Expedientes, Expediente Familiar, Salud y
+  Vulnerabilidad, Empleabilidad, Capacitacion, Oficios y Constancias, Censo
+  Empresarial, Administracion. El item activo se marca con fondo jade al 10 por
+  ciento y una barra vertical jade de 3 px a la izquierda.
+- Area de contenido con padding de 32 px, migas de pan arriba y titulo de
+  pantalla en Novecento Wide mayusculas color guinda.
+- Todas las tablas y listados llevan arriba a la derecha un boton secundario
+  "Exportar a Excel" y otro "Exportar PDF".
+
+COMPONENTES BASE
+- Boton primario: fondo jade #009887, texto blanco, radio 8 px, altura 44 px.
+- Boton secundario: contorno guinda, texto guinda, fondo transparente.
+- Boton de peligro: fondo guinda #AE192D, texto blanco.
+- Campo de formulario: fondo blanco, borde 1 px beige #D3C2B4, radio 8 px,
+  etiqueta arriba en mayusculas pequeñas, texto de ayuda en gris debajo.
+  Los campos obligatorios llevan un punto rosa; los opcionales dicen
+  "(opcional)" en la etiqueta.
+- Etiquetas de estado (chips): pildora con fondo del color al 12 por ciento y
+  texto del color al 100 por ciento.
+- Tabla: encabezado con fondo hueso y texto guinda en mayusculas pequeñas,
+  filas blancas alternadas con hueso muy claro, separador beige de 1 px.
+- Accesibilidad: contraste AA, area tactil minima de 44 px, sin depender solo
+  del color para comunicar estados (siempre con icono o texto).
+
+================================================================================
+PANTALLA 1 - INICIO DE SESION
+================================================================================
+Pantalla de acceso dividida en dos columnas.
+- Izquierda (55 por ciento): fondo rojo guinda #AE192D con un patron textil de
+  rombos y grecas en muy baja opacidad (8 por ciento blanco). Centrado, el
+  isotipo de manos en version blanca, debajo el nombre "SISTEMA INTEGRAL DE
+  MOVILIDAD HUMANA" en Novecento Wide mayusculas blanco, y una linea de apoyo:
+  "Secretaria de la Frontera Sur - Gobierno de Chiapas".
+- Derecha (45 por ciento): fondo hueso, tarjeta blanca centrada con: titulo
+  "INICIAR SESION", campo "Usuario", campo "Contraseña" con icono de ojo,
+  casilla "Recordar este equipo", boton primario jade de ancho completo
+  "ENTRAR", y enlace discreto "Olvidaste tu contraseña? Contacta a tu Director
+  de Area".
+- Bajo la tarjeta: aviso pequeño en gris "El acceso a este sistema es exclusivo
+  para personal autorizado. Todas las acciones quedan registradas en bitacora."
+- Pie con la cenefa de grecas y la firma "HUMANISMO QUE TRANSFORMA - GOBIERNO DE
+  CHIAPAS 2024-2030".
+
+================================================================================
+PANTALLA 2 - INICIO / TABLERO ESTADISTICO   *** PANTALLA PRINCIPAL (RF14) ***
+================================================================================
+Esta es la pantalla de aterrizaje despues del inicio de sesion: un tablero con
+graficas estadisticas de las personas registradas. Es la pantalla mas importante
+del prototipo, diseñala con especial cuidado.
+
+Encabezado del contenido:
+- Titulo "PANEL ESTADISTICO" y subtitulo "Corte al 31 de agosto de 2026 -
+  Piloto Tapachula y franja fronteriza".
+- A la derecha: selector de rango de fechas ("Agosto 2026"), selector de
+  municipio ("Todos los municipios"), boton primario jade "EXPORTAR GLOSA
+  MENSUAL (EXCEL)" y boton secundario "Descargar PDF".
+
+Fila 1 - Seis tarjetas KPI blancas en una rejilla horizontal. Cada una con
+icono lineal jade arriba a la izquierda, numero grande de 40 px, etiqueta en
+mayusculas pequeñas y una variacion porcentual contra el mes anterior (flecha
+jade si sube, gris si baja):
+1. PERSONAS REGISTRADAS - 12,480
+2. EXPEDIENTES ACTIVOS - 9,315
+3. NIÑAS, NIÑOS Y ADOLESCENTES - 3,102
+4. NNA NO ACOMPANADOS - 214  (esta tarjeta va con acento guinda y un icono de
+   alerta, porque implica notificacion a la Procuraduria)
+5. CANALIZACIONES A SALUD - 1,067
+6. PERSONAS VINCULADAS A EMPLEO - 486
+
+Fila 2 - Dos graficas en tarjetas blancas, lado a lado:
+- Izquierda (60 por ciento): grafica de barras verticales "REGISTROS POR MES"
+  con los ultimos 12 meses, barras en verde jade, eje suave, etiquetas
+  discretas.
+- Derecha (40 por ciento): grafica de dona "DISTRIBUCION POR GENERO" con
+  segmentos Mujeres, Hombres y Otro / No binario (jade, guinda y rosa), con el
+  total al centro y leyenda con porcentajes debajo. Nota al pie de la tarjeta:
+  "Incluye identidad de genero autoadscrita".
+
+Fila 3 - Tres graficas en tarjetas blancas:
+- "PIRAMIDE POR RANGO DE EDAD": barras horizontales por rangos 0-5, 6-11,
+  12-17, 18-29, 30-44, 45-59, 60 y mas.
+- "ESTATUS MIGRATORIO": barras horizontales apiladas con las categorias
+  Solicitante de refugio, Refugiado o Residente, Naturalizado, Sin tramite.
+- "PRINCIPALES NACIONALIDADES": lista tipo ranking con barra de progreso y
+  bandera pequeña: Honduras, Haiti, Venezuela, Guatemala, El Salvador, Cuba.
+
+Fila 4 - Dos bloques:
+- Izquierda (55 por ciento): tarjeta "ATENCION POR MUNICIPIO" con un mapa
+  esquematico y simplificado de la franja fronteriza y el centro de Chiapas, con
+  circulos proporcionales en jade sobre Tapachula, Suchiate, Frontera Comalapa,
+  Motozintla, Tuxtla Gutierrez y Comitan; a un lado la tabla de cifras.
+- Derecha (45 por ciento): tarjeta "ALERTAS ACTIVAS" con una lista de avisos,
+  cada uno con icono, texto y hora: "3 NNA no acompañados sin oficio de
+  canalizacion", "12 expedientes con documentacion pendiente", "8 citas medicas
+  en las proximas 72 horas". Boton de texto "Ver todas las alertas".
+
+Al final de la pantalla: nota en gris pequeño "Datos agregados. La informacion
+sensible de movilidad, condicion migratoria y vulnerabilidad se muestra de forma
+anonimizada en este panel."
+
+================================================================================
+PANTALLA 3 - REGISTRO DE PERSONA (ALTA DE EXPEDIENTE) - RF01, RF02, RF03, RF04
+================================================================================
+Formulario de captura de ventanilla en asistente de 5 pasos, optimizado para
+llenarse en menos de 5 minutos. Barra de progreso horizontal arriba con los
+pasos: 1 Datos generales - 2 Fotografia y documentos - 3 Movilidad y estatus -
+4 Contacto - 5 Consentimiento. El paso activo en jade, los completados con
+palomita jade, los pendientes en beige.
+
+Muestra el PASO 1 "DATOS GENERALES" desplegado, con campos en rejilla de dos
+columnas: Nombre(s), Primer apellido, Segundo apellido, Fecha de nacimiento
+(selector de fecha), Sexo, Identidad de genero (menu con opciones incluyentes:
+Mujer, Hombre, Mujer trans, Hombre trans, No binaria, Prefiere no decir, y una
+opcion "Otra (especificar)" con campo de texto abierto), Nacionalidad, Estado
+civil, Etnia o pueblo de pertenencia, Lengua indigena que habla, Grado de
+marginacion (menu), Profesion u oficio en pais de origen, Ocupacion actual,
+Escolaridad. Los campos RFC y NSS aparecen agrupados al final marcados como
+"(opcional)" con la nota "Pueden capturarse despues; el sector patronal suele
+tramitarlos posteriormente".
+
+En la columna derecha, una tarjeta lateral fija de resumen: fotografia en blanco
+con marco punteado, folio provisional "SIMH-2026-TAP-0000", municipio de captura
+y nombre del capturista, mas un contador visual "Tiempo de captura: 01:42" con
+la meta "Objetivo: menos de 5 minutos".
+
+Pie del formulario: boton secundario "Guardar borrador", boton primario jade
+"CONTINUAR" y, a la izquierda, "Cancelar" en texto plano.
+
+El PASO 5 (Consentimiento) debe mostrarse tambien como variante: texto del aviso
+de privacidad en un area con desplazamiento y una casilla obligatoria destacada
+"Acepto el tratamiento de mis datos personales conforme al aviso de privacidad",
+sin la cual el boton "GUARDAR EXPEDIENTE" permanece deshabilitado.
+
+================================================================================
+PANTALLA 4 - CAPTURA DE FOTOGRAFIA Y DOCUMENTOS (PASO 2) - RF02
+================================================================================
+Mismo asistente, paso 2. Area central grande dividida:
+- Izquierda: visor de camara web en vivo con guia ovalada para encuadrar el
+  rostro, indicaciones "Mire de frente, retire gorra y lentes oscuros", y boton
+  primario jade circular grande "CAPTURAR". Debajo, miniaturas de las tomas
+  hechas con opcion de elegir una y boton "Repetir toma".
+- Derecha: zona de carga de documentos con recuadro punteado beige "Arrastra
+  aqui el escaneo de identidad o haz clic para seleccionar (PDF, JPG, PNG,
+  maximo 10 MB)". Debajo, lista de documentos ya cargados en filas con icono de
+  tipo de archivo, nombre, tipo de documento (menu: Pasaporte, Documento de
+  identidad de pais de origen, Constancia COMAR, CURP, Acta de nacimiento,
+  Otro), fecha de carga, estado de validacion (chip: Pendiente / Validado /
+  Rechazado) y acciones ver y reemplazar.
+Nota inferior en gris: "Los documentos conservan version, fecha de carga y
+usuario responsable. No se permite sobrescritura silenciosa."
+
+================================================================================
+PANTALLA 5 - LISTADO Y BUSQUEDA DE EXPEDIENTES
+================================================================================
+Pantalla de tabla. Arriba, barra de filtros en tarjeta blanca: campo de busqueda
+"Folio, CURP o nombre", y menus de filtro: Municipio, Estatus migratorio,
+Estatus del expediente (Activo / Cerrado / Concluido por deceso), Rango de edad,
+Nacionalidad, Tipo de vulnerabilidad. Boton "Aplicar filtros" y "Limpiar".
+
+Tabla de resultados con columnas: Folio, Fotografia (avatar circular pequeño),
+Nombre completo, Edad, Nacionalidad, Estatus migratorio (chip de color),
+Municipio, Grupo familiar (icono si pertenece a uno), Ultima actualizacion,
+Acciones (ver expediente, generar constancia). Fila destacada con un pequeño
+icono rosa cuando la persona es NNA no acompañado.
+
+Arriba a la derecha: boton primario jade "NUEVO REGISTRO", y botones
+"Exportar a Excel" y "Exportar PDF". Abajo, paginacion y el texto
+"Mostrando 1-25 de 12,480 expedientes".
+
+================================================================================
+PANTALLA 6 - DETALLE DEL EXPEDIENTE DE PERSONA - RF03, RF08
+================================================================================
+Vista de expediente unico. Encabezado del expediente en tarjeta blanca ancha:
+fotografia grande a la izquierda; a un lado el nombre en Novecento Wide, folio,
+edad, nacionalidad, chips de estatus migratorio y de vulnerabilidad; a la
+derecha botones "Generar constancia (PDF)", "Emitir oficio" y un boton
+secundario "Solicitar modificacion" con la leyenda pequeña "Requiere oficio y
+autorizacion del Director de Area".
+
+Debajo, pestañas horizontales: Datos generales - Movilidad humana - Expediente
+familiar - Salud y vulnerabilidad - Contacto - Documentos - Empleabilidad -
+Capacitacion - Bitacora de seguimiento.
+
+Muestra activa la pestaña "BITACORA DE SEGUIMIENTO": linea de tiempo vertical
+con marcadores jade; cada entrada es una tarjeta con fecha y hora, autor y area,
+y texto libre del seguimiento (ejemplos: "Atendido via telefonica, confirma
+asistencia a cita medica del 12/09", "Se entrega constancia de registro",
+"Canalizado a IMSS-Bienestar mediante oficio SFS/0912/2026"). Arriba de la linea
+de tiempo, un cuadro de texto amplio con la etiqueta "Agregar nota de
+seguimiento" y boton primario jade "Guardar nota".
+
+Barra lateral derecha con: "Historial de medios de contacto" mostrando telefonos
+y correos con fecha de alta, donde los anteriores aparecen tachados y en gris
+con la nota "Registro conservado, no se elimina"; y un bloque "Alertas del
+expediente".
+
+================================================================================
+PANTALLA 7 - EXPEDIENTE FAMILIAR Y NNA - RF05, RF06
+================================================================================
+Pantalla dividida en dos partes.
+Parte superior: tarjeta "GRUPO FAMILIAR SIMH-FAM-2026-0341" con un diagrama de
+parentesco sencillo: al centro la persona Titular (mayor de edad) con su foto y
+una etiqueta "TITULAR"; alrededor, tarjetas de los acompañantes o dependientes
+con foto, nombre, edad, parentesco y dos indicadores "Depende economicamente" y
+"Viaja con el grupo". Botones "Agregar integrante" y "Reasignar titular" (este
+ultimo con nota "Solo por fallecimiento o abandono").
+
+Parte inferior: seccion "NIÑAS, NIÑOS Y ADOLESCENTES" con una tabla de los NNA
+del grupo, columna "Clasificacion" con chips de tres colores: Acompañado (jade),
+Separado (rosa), No acompañado (guinda). Cuando la clasificacion es Separado o
+No acompañado, la fila muestra un banner de accion: "Requiere notificacion a la
+Procuraduria Regional" con boton primario "GENERAR OFICIO AUTOMATICO" y un chip
+de estado del oficio (Pendiente / Generado / Enviado).
+
+================================================================================
+PANTALLA 8 - SALUD Y VULNERABILIDAD - RF07
+================================================================================
+Formulario del catalogo de salud. Seccion "CONDICIONES DE SALUD (CATALOGO OMS)"
+con casillas agrupadas en tarjetas por categoria: Enfermedades cronicas
+(Diabetes, Hipertension, Cancer), Infecciosas (VIH, Tuberculosis), Salud materna
+(Embarazo, Puerperio), Salud mental, Discapacidad, Otra (campo abierto). Cada
+condicion seleccionada agrega una fila en un panel lateral "Condiciones
+registradas" con fecha de registro.
+
+Debajo, seccion "CANALIZACION AL SECTOR SALUD": menu "Institucion receptora"
+(IMSS-Bienestar, Hospital General de Tapachula, Centro de Salud municipal,
+Otro), campo "Motivo de la canalizacion", selector de fecha de cita y boton
+primario jade "GENERAR OFICIO DE CANALIZACION (PDF)". A un costado, una vista
+previa en miniatura del oficio en papel membretado.
+
+Aviso en la parte superior en tarjeta de fondo rosa muy claro: "Informacion
+sensible. Su acceso esta restringido por permisos y su uso en reportes agregados
+es siempre anonimizado."
+
+================================================================================
+PANTALLA 9 - EMPLEABILIDAD: HISTORIAL LABORAL - RF12
+================================================================================
+Modulo aislado de empleo. Arriba, tres tarjetas KPI pequeñas: "Vacantes
+registradas", "Entrevistas agendadas", "Contrataciones del mes".
+Cuerpo: tabla "HISTORIAL LABORAL DE LA PERSONA" con columnas: Vacante o
+actividad, Empresa o patron (texto libre), Fecha de postulacion, Fecha de
+entrevista, Resultado de entrevista, Contratacion (Si / No), Fecha de inicio de
+labores, Motivo de renuncia o de no contratacion, Responsable del seguimiento.
+Boton primario "REGISTRAR VINCULACION".
+Panel lateral "Seguimiento" con dos hitos de verificacion marcados en linea de
+tiempo: "15 dias" y "30 dias", cada uno con chip de estado (Cumplido / Por
+vencer / Vencido).
+
+================================================================================
+PANTALLA 10 - CAPACITACION: GRUPOS ICATECH - RF13
+================================================================================
+Pantalla de conformacion de grupos. Izquierda: tarjeta del grupo "CURSO:
+PANADERIA BASICA - ICATECH TAPACHULA" con fechas, modalidad, sede y un medidor
+circular de cupo "16 / 18 personas" en jade. Debajo, una barra de composicion
+demografica que muestra la proporcion "11 personas extranjeras / 5 mexicanas"
+con la validacion en verde "Cumple con la proporcion mayoritaria extranjera".
+Derecha: lista de personas inscritas; cada fila muestra foto, nombre, folio y
+dos indicadores de validacion documental: "CURP vigente" y "Constancia COMAR",
+en jade con palomita si cumplen y en guinda con advertencia si faltan, con el
+texto "No puede acreditarse sin documentacion completa".
+Arriba: boton primario "AGREGAR PARTICIPANTE" y botones "Exportar lista de
+asistencia (Excel)" y "Generar lista para firma fisica (PDF)".
+Nota al pie: "No hay limite de cursos por persona."
+
+================================================================================
+PANTALLA 11 - CENSO EMPRESARIAL OFFLINE (VISTA MOVIL) - RF15
+================================================================================
+IMPORTANTE: esta pantalla es para MOVIL (390 x 844), no escritorio.
+Formulario de campo para registrar negocios sin conexion a internet.
+- Barra superior guinda con el isotipo y un indicador de conexion muy visible:
+  chip beige con icono de nube tachada y el texto "SIN CONEXION - 14 registros
+  pendientes de sincronizar".
+- Formulario en una columna con campos grandes y tactiles: Nombre del negocio,
+  Giro o actividad, Nombre de la persona propietaria, Telefono, Direccion,
+  Municipio, Numero de personas empleadas, Contrata personas en movilidad
+  (Si / No), Vacantes disponibles, Observaciones. Boton para adjuntar fotografia
+  del establecimiento y un boton "Usar ubicacion actual".
+- Boton primario jade fijo abajo de ancho completo "GUARDAR EN EL DISPOSITIVO",
+  y debajo un boton secundario "SINCRONIZAR AHORA" deshabilitado con el texto
+  "Se sincronizara automaticamente al detectar conexion".
+- Genera ademas una segunda vista con la lista de registros pendientes, cada uno
+  con chip de estado "Pendiente" (beige) o "Sincronizado" (jade).
+
+================================================================================
+PANTALLA 12 - CONSTANCIA DE REGISTRO (GAFETE) - RF10
+================================================================================
+Pantalla de generacion de documento, con vista previa a tamaño real al centro
+sobre fondo hueso.
+La constancia es un documento vertical tipo credencial o gafete con: cenefa de
+grecas en la parte superior; los logos oficiales (Gobierno de Chiapas y
+Secretaria de la Frontera Sur); el titulo "CONSTANCIA DE REGISTRO" en Novecento
+Wide guinda; fotografia de la persona; y los datos Folio, Nombre completo,
+Nacionalidad, Fecha de nacimiento, Fecha de registro, Municipio de captura y
+nombre del capturista. Al pie, la firma "HUMANISMO QUE TRANSFORMA - GOBIERNO DE
+CHIAPAS 2024-2030" y una franja de cenefa.
+IMPORTANTE: la constancia NO debe llevar codigo QR (restriccion del proyecto por
+falta de acceso a dispositivos moviles en la poblacion atendida).
+A la derecha, panel de opciones: "Formato: Imprimible / Digital", casilla
+"Incluir fotografia", botones "IMPRIMIR" (primario jade) y "Descargar PDF".
+
+================================================================================
+PANTALLA 13 - EMISION AUTOMATIZADA DE OFICIOS - RF11
+================================================================================
+Pantalla de dos columnas.
+- Izquierda: "PLANTILLAS DE OFICIO" en lista seleccionable (Canalizacion a
+  salud, Notificacion a Procuraduria por NNA, Solicitud de modificacion de
+  expediente, Vinculacion laboral, Oficio libre). Debajo, formulario de
+  variables con campos: Institucion destinataria, Cargo del destinatario,
+  Asunto, Remitente, Fecha, Folio (autogenerado y bloqueado) y un cuerpo de
+  texto editable donde las variables aparecen resaltadas en jade con formato
+  {{nombre_persona}}, {{folio}}, {{fecha}}.
+- Derecha: vista previa del oficio en papel membretado, con encabezado
+  institucional, cenefa superior, texto justificado y bloque de firma.
+- Abajo: botones "Guardar borrador", "GENERAR OFICIO (PDF)" primario jade y
+  "Enviar a firma".
+
+================================================================================
+PANTALLA 14 - ADMINISTRACION: USUARIOS, ROLES Y BITACORA - RNF01, RNF02
+================================================================================
+Pantalla con dos pestañas: "Usuarios y permisos" y "Bitacora de auditoria".
+Pestaña activa "Usuarios y permisos":
+- Tabla de usuarios con columnas: Nombre, Cargo, Direccion o Area, Municipio,
+  Rol (chips: Superadmin, Director de Area, Capturista Municipal, Consulta),
+  Estado (Activo / Suspendido), Ultimo acceso.
+- Al seleccionar un usuario, se abre un panel lateral derecho con una MATRIZ DE
+  PERMISOS: filas igual a modulos (Registro, Expedientes, Expediente Familiar,
+  Salud y Vulnerabilidad, Empleabilidad, Capacitacion, Oficios, Censo
+  Empresarial, Panel Estadistico); columnas igual a acciones (Ver, Crear,
+  Editar, Eliminar, Exportar); intersecciones con casillas de verificacion en
+  jade. Las casillas de Editar y Eliminar aparecen bloqueadas con un icono de
+  candado para el rol Capturista Municipal, con la nota "Bloqueado: requiere
+  oficio y autorizacion del Director de Area o Subsecretario".
+- Aviso superior: "Las direcciones operan con aislamiento estricto de datos: el
+  area de Salud no puede consultar informacion de Empleo."
+Pestaña "Bitacora de auditoria": tabla de solo lectura con Fecha y hora,
+Usuario, Rol, Accion, Modulo, Registro afectado y Direccion IP, con filtros por
+fecha y usuario y boton "Exportar a Excel".
+
+================================================================================
+NOTAS FINALES PARA STITCH (puedes anexarlas a cualquier prompt)
+================================================================================
+- Ningun registro se elimina: en las interfaces usa siempre el termino "Cerrar
+  expediente" o "Concluido por deceso", nunca "Eliminar".
+- No incluir codigos QR en ninguna pantalla ni documento.
+- Mantener consistencia total de barra superior, menu lateral, tipografia y
+  paleta entre todas las pantallas.
+- Usar datos de ejemplo realistas del contexto de Tapachula y la frontera sur
+  (nombres, nacionalidades de Honduras, Haiti, Venezuela, Guatemala y Cuba;
+  municipios de Chiapas), evitando datos personales reales.
+- Si Stitch responde mejor en ingles, traduce unicamente las instrucciones y
+  conserva TODAS las etiquetas y textos de la interfaz en español.
+
+================================================================================
+TRAZABILIDAD RAPIDA (para la entrega, no para pegar en Stitch)
+================================================================================
+RF01 Datos demograficos y socioeconomicos ....... Pantalla 3
+RF02 Expediente fotografico y documental ........ Pantalla 4
+RF03 Historial de medios de contacto ............ Pantalla 6 (barra lateral)
+RF04 Aviso de privacidad y consentimiento ....... Pantalla 3 (paso 5)
+RF05 Estructura de expediente familiar .......... Pantalla 7
+RF06 Notificacion de NNA ........................ Pantalla 7
+RF07 Catalogo de salud y vulnerabilidad ......... Pantalla 8
+RF08 Seguimiento manual (bitacora) .............. Pantalla 6
+RF09 Estatus migratorio oficial ................. Pantallas 3 y 5
+RF10 Constancia de registro (gafete) ............ Pantalla 12
+RF11 Emision automatizada de oficios ............ Pantalla 13
+RF12 Gestion de historial laboral ............... Pantalla 9
+RF13 Asistencia a cursos ICATECH ................ Pantalla 10
+RF14 Graficas estadisticas y exportacion ........ Pantalla 2
+RF15 Censo empresarial offline .................. Pantalla 11
+RNF01 Seguridad y roles ......................... Pantalla 14
+RNF02 Auditoria y modificaciones ................ Pantallas 6 y 14
+RNF03 Integridad de datos ....................... Pantalla 5 (estatus)
+RNF04 Rendimiento y usabilidad .................. Pantalla 3 (meta 5 minutos)
+RNF05 Diseño e interfaz (manual de identidad) ... Bloque 0

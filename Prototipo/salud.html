@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Salud y Vulnerabilidad · SIMH</title>
+<link rel="icon" href="assets/img/simh-isotipo-96.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/simh.css">
+<style>
+  .g-maestro{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start}
+  @media (max-width:1180px){ .g-maestro{grid-template-columns:1fr} }
+
+  /* ---------- Lista de trabajo: lo que exige acción se lee sin color ---- */
+  .pers-item{display:block;width:100%;text-align:left;background:none;border:0;
+    border-bottom:1px solid var(--linea-suave);padding:11px 12px;cursor:pointer;
+    font-family:var(--f-texto);position:relative}
+  .pers-item:hover{background:var(--hueso-claro)}
+  .pers-item.activo{background:var(--jade-050)}
+  .pers-item.activo::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;
+    background:var(--jade);border-radius:0 3px 3px 0}
+  .pers-item .p-nom{display:block;font-size:13.5px;font-weight:700;color:var(--tinta);line-height:1.3;margin:6px 0 2px}
+  .pers-item .p-folio{display:block;font-size:11.5px;color:var(--gris-claro);font-variant-numeric:tabular-nums}
+  .pers-item .p-motivo{display:block;font-size:11.5px;color:var(--gris);line-height:1.4;margin-top:3px}
+
+  .chips-filtro{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .chips-filtro .chip{cursor:pointer;border:0;font-family:var(--f-texto)}
+
+  /* ---------- Nivel de atención: dos dimensiones, no un solo semáforo --- */
+  .nivel{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    border:1px solid var(--linea-suave);border-radius:var(--radio);padding:11px 14px;
+    background:var(--hueso-claro);margin-bottom:16px}
+  .nivel .n-col{display:block}
+  .nivel .n-lab{display:block;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;
+    color:var(--gris-claro);font-weight:700;margin-bottom:2px}
+  .nivel .n-val{display:block;font-size:15px;font-weight:700;line-height:1.2}
+  .nivel .n-sep{display:block;width:1px;align-self:stretch;background:var(--linea);flex:none}
+  .nivel .n-num{display:block;font-size:19px;font-weight:600;line-height:1.2}
+  .n-inmediata{color:var(--critico)}
+  .n-prioritaria{color:var(--rosa)}
+  .n-estandar{color:var(--tinta)}
+
+  /* ---------- Marcadores de vulnerabilidad ------------------------------ */
+  .vuln-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 22px}
+  @media (max-width:1000px){ .vuln-grid{grid-template-columns:1fr} }
+  .vuln-g{margin-bottom:16px}
+  .vuln-g > h4{margin:0 0 8px;font-family:var(--f-texto);font-size:10.5px;letter-spacing:.07em;
+    text-transform:uppercase;color:var(--gris-claro);font-weight:700}
+  .vuln-item{display:flex;gap:9px;align-items:flex-start;padding:6px 0;cursor:pointer}
+  .vuln-item input{width:17px;height:17px;accent-color:var(--jade);margin-top:1px;flex:none}
+  .vuln-item .v-t{display:block;font-size:13.5px;line-height:1.35;color:var(--tinta)}
+  .vuln-item .v-n{display:block;font-size:11.5px;color:var(--gris-claro);line-height:1.4;margin-top:1px}
+  .vuln-item .v-ruta{display:block;font-size:11.5px;line-height:1.4;margin-top:3px;
+    color:var(--gris);padding-left:9px;border-left:2px solid var(--linea)}
+  .vuln-item.marcado .v-ruta{color:var(--jade-900);border-left-color:var(--jade)}
+  .vuln-item.marcado.obliga .v-ruta{color:var(--guinda-900);border-left-color:var(--guinda);font-weight:700}
+  .vuln-item .v-marca{display:inline-block;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;
+    font-weight:700;color:var(--gris-claro);border:1px solid var(--linea);border-radius:999px;
+    padding:1px 6px;margin-left:6px;vertical-align:1px}
+  .vuln-item.obliga .v-marca{color:var(--guinda);border-color:rgba(174,25,45,.35)}
+
+  /* ---------- Catálogo OMS ---------------------------------------------- */
+  .cat-buscar{position:relative;margin-bottom:12px}
+  .cat-buscar input{width:100%;height:38px;border:1px solid var(--linea);border-radius:var(--radio-s);
+    padding:0 12px 0 38px;font-family:var(--f-texto);font-size:13.5px;background:var(--blanco)}
+  .cat-buscar input:focus{outline:none;border-color:var(--jade);box-shadow:0 0 0 3px var(--jade-050)}
+  .cat-buscar .lupa{position:absolute;left:12px;top:50%;transform:translateY(-50%);line-height:0;color:var(--gris-claro)}
+
+  details.cat-g{border:1px solid var(--linea-suave);border-radius:var(--radio);margin-bottom:8px}
+  details.cat-g > summary{cursor:pointer;padding:10px 14px;font-size:12.5px;font-weight:700;
+    color:var(--tinta);list-style:none;display:flex;align-items:center;gap:9px}
+  details.cat-g > summary::-webkit-details-marker{display:none}
+  details.cat-g > summary::before{content:"+";font-size:15px;line-height:1;color:var(--jade);width:10px}
+  details.cat-g[open] > summary::before{content:"−"}
+  details.cat-g > summary .c-cuenta{margin-left:auto;font-size:11px;font-weight:700;color:var(--gris-claro)}
+  details.cat-g > summary .c-cuenta.hay{color:var(--jade-900)}
+  .cat-lista{padding:2px 14px 12px;display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+  @media (max-width:1000px){ .cat-lista{grid-template-columns:1fr} }
+  .cat-op{display:flex;gap:9px;align-items:center;padding:5px 0;cursor:pointer;font-size:13.5px}
+  .cat-op input{width:16px;height:16px;accent-color:var(--jade);flex:none}
+  .cat-op .c-cod{display:inline-block;font-size:10.5px;font-variant-numeric:tabular-nums;color:var(--gris-claro);
+    background:var(--hueso);border-radius:4px;padding:1px 5px;margin-left:auto;flex:none}
+  .cat-vacio{font-size:12.5px;color:var(--gris-claro);padding:10px 2px}
+
+  .otra-cond{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:6px}
+  .otra-cond input{flex:1;min-width:200px;height:36px;border:1px solid var(--linea);
+    border-radius:var(--radio-s);padding:0 11px;font-family:var(--f-texto);font-size:13.5px}
+  .otra-cond input:focus{outline:none;border-color:var(--jade);box-shadow:0 0 0 3px var(--jade-050)}
+
+  .fila-nueva{background:var(--jade-020)}
+  .sel-estado{height:30px;border:1px solid var(--linea);border-radius:var(--radio-s);
+    font-family:var(--f-texto);font-size:12.5px;padding:0 8px;background:var(--blanco)}
+
+  /* ---------- Barra de guardado ----------------------------------------- */
+  .barra-guardar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+    background:var(--blanco);border:1px solid var(--linea);border-radius:var(--radio);
+    padding:12px 16px;margin-bottom:16px}
+  .barra-guardar .b-est{font-size:12.5px;color:var(--gris);display:flex;align-items:center;gap:7px}
+  .barra-guardar .b-est svg{width:14px;height:14px;flex:none;stroke-width:2}
+
+  /* ---------- Canalización y vista previa del oficio -------------------- */
+  .g-canaliza{display:grid;grid-template-columns:1fr 306px;gap:22px;align-items:start}
+  @media (max-width:1100px){ .g-canaliza{grid-template-columns:1fr} }
+
+  /* .oficio-hoja y .oficio-cap viven ahora en simh.css §22: la hoja
+     membretada la comparten esta canalización y la emisión de oficios. */
+
+  /* Acción dentro del texto de un aviso: debe fluir con la frase, no ser un
+     bloque flex que la parta en dos líneas. */
+  .enlace-inline{display:inline;background:none;border:0;padding:0;font:inherit;
+    font-weight:700;color:var(--jade-900);cursor:pointer;text-decoration:underline}
+</style>
+</head>
+<body>
+
+<main class="contenido">
+  <div class="migas"><a href="index.html">Inicio</a> › Salud y Vulnerabilidad</div>
+
+  <div class="enc">
+    <div class="enc-txt">
+      <h1>Salud y Vulnerabilidad</h1>
+      <div class="enc-sub">Valoración, catálogo OMS y canalización al sector salud (RF07)</div>
+    </div>
+    <div class="enc-acc">
+      <button class="btn btn-secundario btn-s" type="button" id="btnXls"></button>
+      <a class="btn btn-secundario btn-s" href="expedientes.html" id="btnBuscar"></a>
+    </div>
+  </div>
+
+  <div class="aviso aviso-rosa" id="avisoSensible"></div>
+
+  <div class="g-maestro">
+    <!-- ===================== Lista de trabajo ========================== -->
+    <div class="tarjeta" style="padding:0;position:sticky;top:calc(var(--topbar-h) + 16px)">
+      <div style="padding:12px 12px 11px;border-bottom:1px solid var(--linea)">
+        <input type="text" id="buscaPersona" placeholder="Buscar folio, nombre o CURP"
+               aria-label="Buscar persona en la lista de valoración"
+               style="width:100%;height:34px;border:1px solid var(--linea);border-radius:var(--radio-s);
+                      padding:0 11px;font-family:var(--f-texto);font-size:13px">
+        <div class="chips-filtro" id="chipsFiltro" role="group" aria-label="Filtrar la lista"></div>
+      </div>
+      <div id="listaPersonas" style="max-height:60vh;overflow-y:auto"></div>
+      <div class="tabla-pie" style="border-radius:0 0 var(--radio) var(--radio)">
+        <span id="conteoPersonas"></span>
+      </div>
+    </div>
+
+    <!-- ========================== Detalle ============================== -->
+    <div id="detalle"></div>
+  </div>
+</main>
+
+<script src="assets/js/simh.js"></script>
+<script>
+(function () {
+  "use strict";
+  SIMH.chrome("salud");
+  var ico = SIMH.icono, esc = SIMH.esc;
+  var $ = function (s) { return document.querySelector(s); };
+
+  $("#btnXls").innerHTML    = ico("excel") + "Exportar valoraciones";
+  $("#btnBuscar").innerHTML = ico("buscar") + "Buscar otro expediente";
+  $("#avisoSensible").innerHTML = ico("candado") +
+    "<span><strong>Información sensible</strong>Los datos de salud y vulnerabilidad solo son visibles para los " +
+    "perfiles autorizados de esta dirección y en los reportes agregados se usan siempre de forma anonimizada " +
+    "(RNF01). Ninguna condición se elimina: se marca como resuelta y conserva su historial (RNF03).</span>";
+
+  /* ======================================================================
+     1. Catálogo de marcadores de vulnerabilidad
+     Marcar una casilla aquí no es informativo: activa una ruta con plazo.
+     Por eso cada marcador declara su consecuencia junto a la casilla.
+     ================================================================== */
+  var VULN = [
+    { g: "Edad y desarrollo", items: [
+      { id:"nna",     t:"Niña, niño o adolescente (NNA)", n:"Persona menor de 18 años" },
+      { id:"nnasep",  t:"NNA separado o no acompañado", obliga:true,
+        ruta:"Oficio a la Procuraduría Regional de Protección dentro de 24 h (RF06). Se emite desde el expediente familiar.",
+        link:{ href:"familiar.html?g=1", txt:"Ir al expediente familiar" } },
+      { id:"mayor",   t:"Persona adulta mayor", n:"60 años o más" }
+    ]},
+    { g: "Salud y maternidad", items: [
+      { id:"emb",     t:"Embarazo o periodo de lactancia",
+        ruta:"Canalización a control prenatal en la primera cita disponible.",
+        canaliza:{ inst:"IMSS-Bienestar", motivo:"Control prenatal y valoración obstétrica" } },
+      { id:"disc",    t:"Persona con discapacidad", n:"Motriz, visual, auditiva, intelectual o psicosocial",
+        ruta:"Requiere ajustes razonables en ventanilla y en el traslado." },
+      { id:"cronica", t:"Enfermedad crónica o grave sin tratamiento",
+        ruta:"Canalización a primer nivel de atención para continuidad del tratamiento.",
+        canaliza:{ inst:"Centro de Salud Municipal", motivo:"Continuidad de tratamiento de enfermedad crónica" } }
+    ]},
+    { g: "Violencia y delito", items: [
+      { id:"victima", t:"Víctima o testigo de delito", obliga:true,
+        ruta:"Aviso a la Fiscalía y a la Comisión Ejecutiva de Atención a Víctimas dentro de 24 h.",
+        canaliza:{ inst:"Jurisdicción Sanitaria VII · atención a víctimas", motivo:"Valoración médica y psicológica por hecho victimizante" } },
+      { id:"trata",   t:"Indicios de trata de personas", obliga:true,
+        ruta:"Activa el protocolo especial: resguardo inmediato y notificación a la unidad especializada.",
+        canaliza:{ inst:"Jurisdicción Sanitaria VII · atención a víctimas", motivo:"Protocolo de atención a posible víctima de trata" } },
+      { id:"violen",  t:"Violencia familiar o de género",
+        ruta:"Canalización a refugio y acompañamiento jurídico.",
+        canaliza:{ inst:"Jurisdicción Sanitaria VII · atención a víctimas", motivo:"Valoración por violencia familiar o de género" } }
+    ]},
+    { g: "Situación social", items: [
+      { id:"asilo",   t:"Solicitante de asilo o refugio", n:"Trámite ante COMAR en curso" },
+      { id:"indig",   t:"Persona indígena o afromexicana",
+        ruta:"Requiere intérprete en su lengua para la valoración." },
+      { id:"lgbt",    t:"Población LGBTTTIQ+" },
+      { id:"calle",   t:"Sin red de apoyo o en situación de calle",
+        ruta:"Valorar alojamiento temporal antes de la canalización." }
+    ]}
+  ];
+
+  var VULN_IDX = {};
+  VULN.forEach(function (g) { g.items.forEach(function (v) { VULN_IDX[v.id] = v; }); });
+
+  /* ======================================================================
+     2. Catálogo de condiciones de salud (OMS / CIE-10)
+     Se agrupa y se pliega: 30 casillas abiertas a la vez son ilegibles,
+     pero el buscador recorre los seis grupos y abre los que coinciden.
+     ================================================================== */
+  var CATALOGO = [
+    { g:"Enfermedades crónicas no transmisibles", abierto:true, items:[
+      ["E11","Diabetes mellitus tipo 2"], ["I10","Hipertensión arterial"],
+      ["C80","Cáncer, sitio no especificado"], ["N18","Enfermedad renal crónica"],
+      ["J45","Asma"], ["E78","Dislipidemia"] ]},
+    { g:"Enfermedades infecciosas", abierto:true, items:[
+      ["B24","VIH / sida"], ["A15","Tuberculosis pulmonar"], ["A90","Dengue"],
+      ["B16","Hepatitis B"], ["J06","Infección respiratoria aguda"],
+      ["A09","Enfermedad diarreica aguda"] ]},
+    { g:"Salud materna y perinatal", items:[
+      ["Z34","Embarazo de bajo riesgo"], ["O09","Embarazo de alto riesgo"],
+      ["Z39","Puerperio"], ["Z39.1","Lactancia materna"] ]},
+    { g:"Salud mental y consumo de sustancias", items:[
+      ["F32","Episodio depresivo"], ["F41","Trastorno de ansiedad"],
+      ["F43.1","Estrés postraumático"], ["F19","Consumo de sustancias"] ]},
+    { g:"Discapacidad", items:[
+      ["Z73.6","Discapacidad motriz"], ["H54","Discapacidad visual"],
+      ["H91","Discapacidad auditiva"], ["F79","Discapacidad intelectual"],
+      ["F99","Discapacidad psicosocial"] ]},
+    { g:"Lesiones y condiciones del trayecto", items:[
+      ["E46","Desnutrición"], ["E86","Deshidratación"],
+      ["L98","Lesiones en pies por trayecto"], ["T14","Herida o traumatismo"] ]}
+  ];
+
+  var INSTITUCIONES = [
+    "IMSS-Bienestar",
+    "Hospital General de Tapachula",
+    "Hospital Regional de Alta Especialidad Ciudad Salud",
+    "Centro de Salud Municipal",
+    "Jurisdicción Sanitaria VII · atención a víctimas",
+    "Otra institución"
+  ];
+
+  var ESTADOS_COND = ["Activa", "En tratamiento", "Controlada", "Resuelta"];
+
+  /* ======================================================================
+     3. Cartera de trabajo del módulo
+     Ordenada por urgencia, no por fecha: primero lo que tiene plazo legal,
+     después la cita vencida, después lo pendiente y al final el seguimiento.
+     ================================================================== */
+  var URG = {
+    inm:      { txt:"Atención inmediata", chip:"chip-guinda", ico:"alerta" },
+    vencida:  { txt:"Cita vencida",       chip:"chip-rosa",   ico:"reloj"  },
+    pend:     { txt:"Pendiente de valoración", chip:"chip-neutro", ico:"reloj" },
+    seg:      { txt:"En seguimiento",     chip:"chip-jade",   ico:"check"  },
+    fin:      { txt:"Valoración concluida", chip:"chip-neutro", ico:"check" }
+  };
+
+  var P = [
+    { f:"SIMH-2026-TAP-0410", n:"Keiner Alexander Rojas Mora", ini:"KR", ed:16, pais:"Venezuela",
+      mun:"Tapachula", curp:"ROMK100722HNEXXX03", grupo:"SIMH-FAM-2026-0338", grupoHref:"familiar.html?g=1",
+      urg:"inm", motivo:"NNA separado detectado en ventanilla · 2 días sin valorar",
+      resp:"Sin asignar", ultima:"Sin valoración clínica",
+      vuln:["nna","nnasep","calle"],
+      cond:[ {cod:"E46", t:"Desnutrición", grupo:"Lesiones y condiciones del trayecto",
+              est:"Activa", fecha:"24/08/2026", por:"Ventanilla · M. Gómez"} ],
+      can:[] },
+
+    { f:"SIMH-2026-SUC-0177", n:"Marta Lucía Xicoténcatl Pérez", ini:"MX", ed:41, pais:"Guatemala",
+      mun:"Suchiate", curp:"XIPM850214MNEXXX07", grupo:"SIMH-FAM-2026-0332", grupoHref:"familiar.html?g=2",
+      urg:"vencida", motivo:"No acudió a la cita del 20/08 · requiere reprogramación",
+      resp:"Luis A. Ramírez", ultima:"12/08/2026",
+      vuln:["cronica","indig"],
+      cond:[ {cod:"E11", t:"Diabetes mellitus tipo 2", grupo:"Enfermedades crónicas no transmisibles",
+              est:"En tratamiento", fecha:"12/08/2026", por:"Salud · L. Ramírez"},
+             {cod:"I10", t:"Hipertensión arterial", grupo:"Enfermedades crónicas no transmisibles",
+              est:"Controlada", fecha:"12/08/2026", por:"Salud · L. Ramírez"} ],
+      can:[ {fecha:"12/08/2026", inst:"Centro de Salud Municipal", motivo:"Control metabólico y surtido de metformina",
+             of:"SFS/0874/2026", cita:"20/08/2026", est:"No acudió"} ] },
+
+    { f:"SIMH-2026-TAP-0409", n:"Óscar Danilo Hernández Reyes", ini:"OH", ed:35, pais:"El Salvador",
+      mun:"Tapachula", curp:"HERO910930HNEXXX01", grupo:"—", grupoHref:"",
+      urg:"inm", motivo:"Víctima de delito en tránsito · marcado en ventanilla ayer",
+      resp:"Sin asignar", ultima:"Sin valoración clínica",
+      vuln:["victima"],
+      cond:[], can:[] },
+
+    { f:"SIMH-2026-MOT-0061", n:"Rosalinda Gómez Vázquez", ini:"RG", ed:63, pais:"Guatemala",
+      mun:"Motozintla", curp:"GOVR630405MNEXXX09", grupo:"SIMH-FAM-2026-0327", grupoHref:"familiar.html?g=3",
+      urg:"pend", motivo:"Adulta mayor · sin valoración desde el registro del 12/08",
+      resp:"Sin asignar", ultima:"Sin valoración clínica",
+      vuln:["mayor"],
+      cond:[], can:[] },
+
+    { f:"SIMH-2026-TAP-0411", n:"Jean-Baptiste Pierre Louis", ini:"JP", ed:27, pais:"Haití",
+      mun:"Tapachula", curp:"PILJ990118HNEXXX05", grupo:"—", grupoHref:"",
+      urg:"pend", motivo:"Lesiones en pies por el trayecto · requiere intérprete de creole",
+      resp:"Sin asignar", ultima:"Sin valoración clínica",
+      vuln:["indig"],
+      cond:[], can:[] },
+
+    { f:"SIMH-2026-TAP-0412", n:"Yolanda Esperanza Martínez Cruz", ini:"YM", ed:32, pais:"Honduras",
+      mun:"Tapachula", curp:"MACY940318MNEXXX01", grupo:"SIMH-FAM-2026-0341", grupoHref:"familiar.html?g=0",
+      urg:"seg", motivo:"Embarazo de 22 semanas e hipertensión · próxima cita 12/09",
+      resp:"Luis A. Ramírez", ultima:"18/08/2026",
+      vuln:["emb","asilo"],
+      cond:[ {cod:"Z34", t:"Embarazo de bajo riesgo", grupo:"Salud materna y perinatal",
+              est:"En tratamiento", fecha:"18/08/2026", por:"Salud · L. Ramírez"},
+             {cod:"I10", t:"Hipertensión arterial", grupo:"Enfermedades crónicas no transmisibles",
+              est:"Controlada", fecha:"18/08/2026", por:"Salud · L. Ramírez"} ],
+      can:[ {fecha:"18/08/2026", inst:"IMSS-Bienestar", motivo:"Control prenatal",
+             of:"SFS/0912/2026", cita:"12/09/2026", est:"Atendida"},
+            {fecha:"24/08/2026", inst:"Hospital General de Tapachula", motivo:"Valoración por hipertensión",
+             of:"SFS/0947/2026", cita:"03/09/2026", est:"Cita programada"} ] },
+
+    { f:"SIMH-2026-FCO-0094", n:"Yamilé Rodríguez Betancourt", ini:"YR", ed:29, pais:"Cuba",
+      mun:"F. Comalapa", curp:"ROBY970712MNEXXX04", grupo:"—", grupoHref:"",
+      urg:"seg", motivo:"Trastorno de ansiedad en tratamiento · cita de control 05/09",
+      resp:"Luis A. Ramírez", ultima:"20/08/2026",
+      vuln:["violen"],
+      cond:[ {cod:"F41", t:"Trastorno de ansiedad", grupo:"Salud mental y consumo de sustancias",
+              est:"En tratamiento", fecha:"20/08/2026", por:"Salud · L. Ramírez"} ],
+      can:[ {fecha:"20/08/2026", inst:"Jurisdicción Sanitaria VII · atención a víctimas",
+             motivo:"Atención psicológica por violencia de género", of:"SFS/0931/2026",
+             cita:"05/09/2026", est:"Cita programada"} ] },
+
+    { f:"SIMH-2026-TAP-0408", n:"Wilmer Josué Aguilar Paz", ini:"WA", ed:9, pais:"Honduras",
+      mun:"Tapachula", curp:"AUPW170203HNEXXX06", grupo:"SIMH-FAM-2026-0341", grupoHref:"familiar.html?g=0",
+      urg:"fin", motivo:"NNA acompañado · valoración sin hallazgos el 22/08",
+      resp:"Luis A. Ramírez", ultima:"22/08/2026",
+      vuln:["nna"],
+      cond:[], can:[] }
+  ];
+
+  var FILTROS = [
+    { id:"accion", txt:"Requieren acción", test:function (p) { return p.urg === "inm" || p.urg === "vencida"; } },
+    { id:"pend",   txt:"Sin valorar",      test:function (p) { return p.urg === "pend" || p.urg === "inm"; } },
+    { id:"seg",    txt:"En seguimiento",   test:function (p) { return p.urg === "seg"; } },
+    { id:"todas",  txt:"Todas",            test:function () { return true; } }
+  ];
+
+  var sel = 0, filtro = "todas", busca = "";
+  var oficioSec = 947;                       /* último folio emitido en la ficción */
+
+  /* ------------------------------------------------------- Utilidades --- */
+  function hoy() {
+    var d = new Date(2026, 7, 25);            /* fecha fija del prototipo */
+    return ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2) + "/" + d.getFullYear();
+  }
+  function nuevoFolio() {
+    oficioSec += 1;
+    return "SFS/" + ("000" + oficioSec).slice(-4) + "/2026";
+  }
+  function chipUrg(p) {
+    var u = URG[p.urg];
+    return '<span class="chip ' + u.chip + '">' + ico(u.ico) + esc(u.txt) + "</span>";
+  }
+  /* Nivel de atención: lo decide el marcador con plazo legal, no el conteo. */
+  function nivel(p) {
+    var obliga = p.vuln.filter(function (id) { return VULN_IDX[id] && VULN_IDX[id].obliga; });
+    if (obliga.length) return { k:"inmediata", txt:"Atención inmediata (24 h)", cls:"n-inmediata" };
+    if (p.vuln.length) return { k:"prioritaria", txt:"Atención prioritaria", cls:"n-prioritaria" };
+    return { k:"estandar", txt:"Atención estándar", cls:"n-estandar" };
+  }
+  function rutasObligadas(p) {
+    return p.vuln.map(function (id) { return VULN_IDX[id]; })
+      .filter(function (v) { return v && v.ruta; });
+  }
+
+  /* ====================================================== Lista ========= */
+  function visibles() {
+    var ft = FILTROS.filter(function (f) { return f.id === filtro; })[0];
+    var q = busca.trim().toLowerCase();
+    return P.filter(function (p) {
+      if (!ft.test(p)) return false;
+      if (!q) return true;
+      return (p.n + " " + p.f + " " + p.curp).toLowerCase().indexOf(q) >= 0;
+    });
+  }
+
+  function pintarChips() {
+    $("#chipsFiltro").innerHTML = FILTROS.map(function (f) {
+      var c = P.filter(f.test).length;
+      return '<button class="chip ' + (f.id === filtro ? "chip-jade" : "chip-neutro") +
+        '" type="button" data-f="' + f.id + '" aria-pressed="' + (f.id === filtro) + '">' +
+        esc(f.txt) + " " + c + "</button>";
+    }).join("");
+  }
+
+  function pintarLista() {
+    var vs = visibles();
+    $("#listaPersonas").innerHTML = vs.length ? vs.map(function (p) {
+      var i = P.indexOf(p);
+      return '<button class="pers-item' + (i === sel ? " activo" : "") + '" type="button" data-i="' + i + '">' +
+        chipUrg(p) +
+        '<span class="p-nom">' + esc(p.n) + "</span>" +
+        '<span class="p-folio">' + esc(p.f) + " · " + p.ed + " años · " + esc(p.mun) + "</span>" +
+        '<span class="p-motivo">' + esc(p.motivo) + "</span>" +
+        "</button>";
+    }).join("") : '<div class="cat-vacio" style="padding:18px 14px">Ningún expediente coincide con el filtro.</div>';
+    $("#conteoPersonas").textContent = vs.length + " de " + P.length + " personas en la cartera";
+  }
+
+  $("#chipsFiltro").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-f]");
+    if (!b) return;
+    filtro = b.getAttribute("data-f");
+    pintarChips(); pintarLista();
+  });
+  $("#listaPersonas").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-i]");
+    if (!b) return;
+    sel = +b.getAttribute("data-i");
+    pintarLista(); pintarDetalle();
+    window.scrollTo({ top:0, behavior:"smooth" });
+  });
+  $("#buscaPersona").addEventListener("input", function (e) {
+    busca = e.target.value; pintarLista();
+  });
+
+  /* ====================================================== Detalle ======= */
+  function pintarDetalle() {
+    var p = P[sel];
+    var nv = nivel(p);
+    var rutas = rutasObligadas(p);
+    var nuevas = p.cond.filter(function (c) { return c.nuevo; }).length;
+    var sucio = !!p.sucio;
+
+    var h = "";
+
+    /* ---------------- Cabecera de identidad -------------------------- */
+    h += '<div class="tarjeta exp-cab" style="margin-bottom:16px">' +
+      '<div class="exp-foto">' + ico("persona") + "</div>" +
+      '<div class="exp-id">' +
+        '<h2 class="exp-nombre">' + esc(p.n) + "</h2>" +
+        '<div class="exp-folio">Folio ' + esc(p.f) + " · CURP " + esc(p.curp) + "</div>" +
+        '<div class="exp-chips">' + chipUrg(p) +
+          '<span class="chip chip-neutro">' + p.ed + " años · " + esc(p.pais) + "</span>" +
+          '<span class="chip chip-neutro">' + esc(p.mun) + "</span>" +
+        "</div>" +
+        '<div class="exp-meta">' +
+          "<span>Última valoración<b>" + esc(p.ultima) + "</b></span>" +
+          "<span>Responsable clínico<b>" + esc(p.resp) + "</b></span>" +
+          "<span>Grupo familiar<b>" +
+            (p.grupoHref ? '<a href="' + p.grupoHref + '">' + esc(p.grupo) + "</a>" : "Sin grupo") + "</b></span>" +
+          "<span>Condiciones registradas<b>" + p.cond.length + "</b></span>" +
+          "<span>Canalizaciones<b>" + p.can.length + "</b></span>" +
+        "</div>" +
+      "</div>" +
+      '<div class="exp-acc">' +
+        '<a class="btn btn-secundario" href="expediente-detalle.html">' + ico("expedientes") + "Abrir expediente</a>" +
+        '<a class="btn btn-secundario btn-s" href="expediente-detalle.html?tab=bitacora">' + ico("doc") + "Ver bitácora</a>" +
+      "</div>" +
+    "</div>";
+
+    /* ---------------- Rutas con plazo, antes que nada ---------------- */
+    if (rutas.length) {
+      var obliga  = rutas.filter(function (v) { return v.obliga; });
+      var derivadas = rutas.filter(function (v) { return !v.obliga; });
+      /* La ruta con plazo legal y la ruta recomendada no son lo mismo: se
+         listan por separado para que el conteo del encabezado sea el real. */
+      var linea = function (v) {
+        return '<span style="display:block;margin-top:5px">· <b>' + esc(v.t) + "</b> — " + esc(v.ruta) +
+          (v.link ? ' <a href="' + v.link.href + '">' + esc(v.link.txt) + "</a>"
+                  : (v.canaliza ? ' <button class="enlace-inline" type="button" data-pre="' + v.id +
+                      '">Preparar canalización</button>' : "")) + "</span>";
+      };
+      h += '<div class="aviso ' + (obliga.length ? "aviso-guinda" : "aviso-jade") + '">' +
+        ico(obliga.length ? "alerta" : "info") + "<span><strong>" +
+        (obliga.length
+          ? "Esta valoración activa " + obliga.length +
+            (obliga.length === 1 ? " ruta obligatoria con plazo" : " rutas obligatorias con plazo")
+          : "Rutas de atención derivadas de la valoración") + "</strong>" +
+        (obliga.length ? obliga.map(linea).join("") : derivadas.map(linea).join("")) +
+        (obliga.length && derivadas.length
+          ? '<span style="display:block;margin-top:9px;padding-top:7px;border-top:1px solid rgba(174,25,45,.2)">' +
+            "<b>Además, sin plazo legal:</b></span>" + derivadas.map(linea).join("")
+          : "") +
+        "</span></div>";
+    }
+
+    /* ---------------- Marcadores de vulnerabilidad ------------------- */
+    h += '<article class="tarjeta" style="margin-bottom:16px">' +
+      '<div class="grafica-enc"><h3>Valoración de vulnerabilidad</h3>' +
+        '<span class="txt-min">' + p.vuln.length + " de " +
+        Object.keys(VULN_IDX).length + " marcadores</span></div>" +
+      '<div class="grafica-sub">Los marcadores que la ventanilla capturó en el alta llegan preseleccionados. ' +
+        "Cada uno declara la ruta que activa y su plazo.</div>" +
+      '<div class="nivel">' +
+        '<div class="n-col"><span class="n-lab">Nivel de atención</span>' +
+        '<span class="n-val ' + nv.cls + '">' + esc(nv.txt) + "</span></div>" +
+        '<span class="n-sep"></span>' +
+        '<div class="n-col"><span class="n-lab">Marcadores</span><span class="n-num">' + p.vuln.length + "</span></div>" +
+        '<span class="n-sep"></span>' +
+        '<div class="n-col"><span class="n-lab">Condiciones de salud</span><span class="n-num">' + p.cond.length + "</span></div>" +
+        '<span class="n-sep"></span>' +
+        '<div class="n-col"><span class="n-lab">Canalizaciones</span><span class="n-num">' + p.can.length + "</span></div>" +
+      "</div>" +
+      '<div class="vuln-grid">' + VULN.map(function (g) {
+        return '<div class="vuln-g"><h4>' + esc(g.g) + "</h4>" + g.items.map(function (v) {
+          var on = p.vuln.indexOf(v.id) >= 0;
+          return '<label class="vuln-item' + (on ? " marcado" : "") + (v.obliga ? " obliga" : "") + '">' +
+            '<input type="checkbox" data-v="' + v.id + '"' + (on ? " checked" : "") + ">" +
+            "<span>" +
+              '<span class="v-t">' + esc(v.t) +
+                (v.obliga ? '<span class="v-marca">Plazo 24 h</span>' : "") + "</span>" +
+              (v.n ? '<span class="v-n">' + esc(v.n) + "</span>" : "") +
+              (v.ruta && on ? '<span class="v-ruta">' + esc(v.ruta) + "</span>" : "") +
+            "</span></label>";
+        }).join("") + "</div>";
+      }).join("") + "</div>" +
+    "</article>";
+
+    /* ---------------- Catálogo OMS ----------------------------------- */
+    h += '<article class="tarjeta" style="margin-bottom:16px">' +
+      '<div class="grafica-enc"><h3>Condiciones de salud · catálogo OMS (CIE-10)</h3></div>' +
+      '<div class="grafica-sub">Al marcar una condición se agrega al registro de la persona con la fecha de hoy ' +
+        "y estado <em>Activa</em>; el estado se corrige en la tabla de abajo.</div>" +
+      '<div class="cat-buscar"><span class="lupa">' + ico("buscar") + "</span>" +
+        '<input type="text" id="buscaCat" placeholder="Buscar condición o código CIE-10 en los seis grupos" ' +
+        'aria-label="Buscar en el catálogo de condiciones"></div>' +
+      '<div id="catGrupos"></div>' +
+      '<div class="fieldset" style="margin:12px 0 0"><legend>Condición no incluida en el catálogo</legend>' +
+        '<div class="otra-cond">' +
+          '<input type="text" id="otraCond" placeholder="Describir la condición observada" ' +
+            'aria-label="Otra condición de salud">' +
+          '<button class="btn btn-secundario btn-s" type="button" id="btnOtra">' + ico("mas") + "Agregar</button>" +
+        "</div>" +
+        '<div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-top:8px">' +
+          "Se registra como <em>Otra</em> y queda marcada para que el personal médico le asigne código.</div>" +
+      "</div>" +
+    "</article>";
+
+    /* ---------------- Condiciones registradas ------------------------ */
+    h += '<article class="tarjeta" style="margin-bottom:16px">' +
+      '<div class="grafica-enc"><h3>Condiciones registradas</h3>' +
+        '<span class="txt-min">' + p.cond.length + (p.cond.length === 1 ? " condición" : " condiciones") + "</span></div>" +
+      (p.cond.length
+        ? '<table class="tabla" style="font-size:13px"><thead><tr>' +
+            "<th>Condición</th><th>Código</th><th>Grupo</th><th>Detectada</th><th>Registró</th>" +
+            "<th>Estado</th><th></th></tr></thead><tbody>" +
+          p.cond.map(function (c, i) {
+            return '<tr' + (c.nuevo ? ' class="fila-nueva"' : "") + "><td>" + esc(c.t) +
+              (c.nuevo ? ' <span class="chip chip-jade" style="margin-left:4px">Sin guardar</span>' : "") + "</td>" +
+              '<td class="mono">' + esc(c.cod) + "</td>" +
+              "<td>" + esc(c.grupo) + "</td>" +
+              '<td class="mono">' + esc(c.fecha) + "</td>" +
+              "<td>" + esc(c.por) + "</td>" +
+              '<td><select class="sel-estado" data-est="' + i + '" aria-label="Estado de ' + esc(c.t) + '">' +
+                ESTADOS_COND.map(function (e) {
+                  return '<option' + (e === c.est ? " selected" : "") + ">" + e + "</option>";
+                }).join("") + "</select></td>" +
+              '<td class="num">' + (c.nuevo
+                ? '<button class="btn-texto btn" type="button" data-quita="' + i + '">Quitar</button>'
+                : '<span class="txt-min" style="white-space:nowrap">No se elimina</span>') + "</td></tr>";
+          }).join("") + "</tbody></table>"
+        : '<div class="cat-vacio">Sin condiciones registradas. Marque las que correspondan en el catálogo de arriba.</div>') +
+      '<div class="tarjeta-pie">Una condición guardada no se borra: se marca como <em>Resuelta</em> y conserva su ' +
+        "fecha y su responsable (RNF03). Solo las condiciones aún sin guardar pueden quitarse.</div>" +
+    "</article>";
+
+    /* ---------------- Barra de guardado ------------------------------ */
+    /* La barra dice la verdad: sin cambios pendientes no ofrece guardar. */
+    h += '<div class="barra-guardar">' +
+      '<span class="b-est">' + ico(sucio ? "alerta" : "check") +
+        (sucio
+          ? "<span>" + (nuevas
+              ? nuevas + (nuevas === 1 ? " condición nueva" : " condiciones nuevas") + " y cambios en los marcadores"
+              : "Cambios en los marcadores de vulnerabilidad") + " sin guardar.</span>"
+          : "<span>Valoración al día. El último guardado quedó asentado en la bitácora del expediente.</span>") +
+      "</span>" +
+      '<span class="flex gap-8">' +
+        '<button class="btn btn-secundario btn-s' + (sucio ? "" : " desactivado") +
+          '" type="button" id="btnDescartar"' + (sucio ? "" : " disabled") + ">Descartar cambios</button>" +
+        '<button class="btn btn-primario' + (sucio ? "" : " desactivado") +
+          '" type="button" id="btnGuardar"' + (sucio ? "" : " disabled") + ">" +
+          ico("guardar") + "Guardar valoración</button>" +
+      "</span></div>";
+
+    /* ---------------- Canalización ----------------------------------- */
+    h += '<article class="tarjeta">' +
+      '<div class="grafica-enc"><h3>Canalización al sector salud</h3></div>' +
+      '<div class="grafica-sub">El oficio se genera en borrador y queda pendiente de la firma del Director de ' +
+        "Área; el sistema lo numera y lo asienta en la bitácora del expediente (RF11).</div>" +
+      '<div class="g-canaliza"><div>' +
+        '<div class="campo"><label for="cInst">Institución receptora <span class="req">•</span></label>' +
+          '<select id="cInst">' + INSTITUCIONES.map(function (x) {
+            return "<option>" + esc(x) + "</option>";
+          }).join("") + "</select></div>" +
+        '<div class="campo"><label for="cMotivo">Motivo de la canalización <span class="req">•</span></label>' +
+          '<input type="text" id="cMotivo" placeholder="Ej. Control prenatal y valoración obstétrica"></div>' +
+        '<div class="fila">' +
+          '<div class="campo"><label for="cCita">Fecha de cita <span class="opc">(si ya está agendada)</span></label>' +
+            '<input type="date" id="cCita"></div>' +
+          '<div class="campo"><label for="cAcomp">Requiere acompañamiento</label>' +
+            '<select id="cAcomp"><option>No</option><option>Sí, traslado</option>' +
+            "<option>Sí, intérprete</option><option>Sí, traslado e intérprete</option></select></div>" +
+        "</div>" +
+        '<div class="campo error" id="cErr" style="display:none"><span class="msg-error" style="display:block">' +
+          "Indique el motivo de la canalización antes de generar el oficio.</span></div>" +
+        '<button class="btn btn-primario btn-grande" type="button" id="btnOficio">' +
+          ico("oficios") + "Generar oficio de canalización</button>" +
+        '<div class="ayuda" style="font-size:11.5px;color:var(--gris);margin-top:8px">' +
+          "Se descarga en PDF y se adjunta al expediente. El documento no incluye código QR: se valida por folio " +
+          "y sello de la Secretaría.</div>" +
+      "</div>" +
+      '<div><div class="etiqueta" style="margin-bottom:6px">Vista previa del oficio</div>' +
+        '<div class="oficio-hoja" id="hojaOficio"></div>' +
+        '<div class="oficio-cap">La vista previa se actualiza conforme se llena el formulario.</div>' +
+      "</div></div>" +
+
+      '<div class="grafica-enc mt-20"><h3>Canalizaciones de la persona</h3></div>' +
+      (p.can.length
+        ? '<table class="tabla" style="font-size:13px"><thead><tr>' +
+            "<th>Fecha</th><th>Institución</th><th>Motivo</th><th>Oficio</th><th>Cita</th><th>Estado</th>" +
+            "</tr></thead><tbody>" +
+          p.can.slice().reverse().map(function (c) {
+            var chip = c.est === "No acudió" ? "chip-rosa"
+                     : c.est === "Atendida" ? "chip-jade"
+                     : "chip-neutro";
+            return '<tr><td class="mono">' + esc(c.fecha) + "</td><td>" + esc(c.inst) + "</td>" +
+              "<td>" + esc(c.motivo) + '</td><td class="mono">' + esc(c.of) + "</td>" +
+              '<td class="mono">' + esc(c.cita || "Por agendar") + "</td>" +
+              '<td><span class="chip ' + chip + '">' + esc(c.est) + "</span></td></tr>";
+          }).join("") + "</tbody></table>"
+        : '<div class="cat-vacio">Sin canalizaciones. La primera se genera con el formulario de arriba.</div>') +
+    "</article>";
+
+    $("#detalle").innerHTML = h;
+    pintarCatalogo("");
+    pintarOficio();
+    enlazarDetalle();
+  }
+
+  /* --------------------------------------------- Catálogo plegable ----- */
+  function pintarCatalogo(q) {
+    var p = P[sel];
+    q = (q || "").trim().toLowerCase();
+    var puestas = {};
+    p.cond.forEach(function (c) { puestas[c.cod] = true; });
+
+    var html = CATALOGO.map(function (g) {
+      var items = g.items.filter(function (it) {
+        return !q || (it[1] + " " + it[0] + " " + g.g).toLowerCase().indexOf(q) >= 0;
+      });
+      if (!items.length) return "";
+      var marcadas = items.filter(function (it) { return puestas[it[0]]; }).length;
+      var abierto = q ? true : !!g.abierto;
+      return '<details class="cat-g"' + (abierto ? " open" : "") + "><summary>" + esc(g.g) +
+        '<span class="c-cuenta' + (marcadas ? " hay" : "") + '">' +
+          (marcadas ? marcadas + " marcadas" : items.length + " opciones") + "</span></summary>" +
+        '<div class="cat-lista">' + items.map(function (it) {
+          var on = !!puestas[it[0]];
+          return '<label class="cat-op"><input type="checkbox" data-c="' + esc(it[0]) +
+            '" data-g="' + esc(g.g) + '" data-t="' + esc(it[1]) + '"' + (on ? " checked" : "") + ">" +
+            "<span>" + esc(it[1]) + '</span><span class="c-cod">' + esc(it[0]) + "</span></label>";
+        }).join("") + "</div></details>";
+    }).join("");
+
+    document.getElementById("catGrupos").innerHTML =
+      html || '<div class="cat-vacio">Ninguna condición del catálogo coincide con la búsqueda. ' +
+              "Puede registrarla en <em>Condición no incluida en el catálogo</em>.</div>";
+  }
+
+  /* ------------------------------------------- Vista previa del oficio - */
+  function pintarOficio() {
+    var p = P[sel];
+    var inst = document.getElementById("cInst").value;
+    var mot  = document.getElementById("cMotivo").value.trim();
+    var cita = document.getElementById("cCita").value;
+    var acomp = document.getElementById("cAcomp").value;
+    var citaTxt = cita ? cita.split("-").reverse().join("/") : "por agendar";
+
+    document.getElementById("hojaOficio").innerHTML =
+      '<div class="o-membrete">' +
+        '<span class="o-inst">Gobierno del Estado de Chiapas</span>' +
+        '<span class="o-inst">Secretaría de la Frontera Sur</span>' +
+        '<span class="o-inst" style="color:var(--gris-claro)">Dirección de Atención a Personas en Movilidad</span>' +
+        '<div class="cenefa-fina" style="margin-top:7px"></div>' +
+      "</div>" +
+      '<div class="o-cuerpo">' +
+        '<span class="o-folio">Oficio ' + ("SFS/" + ("000" + (oficioSec + 1)).slice(-4) + "/2026") +
+          "<br>Tapachula, Chiapas, a " + hoy() + "</span>" +
+        '<span class="o-dest">' + esc(inst) + "<br>P R E S E N T E</span>" +
+        "<p>Por medio del presente y con fundamento en el artículo 8 de la Ley de Migración, me permito " +
+          "canalizar a la persona <b>" + esc(p.n) + "</b>, de " + p.ed + " años, registrada en el Sistema " +
+          "Integral de Movilidad Humana con folio <b>" + esc(p.f) + "</b>, para su atención por el motivo " +
+          "siguiente:</p>" +
+        "<p><b>" + (mot ? esc(mot) : "— motivo pendiente de capturar —") + "</b></p>" +
+        "<p>Fecha de cita: <b>" + esc(citaTxt) + "</b>. Acompañamiento: <b>" + esc(acomp) + "</b>.</p>" +
+        "<p>Sin otro particular, agradezco las atenciones brindadas.</p>" +
+        '<div class="o-firma"><span class="o-raya"></span>Director de Área<br>' +
+          "Secretaría de la Frontera Sur</div>" +
+      "</div>" +
+      '<div class="o-pie">Documento con datos personales sensibles. Su validación se realiza por folio y sello ' +
+        "ante la Secretaría; no incluye código QR.</div>";
+  }
+
+  /* -------------------------------------------------- Eventos ---------- */
+  function enlazarDetalle() {
+    var p = P[sel];
+    var det = document.getElementById("detalle");
+
+    /* Marcadores de vulnerabilidad */
+    det.querySelectorAll("[data-v]").forEach(function (chk) {
+      chk.addEventListener("change", function () {
+        var id = chk.getAttribute("data-v");
+        var i = p.vuln.indexOf(id);
+        if (chk.checked && i < 0) p.vuln.push(id);
+        if (!chk.checked && i >= 0) p.vuln.splice(i, 1);
+        p.sucio = true;
+        pintarDetalle();
+      });
+    });
+
+    /* Catálogo: marcar agrega la condición; desmarcar solo retira lo no guardado */
+    det.querySelector("#catGrupos").addEventListener("change", function (e) {
+      var chk = e.target.closest("[data-c]");
+      if (!chk) return;
+      var cod = chk.getAttribute("data-c");
+      var ya = p.cond.filter(function (c) { return c.cod === cod; })[0];
+      if (chk.checked && !ya) {
+        p.cond.push({ cod:cod, t:chk.getAttribute("data-t"), grupo:chk.getAttribute("data-g"),
+                      est:"Activa", fecha:hoy(), por:"Salud · M. Gómez", nuevo:true });
+      } else if (!chk.checked && ya) {
+        if (!ya.nuevo) { chk.checked = true; return; }   /* lo guardado no se retira */
+        p.cond.splice(p.cond.indexOf(ya), 1);
+      }
+      p.sucio = true;
+      pintarDetalle();
+    });
+
+    var bc = det.querySelector("#buscaCat");
+    bc.addEventListener("input", function () { pintarCatalogo(bc.value); });
+
+    /* Condición fuera del catálogo */
+    function agregarOtra() {
+      var inp = det.querySelector("#otraCond");
+      var v = inp.value.trim();
+      if (!v) { inp.focus(); return; }
+      p.cond.push({ cod:"—", t:v, grupo:"Otra · pendiente de codificar", est:"Activa",
+                    fecha:hoy(), por:"Salud · M. Gómez", nuevo:true });
+      p.sucio = true;
+      pintarDetalle();
+    }
+    det.querySelector("#btnOtra").addEventListener("click", agregarOtra);
+    det.querySelector("#otraCond").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); agregarOtra(); }
+    });
+
+    /* Estado y retiro de condiciones */
+    det.querySelectorAll("[data-est]").forEach(function (s) {
+      s.addEventListener("change", function () {
+        p.cond[+s.getAttribute("data-est")].est = s.value;
+        p.sucio = true;
+        pintarDetalle();
+      });
+    });
+    det.querySelectorAll("[data-quita]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        p.cond.splice(+b.getAttribute("data-quita"), 1);
+        p.sucio = true;
+        pintarDetalle();
+      });
+    });
+
+    /* Guardar / descartar */
+    det.querySelector("#btnGuardar").addEventListener("click", function () {
+      p.cond.forEach(function (c) { delete c.nuevo; });
+      p.sucio = false;
+      p.ultima = hoy();
+      if (p.resp === "Sin asignar") p.resp = "María Gómez Pérez";
+      if (p.urg === "pend" || p.urg === "inm") p.urg = p.can.length ? "seg" : "pend";
+      pintarLista(); pintarChips(); pintarDetalle();
+      avisar("jade", "check", "Valoración guardada",
+        "Se asentó en la bitácora del expediente " + p.f + " con su autor, área y fecha (RF08).");
+    });
+    det.querySelector("#btnDescartar").addEventListener("click", function () {
+      p.cond = p.cond.filter(function (c) { return !c.nuevo; });
+      p.sucio = false;
+      pintarDetalle();
+    });
+
+    /* Precargar la canalización desde una ruta obligada */
+    det.querySelectorAll("[data-pre]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var v = VULN_IDX[b.getAttribute("data-pre")];
+        if (!v || !v.canaliza) return;
+        det.querySelector("#cInst").value = v.canaliza.inst;
+        det.querySelector("#cMotivo").value = v.canaliza.motivo;
+        pintarOficio();
+        det.querySelector("#cCita").focus();
+        det.querySelector("#cCita").scrollIntoView({ behavior:"smooth", block:"center" });
+      });
+    });
+
+    /* Vista previa en vivo */
+    ["#cInst", "#cMotivo", "#cCita", "#cAcomp"].forEach(function (s) {
+      det.querySelector(s).addEventListener("input", pintarOficio);
+      det.querySelector(s).addEventListener("change", pintarOficio);
+    });
+
+    /* Generación del oficio */
+    det.querySelector("#btnOficio").addEventListener("click", function () {
+      var mot = det.querySelector("#cMotivo");
+      if (!mot.value.trim()) {
+        det.querySelector("#cErr").style.display = "block";
+        mot.closest(".campo").classList.add("error");
+        mot.focus();
+        return;
+      }
+      var cita = det.querySelector("#cCita").value;
+      var folio = nuevoFolio();
+      p.can.push({ fecha:hoy(), inst:det.querySelector("#cInst").value, motivo:mot.value.trim(),
+                   of:folio, cita:cita ? cita.split("-").reverse().join("/") : "",
+                   est:"Borrador · pendiente de firma" });
+      if (p.urg !== "seg" && p.urg !== "fin") p.urg = "seg";
+      p.ultima = hoy();
+      pintarLista(); pintarChips(); pintarDetalle();
+      avisar("jade", "oficios", "Oficio " + folio + " generado en borrador",
+        "Queda pendiente de la firma del Director de Área. Se adjuntó al expediente " + p.f +
+        " y se registró en la bitácora.");
+    });
+  }
+
+  /* Aviso efímero al principio del detalle */
+  function avisar(tono, icono, titulo, texto) {
+    var d = document.createElement("div");
+    d.className = "aviso aviso-" + tono;
+    d.innerHTML = ico(icono) + "<span><strong>" + esc(titulo) + "</strong>" + esc(texto) + "</span>";
+    var det = document.getElementById("detalle");
+    det.insertBefore(d, det.firstChild);
+    window.scrollTo({ top:0, behavior:"smooth" });
+  }
+
+  /* --------------------------------------------------- Arranque -------- */
+  /* Atajo de revisión: salud.html?exp=0412 abre ese expediente. */
+  var q = new URLSearchParams(location.search).get("exp");
+  if (q) {
+    P.forEach(function (p, i) { if (p.f.indexOf(q) >= 0) sel = i; });
+  }
+  pintarChips();
+  pintarLista();
+  pintarDetalle();
+})();
+</script>
+</body>
+</html>

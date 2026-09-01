@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Expediente Familiar · SIMH</title>
+<link rel="icon" href="assets/img/simh-isotipo-96.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/simh.css">
+<style>
+  .g-maestro{display:grid;grid-template-columns:286px 1fr;gap:16px;align-items:start}
+  @media (max-width:1100px){ .g-maestro{grid-template-columns:1fr} }
+
+  /* Lista de grupos: el que exige acción se distingue sin depender del color */
+  .grupo-item{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--linea-suave);
+    padding:11px 12px;cursor:pointer;font-family:var(--f-texto);position:relative}
+  .grupo-item:hover{background:var(--hueso-claro)}
+  .grupo-item.activo{background:var(--jade-050)}
+  .grupo-item.activo::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;background:var(--jade);
+    border-radius:0 3px 3px 0}
+  .grupo-item .g-folio{display:block;font-size:11.5px;color:var(--gris-claro);font-variant-numeric:tabular-nums}
+  .grupo-item .g-tit{display:block;font-size:13.5px;font-weight:700;color:var(--tinta);line-height:1.3;margin:1px 0 3px}
+  .grupo-item .g-meta{display:flex;gap:8px;align-items:center;font-size:11.5px;color:var(--gris)}
+  .grupo-item .g-pend{display:inline-flex;align-items:center;gap:4px;color:var(--guinda);font-weight:700}
+  .grupo-item .g-pend svg{width:12px;height:12px;stroke:var(--guinda);stroke-width:2;fill:none}
+
+  /* Composición del grupo: cifras pequeñas, es contexto y no el mensaje */
+  .comp{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--linea-suave);border-radius:var(--radio)}
+  .comp > div{padding:12px 14px;border-right:1px solid var(--linea-suave)}
+  .comp > div:last-child{border-right:0}
+  .comp .c-num{font-size:19px;font-weight:600;line-height:1.2}
+  .comp .c-lab{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--gris-claro);font-weight:700}
+
+  /* Un vínculo que no es directo no puede leerse igual que uno que sí lo es:
+     es lo que decide si un NNA queda acompañado o separado. Glifo y palabra,
+     no solo color. */
+  .estatus-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+  .estatus-item{display:flex;gap:9px;align-items:flex-start;border:1px solid var(--linea-suave);
+    border-radius:var(--radio-s);padding:10px 12px;background:var(--hueso-claro)}
+  .estatus-item .e-n{font-size:12.5px;color:var(--gris);line-height:1.45}
+
+  .p-nodir{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;
+    color:var(--guinda-900);line-height:1.35;margin-top:3px}
+  .p-nodir svg{width:12px;height:12px;flex:none;stroke:var(--guinda);stroke-width:2;fill:none}
+  .fila-titular{background:var(--jade-020)}
+  .badge-titular{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--jade-900);background:var(--jade-050);border-radius:999px;padding:2px 7px;margin-left:6px}
+  .sin-exp{font-size:11px;color:var(--gris-claro)}
+  .panel-accion{border:1px solid var(--arena);border-radius:var(--radio);background:var(--hueso-claro);padding:16px;margin-bottom:16px}
+</style>
+</head>
+<body>
+
+<main class="contenido">
+  <div class="migas"><a href="index.html">Inicio</a> › Expediente Familiar</div>
+
+  <div class="enc">
+    <div class="enc-txt">
+      <h1>Expediente Familiar</h1>
+      <div class="enc-sub">Grupos familiares registrados en Tapachula y franja fronteriza</div>
+    </div>
+    <div class="enc-acc">
+      <button class="btn btn-secundario btn-s" id="btnXls"></button>
+      <button class="btn btn-primario" type="button" id="btnNuevoGrupo"></button>
+    </div>
+  </div>
+
+  <div class="g-maestro">
+    <!-- ======================== Lista de grupos ======================== -->
+    <div class="tarjeta" style="padding:0;position:sticky;top:calc(var(--topbar-h) + 16px)">
+      <div style="padding:12px 12px 10px;border-bottom:1px solid var(--linea)">
+        <input type="text" placeholder="Buscar folio o titular" aria-label="Buscar grupo familiar"
+               style="width:100%;height:34px;border:1px solid var(--linea);border-radius:var(--radio-s);
+                      padding:0 11px;font-family:var(--f-texto);font-size:13px">
+        <label class="check" style="margin:10px 0 0;font-size:12.5px">
+          <input type="checkbox" id="soloPendientes"><span>Solo con NNA pendiente de oficio</span>
+        </label>
+      </div>
+      <div id="listaGrupos" style="max-height:62vh;overflow-y:auto"></div>
+      <div class="tabla-pie" style="border-radius:0 0 var(--radio) var(--radio)">
+        <span id="conteoGrupos"></span>
+      </div>
+    </div>
+
+    <!-- =========================== Detalle ============================= -->
+    <div id="detalle"></div>
+  </div>
+</main>
+
+<script src="assets/js/simh.js"></script>
+<script>
+(function () {
+  SIMH.chrome("familiar");
+  var ico = SIMH.icono, esc = SIMH.esc, $ = function (s) { return document.querySelector(s); };
+
+  /* ======================================================================
+     Catálogo de parentesco: SOLO DIRECTO.
+     --------------------------------------------------------------------
+     Línea recta (madre, padre, hija, hijo, abuela, abuelo, nieta, nieto),
+     hermanos y cónyuge o concubina. Todo lo demás —tía, sobrino, primo,
+     vecino, compañero de ruta— no es parentesco directo y se registra como
+     PERSONA ACOMPAÑANTE.
+
+     No es una poda del catálogo: es la regla que decide si una niña o un
+     niño queda como NNA acompañado o separado. Quien viaja con su tía no
+     viaja con quien ejerce la patria potestad, y por eso está separado. Con
+     "Sobrino" en la lista, el sistema recibía un vínculo que parecía
+     suficiente y se quedaba sin saber por qué ese NNA estaba separado.
+     ================================================================== */
+  var PARENTESCOS = [
+    { id:"hija",     t:"Hija",                 directo:true },
+    { id:"hijo",     t:"Hijo",                 directo:true },
+    { id:"madre",    t:"Madre",                directo:true },
+    { id:"padre",    t:"Padre",                directo:true },
+    { id:"hermana",  t:"Hermana",              directo:true },
+    { id:"hermano",  t:"Hermano",              directo:true },
+    { id:"conyuge",  t:"Cónyuge o concubina/o", directo:true },
+    { id:"abuela",   t:"Abuela",               directo:true },
+    { id:"abuelo",   t:"Abuelo",               directo:true },
+    { id:"nieta",    t:"Nieta",                directo:true },
+    { id:"nieto",    t:"Nieto",                directo:true },
+    { id:"acomp",    t:"Persona acompañante · sin parentesco directo", directo:false }
+  ];
+  /* Qué significa cada estatus en la práctica: sin eso la etiqueta no dice
+     nada que la ventanilla pueda usar. */
+  var ESTATUS = {
+    "Solicitante de refugio": { c:"chip-rosa",
+      n:"Trámite ante la COMAR en curso. Puede pedir permiso para trabajar." },
+    "Refugiado / Residente":  { c:"chip-jade",
+      n:"Situación regular. Puede trabajar sin permiso adicional." },
+    "Naturalizado":           { c:"chip-jade", n:"Persona mexicana por naturalización." },
+    "Sin trámite":            { c:"chip-guinda",
+      n:"Sin procedimiento iniciado. No puede formalizarse una contratación (RF12)." }
+  };
+  function plural(n, s, p) { return n + " " + (n === 1 ? s : p); }
+
+  function parentesco(id) {
+    return PARENTESCOS.filter(function (x) { return x.id === id; })[0] || null;
+  }
+
+  /* El vínculo se declara contra la persona titular: si es directo y la
+     titular es mayor de edad, el NNA está acompañado; si no, separado. */
+  function clasificaNNA(g, par) {
+    var tit = g.integrantes.filter(function (m) { return m.titular; })[0];
+    return (par.directo && tit && tit.e >= 18) ? "Acompañado" : "Separado";
+  }
+
+  document.getElementById("btnXls").innerHTML = ico("excel") + "Exportar";
+  document.getElementById("btnNuevoGrupo").innerHTML = ico("mas") + "Nuevo grupo familiar";
+
+  /* ------------------------------------------------------------ Datos --- */
+  var grupos = [
+    {
+      id:"SIMH-FAM-2026-0341", tipo:"Nuclear", mun:"Tapachula", fecha:"24/08/2026", juntos:true,
+      origen:"Honduras", ingreso:"28/07/2026", ruta:"Guatemala", oficio:null,
+      integrantes:[
+        { n:"Yolanda Esperanza Martínez Cruz", i:"YM", e:32, p:"Titular", dep:"—", v:"Sí",
+          exp:"SIMH-2026-TAP-0412", est:"Solicitante de refugio", cond:"Embarazo", titular:true },
+        { n:"Wilmer Josué Aguilar Paz", i:"WA", e:9, p:"Hijo", dep:"Sí", v:"Sí",
+          exp:"SIMH-2026-TAP-0408", est:"Solicitante de refugio", nna:"Acompañado" },
+        { n:"Rosa Elena Cruz Medina", i:"RC", e:58, p:"Madre", dep:"Sí", v:"Sí",
+          exp:null, est:"Sin trámite", cond:"Adulta mayor" }
+      ]
+    },
+    {
+      id:"SIMH-FAM-2026-0338", tipo:"Extendido", mun:"Tapachula", fecha:"22/08/2026", juntos:true,
+      origen:"Venezuela", ingreso:"19/08/2026", ruta:"Colombia · Panamá · Guatemala", oficio:"pendiente",
+      integrantes:[
+        /* La tía no es parentesco directo. Ese es exactamente el motivo por
+           el que las dos personas menores de edad están SEPARADAS: viajan
+           con alguien que no ejerce la patria potestad. Antes se declaraba
+           "tía / sobrino" y la clasificación de separados no se explicaba. */
+        { n:"Marisol Rojas Peña", i:"MR", e:38, p:"Persona acompañante", pd:false, dep:"—", v:"Sí",
+          exp:"SIMH-2026-TAP-0415", est:"Solicitante de refugio", titular:true },
+        { n:"Keiner Alexander Rojas Mora", i:"KR", e:16, p:"Persona acompañante", pd:false,
+          dep:"Sí", v:"Sí",
+          exp:"SIMH-2026-TAP-0410", est:"Sin trámite", nna:"Separado" },
+        { n:"Dariana Rojas Mora", i:"DR", e:7, p:"Persona acompañante", pd:false, dep:"Sí", v:"Sí",
+          exp:null, est:"Sin trámite", nna:"Separado" }
+      ]
+    },
+    {
+      id:"SIMH-FAM-2026-0332", tipo:"Nuclear", mun:"Suchiate", fecha:"18/08/2026", juntos:true,
+      origen:"Guatemala", ingreso:"12/08/2026", ruta:"—", oficio:null,
+      integrantes:[
+        { n:"Marta Lucía Xicoténcatl Pérez", i:"MX", e:41, p:"Titular", dep:"—", v:"Sí",
+          exp:"SIMH-2026-SUC-0177", est:"Refugiado / Residente", titular:true },
+        { n:"Diego Armando Xicoténcatl", i:"DX", e:14, p:"Hijo", dep:"Sí", v:"Sí",
+          exp:null, est:"Refugiado / Residente", nna:"Acompañado" }
+      ]
+    },
+    {
+      id:"SIMH-FAM-2026-0327", tipo:"Unipersonal", mun:"Motozintla", fecha:"12/08/2026", juntos:true,
+      origen:"Guatemala", ingreso:"05/08/2026", ruta:"—", oficio:null,
+      integrantes:[
+        { n:"Rosalinda Gómez Vázquez", i:"RG", e:63, p:"Titular", dep:"—", v:"Sí",
+          exp:"SIMH-2026-MOT-0061", est:"Refugiado / Residente", cond:"Adulta mayor", titular:true }
+      ]
+    }
+  ];
+
+  var actual = 0, panelAbierto = null;
+
+  function pendiente(g) {
+    return g.oficio === "pendiente" &&
+      g.integrantes.some(function (m) { return m.nna === "Separado" || m.nna === "No acompañado"; });
+  }
+
+  /* ------------------------------------------------- Lista de grupos ---- */
+  function pintarLista() {
+    var soloP = $("#soloPendientes").checked;
+    var vis = grupos.map(function (g, i) { return { g:g, i:i }; })
+                    .filter(function (o) { return !soloP || pendiente(o.g); });
+    $("#listaGrupos").innerHTML = vis.map(function (o) {
+      var g = o.g, tit = g.integrantes.find(function (m) { return m.titular; });
+      var nna = g.integrantes.filter(function (m) { return m.nna; }).length;
+      var nInt = g.integrantes.length;
+      return '<button class="grupo-item' + (o.i === actual ? " activo" : "") + '" type="button" data-i="' + o.i + '">' +
+        '<span class="g-folio">' + g.id + "</span>" +
+        '<span class="g-tit">' + esc(tit.n) + "</span>" +
+        '<span class="g-meta">' + nInt + (nInt === 1 ? " integrante · " : " integrantes · ") + g.mun +
+        (nna ? " · " + nna + " NNA" : "") + "</span>" +
+        (pendiente(g) ? '<span class="g-meta" style="margin-top:4px"><span class="g-pend">' + ico("alerta") +
+          "Oficio pendiente</span></span>" : "") + "</button>";
+    }).join("");
+    $("#conteoGrupos").textContent = vis.length + " de " + grupos.length + " grupos";
+  }
+  $("#listaGrupos").addEventListener("click", function (e) {
+    var b = e.target.closest(".grupo-item");
+    if (!b) return;
+    actual = +b.getAttribute("data-i");
+    panelAbierto = null;
+    pintarLista(); pintarDetalle();
+    window.scrollTo({ top:0, behavior:"smooth" });
+  });
+  $("#soloPendientes").addEventListener("change", pintarLista);
+
+  /* ----------------------------------------------------- Detalle -------- */
+  function pintarDetalle() {
+    var g = grupos[actual];
+    var tit = g.integrantes.find(function (m) { return m.titular; });
+    var nna = g.integrantes.filter(function (m) { return m.nna; });
+    var sinExp = g.integrantes.filter(function (m) { return !m.exp; }).length;
+    var deps = g.integrantes.filter(function (m) { return m.dep === "Sí"; }).length;
+    var requieren = nna.filter(function (m) { return m.nna === "Separado" || m.nna === "No acompañado"; });
+
+    var html =
+      /* ------------------------------ cabecera ------------------------- */
+      '<section class="exp-cab">' +
+        '<div class="exp-foto">' + ico("familia") + "</div>" +
+        '<div class="exp-id">' +
+          '<h1 class="exp-nombre">Grupo familiar de ' + esc(tit.n.split(" ").slice(0, 2).join(" ")) + "</h1>" +
+          '<div class="exp-folio">Folio ' + g.id + "</div>" +
+          '<div class="exp-chips">' +
+            '<span class="chip chip-neutro">' + g.tipo + "</span>" +
+            '<span class="chip chip-neutro">' + g.integrantes.length + " integrantes</span>" +
+            '<span class="chip ' + (g.juntos ? "chip-jade" : "chip-neutro") + '">' +
+              (g.juntos ? "Viajan juntos" : "Integrantes separados") + "</span>" +
+            (nna.length ? '<span class="chip chip-neutro">' + nna.length + " NNA</span>" : "") +
+          "</div>" +
+          '<div class="exp-meta">' +
+            "<span>Titular<b>" + esc(tit.n) + "</b></span>" +
+            "<span>Municipio<b>" + g.mun + "</b></span>" +
+            "<span>Conformado<b>" + g.fecha + "</b></span>" +
+            "<span>País de origen<b>" + g.origen + "</b></span>" +
+          "</div>" +
+        "</div>" +
+        '<div class="exp-acc">' +
+          '<button class="btn btn-primario" type="button" data-acc="agregar">' + ico("mas") + "Agregar integrante</button>" +
+          '<button class="btn btn-secundario" type="button" data-acc="reasignar">' + ico("registro") + "Reasignar titular</button>" +
+          '<button class="btn btn-secundario" type="button">' + ico("pdf") + "Constancia del grupo</button>" +
+        "</div>" +
+      "</section>";
+
+    /* ------------- lo que exige acción va primero, no al final ---------- */
+    if (requieren.length && g.oficio === "pendiente") {
+      html += '<div class="aviso aviso-guinda" style="margin-top:16px">' + ico("alerta") +
+        "<span><strong>Requiere notificación a la Procuraduría Regional</strong>" +
+        requieren.length + (requieren.length === 1 ? " integrante está clasificado" : " integrantes están clasificados") +
+        " como <b>" + requieren[0].nna + "</b>. El oficio debe emitirse en un plazo máximo de 24 horas a partir " +
+        "del registro (RF06).<br><br>" +
+        '<button class="btn btn-peligro btn-s" type="button" data-acc="oficio">' + ico("oficios") +
+        "Generar oficio automático</button></span></div>";
+    } else if (g.oficio === "generado") {
+      /* Nace en borrador y sin folio: el folio de la serie se asigna en el
+         momento de la firma del Director de Área, no al generarlo. Es la
+         misma regla de la canalización de Salud y del registro de oficios. */
+      html += '<div class="aviso aviso-rosa" style="margin-top:16px">' + ico("reloj") +
+        "<span><strong>Oficio BOR-0034 · en firma</strong>La notificación a la Procuraduría " +
+        "Regional se generó en borrador y espera la firma del Director de Área; el folio se " +
+        'asigna al firmar y el plazo de 24 horas ya corre. ' +
+        '<a href="canalizaciones.html?o=BOR-0034">Ver en Canalizaciones</a></span></div>';
+    }
+
+    /* --------------------------- panel de acción ----------------------- */
+    if (panelAbierto === "reasignar") {
+      html += '<div class="panel-accion">' +
+        '<h3 style="margin-bottom:4px">Reasignar titular del grupo</h3>' +
+        '<p class="txt-min" style="margin-bottom:12px">La titularidad solo se reasigna por fallecimiento o abandono ' +
+        "de la persona titular. El cambio queda registrado en la bitácora con usuario, fecha y motivo (RNF02).</p>" +
+        '<div class="fila">' +
+          '<div class="campo"><label>Nueva persona titular</label><select id="selTitular">' +
+            g.integrantes.filter(function (m) { return !m.titular && m.e >= 18; })
+              .map(function (m) { return "<option>" + esc(m.n) + "</option>"; }).join("") +
+            (g.integrantes.filter(function (m) { return !m.titular && m.e >= 18; }).length ? "" :
+              "<option disabled selected>No hay integrantes mayores de edad</option>") +
+          "</select>" +
+          '<div class="ayuda">Solo pueden ser titulares las personas mayores de edad.</div></div>' +
+          '<div class="campo"><label>Motivo <span class="req">•</span></label><select>' +
+            "<option>Fallecimiento de la persona titular</option><option>Abandono del grupo</option></select></div>" +
+        "</div>" +
+        (g.integrantes.filter(function (m) { return !m.titular && m.e >= 18; }).length ? "" :
+          '<div class="aviso aviso-guinda" style="margin:0 0 12px">' + ico("alerta") +
+          "<span><strong>Sin persona adulta disponible</strong>Al reasignar, los NNA del grupo pasan a " +
+          "clasificarse como <b>No acompañados</b> y se genera el oficio a la Procuraduría de forma automática.</span></div>") +
+        '<div class="flex gap-10">' +
+          '<button class="btn btn-primario btn-s" type="button" data-acc="confirmar-reasignar">Confirmar reasignación</button>' +
+          '<button class="btn btn-texto" type="button" data-acc="cerrar-panel">Cancelar</button>' +
+        "</div></div>";
+    }
+    if (panelAbierto === "agregar") {
+      html += '<div class="panel-accion">' +
+        '<h3 style="margin-bottom:4px">Agregar integrante al grupo</h3>' +
+        '<p class="txt-min" style="margin-bottom:12px">Si la persona ya tiene expediente, se vincula por folio. ' +
+        "Si no, se capturan sus datos básicos aquí y puede generarse su expediente después.</p>" +
+        '<div class="fila-3">' +
+          '<div class="campo"><label>Nombre completo <span class="req">•</span></label><input type="text" id="nvoNombre"></div>' +
+          '<div class="campo"><label>Edad <span class="req">•</span></label><input type="number" id="nvaEdad" min="0" max="120"></div>' +
+          '<div class="campo"><label>Parentesco con la titular <span class="req">•</span></label>' +
+            '<select id="nvoParent">' +
+            PARENTESCOS.map(function (x) {
+              return '<option value="' + x.id + '">' + esc(x.t) + "</option>";
+            }).join("") + "</select>" +
+            '<div class="ayuda">Solo parentesco directo: línea recta y hermanos. Quien acompaña sin ' +
+            "ese vínculo se registra como <b>persona acompañante</b>, y esa es la diferencia que " +
+            "hace que un NNA sea acompañado o separado.</div></div>" +
+        "</div>" +
+        '<div id="avisoParent"></div>' +
+        '<div class="fila-3">' +
+          '<div class="campo"><label>Folio de expediente <span class="opc">(si ya tiene)</span></label><input type="text" placeholder="SIMH-2026-TAP-0000"></div>' +
+          '<div class="campo"><label>¿Depende económicamente?</label><select id="nvoDep"><option>Sí</option><option>No</option></select></div>' +
+          '<div class="campo"><label>¿Viaja con el grupo?</label><select id="nvoViaja"><option>Sí</option><option>No</option></select></div>' +
+        "</div>" +
+        '<div class="flex gap-10">' +
+          '<button class="btn btn-primario btn-s" type="button" data-acc="confirmar-agregar">Agregar al grupo</button>' +
+          '<button class="btn btn-texto" type="button" data-acc="cerrar-panel">Cancelar</button>' +
+        "</div></div>";
+    }
+
+    /* --------------------------- composición --------------------------- */
+    html += '<article class="tarjeta" style="margin-top:16px">' +
+      '<div class="grafica-enc"><h3>Composición del grupo</h3></div>' +
+      '<div class="comp">' +
+        '<div><span class="c-lab">Integrantes</span><div class="c-num">' + g.integrantes.length + "</div></div>" +
+        '<div><span class="c-lab">NNA</span><div class="c-num">' + nna.length + "</div></div>" +
+        '<div><span class="c-lab">Dependientes</span><div class="c-num">' + deps + "</div></div>" +
+        '<div><span class="c-lab">Sin expediente propio</span><div class="c-num">' + sinExp + "</div></div>" +
+      "</div>" +
+
+      /* -------------------- estatus migratorio del grupo ---------------
+         Un grupo no tiene un estatus: tiene tantos como integrantes, y esa
+         diferencia es la que decide quién puede trabajar, quién tiene plazo
+         de trámite y quién no. Verlo por grupo evita revisar expediente por
+         expediente para saberlo.                                        */
+      '<div class="grafica-enc mt-16"><h3>Estatus migratorio del grupo</h3>' +
+        '<span class="txt-min">Cada integrante tiene el suyo</span></div>' +
+      '<div class="estatus-lista">' +
+      (function () {
+        var cuenta = {};
+        g.integrantes.forEach(function (m) { cuenta[m.est] = (cuenta[m.est] || 0) + 1; });
+        return Object.keys(cuenta).sort().map(function (k) {
+          var E = ESTATUS[k] || { c:"chip-neutro", n:"" };
+          return '<div class="estatus-item"><span class="chip ' + E.c + '">' + esc(k) + "</span>" +
+            '<span class="e-n">' + plural(cuenta[k], "integrante", "integrantes") +
+            (E.n ? " · " + esc(E.n) : "") + "</span></div>";
+        }).join("");
+      })() +
+      "</div>" +
+
+      /* ------------------------- lista de integrantes ------------------ */
+      '<div class="grafica-enc mt-16"><h3>Integrantes</h3>' +
+        '<span class="txt-min">La persona titular encabeza siempre la lista</span></div>' +
+      '<table class="tabla" style="font-size:13px"><thead><tr>' +
+        "<th>Integrante</th><th class='num'>Edad</th><th>Parentesco</th><th>Condición</th>" +
+        "<th>Depende</th><th>Viaja</th><th></th></tr></thead><tbody>" +
+      g.integrantes.map(function (m, idx) {
+        var chipCond = m.nna
+          ? '<span class="chip ' + (m.nna === "Acompañado" ? "chip-jade" : "chip-guinda") + '">' +
+            (m.nna === "Acompañado" ? "" : ico("alerta")) + "NNA " + m.nna + "</span>"
+          : (m.cond ? '<span class="chip chip-neutro">' + m.cond + "</span>" : '<span class="txt-min">—</span>');
+        return '<tr class="' + (m.titular ? "fila-titular" : "") + '">' +
+          '<td><span class="persona-celda"><span class="avatar-mini">' + m.i + "</span><span>" +
+            '<span class="p-nom">' + esc(m.n) + (m.titular ? '<span class="badge-titular">Titular</span>' : "") + "</span>" +
+            (m.exp ? '<span class="p-sub">' + m.exp + " · " + m.est + "</span>"
+                   : '<span class="p-sub sin-exp">Sin expediente propio · ' + m.est + "</span>") +
+          "</span></span></td>" +
+          '<td class="num">' + m.e + "</td>" +
+          "<td>" + esc(m.p) +
+            (m.pd === false ? '<span class="p-nodir">' + ico("alerta") + "Sin parentesco directo</span>"
+                            : "") + "</td>" +
+          "<td>" + chipCond + "</td>" +
+          "<td>" + m.dep + "</td><td>" + m.v + "</td>" +
+          "<td>" + (m.exp ? '<a href="expediente-detalle.html">Abrir</a>'
+                          : '<a href="registro.html">Crear expediente</a>') + "</td></tr>";
+      }).join("") + "</tbody></table>";
+
+    if (sinExp) {
+      html += '<div class="aviso aviso-neutro" style="margin:16px 0 0">' + ico("info") +
+        "<span><strong>" + sinExp + " integrante(s) sin expediente propio</strong>" +
+        "Sus datos básicos viven dentro del grupo familiar. Para recibir atención individual " +
+        "(salud, capacitación o empleo) necesitan expediente único.</span></div>";
+    }
+    html += "</article>";
+
+    /* ------------------- movilidad compartida y bitácora --------------- */
+    html += '<div class="rejilla g-2" style="margin-top:16px">' +
+      '<article class="tarjeta"><div class="grafica-enc"><h3>Movilidad compartida</h3></div>' +
+        '<div class="grafica-sub">Datos de ruta comunes a todo el grupo</div>' +
+        '<div class="resumen-grupo"><div class="resumen-lista">' +
+          dato("País de origen", g.origen) + dato("Ingreso a México", g.ingreso) +
+          dato("Países transitados", g.ruta) + dato("Municipio de residencia", g.mun) +
+        "</div></div></article>" +
+
+      '<article class="tarjeta"><div class="grafica-enc"><h3>Bitácora del grupo</h3></div>' +
+        '<div class="timeline">' +
+          nota("Sistema", "Automático", g.fecha, "Conformación del grupo familiar con " +
+            g.integrantes.length + " integrantes. Titular: " + esc(tit.n) + ".") +
+          (g.oficio === "generado"
+            ? nota("Sistema", "Automático", g.fecha, "Se generó en borrador el oficio a la " +
+                "Procuraduría Regional (BOR-0034), pendiente de firma del Director de Área.")
+            : "") +
+          nota("María Gómez Pérez", "Registro · " + g.mun, g.fecha, "Se verifica que las personas viajan " +
+            (g.juntos ? "juntas" : "separadas") + " y se registra el parentesco declarado.") +
+        "</div></article></div>";
+
+    $("#detalle").innerHTML = html;
+    enlazarAlta(g);
+  }
+
+  /* ----------------------------------------------------------------------
+     La consecuencia del alta se declara ANTES de confirmar, como en
+     Capacitación y en Empleabilidad. Aquí importa más que en ninguna otra
+     pantalla: un vínculo no directo sobre una persona menor de edad la
+     clasifica como NNA separada, y eso dispara un oficio con plazo legal de
+     24 horas. Que eso aparezca al pulsar "Agregar" y no antes es lo que
+     convierte una regla en una sorpresa.
+     ------------------------------------------------------------------- */
+  function enlazarAlta(g) {
+    var selP = document.getElementById("nvoParent");
+    var inpE = document.getElementById("nvaEdad");
+    var caja = document.getElementById("avisoParent");
+    if (!selP || !inpE || !caja) return;
+
+    function pinta() {
+      var par = parentesco(selP.value);
+      var ed = parseInt(inpE.value, 10);
+      if (!par) { caja.innerHTML = ""; return; }
+
+      if (!par.directo && !isNaN(ed) && ed < 18) {
+        caja.innerHTML = '<div class="aviso aviso-guinda">' + ico("alerta") +
+          "<span><strong>Al agregarla quedará como NNA separada</strong>" +
+          "No hay parentesco directo con la persona titular, así que la clasificación es " +
+          "<b>separada</b> y no acompañada. Eso obliga a notificar a la Procuraduría Regional " +
+          "dentro de las 24 horas siguientes al registro (RF06); el oficio se genera en borrador " +
+          "y queda pendiente de la firma del Director de Área.</span></div>";
+      } else if (!par.directo) {
+        caja.innerHTML = '<div class="aviso aviso-neutro">' + ico("info") +
+          "<span><strong>Se registrará como persona acompañante</strong>" +
+          "Sin parentesco directo la persona forma parte del grupo, pero no acredita vínculo " +
+          "familiar: no puede ser titular ni recibir por sí sola a una persona menor de edad." +
+          "</span></div>";
+      } else if (!isNaN(ed) && ed < 18) {
+        caja.innerHTML = '<div class="aviso aviso-jade">' + ico("check") +
+          "<span><strong>Quedará como NNA acompañada</strong>" +
+          "El vínculo con la persona titular es directo, así que no se dispara la notificación a " +
+          "la Procuraduría.</span></div>";
+      } else {
+        caja.innerHTML = "";
+      }
+    }
+    selP.addEventListener("change", pinta);
+    inpE.addEventListener("input", pinta);
+    pinta();
+  }
+
+  function dato(l, v) {
+    return '<div class="resumen-dato"><span class="r-lab">' + l + '</span><span class="r-val">' + v + "</span></div>";
+  }
+  function nota(a, ar, f, t) {
+    return '<div class="tl-item"><div class="tl-caja"><div class="tl-meta">' +
+      '<span class="tl-autor">' + a + "</span><span>·</span><span>" + ar + "</span><span>·</span><span>" + f +
+      "</span></div>" + t + "</div></div>";
+  }
+
+  /* ---------------------------------------------------------- Acciones -- */
+  $("#detalle").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-acc]");
+    if (!b) return;
+    var acc = b.getAttribute("data-acc"), g = grupos[actual];
+
+    if (acc === "oficio") {
+      g.oficio = "generado";
+      pintarLista(); pintarDetalle();
+    }
+    if (acc === "reasignar" || acc === "agregar") { panelAbierto = acc; pintarDetalle(); }
+    if (acc === "cerrar-panel") { panelAbierto = null; pintarDetalle(); }
+
+    if (acc === "confirmar-reasignar") {
+      var nuevo = document.getElementById("selTitular").value;
+      var adultos = g.integrantes.filter(function (m) { return !m.titular && m.e >= 18; });
+      if (adultos.length) {
+        g.integrantes.forEach(function (m) { m.titular = (m.n === nuevo); if (m.titular) m.p = "Titular"; });
+        g.integrantes.sort(function (a, c) { return (c.titular ? 1 : 0) - (a.titular ? 1 : 0); });
+      } else {
+        /* Sin persona adulta el grupo se disuelve como tal: los NNA quedan
+           no acompañados y el oficio pasa a ser obligatorio (RF06).        */
+        g.integrantes.forEach(function (m) { if (m.nna) m.nna = "No acompañado"; });
+        g.oficio = "pendiente";
+      }
+      panelAbierto = null;
+      pintarLista(); pintarDetalle();
+    }
+
+    if (acc === "confirmar-agregar") {
+      var nom = document.getElementById("nvoNombre").value.trim();
+      var ed = parseInt(document.getElementById("nvaEdad").value, 10);
+      if (!nom || isNaN(ed)) { document.getElementById("nvoNombre").focus(); return; }
+      var ini = nom.split(" ").map(function (x) { return x[0]; }).slice(0, 2).join("").toUpperCase();
+      var par = parentesco(document.getElementById("nvoParent").value) || PARENTESCOS[0];
+      var nuevoM = {
+        n:nom, i:ini, e:ed, p:par.t, pd:par.directo,
+        dep:document.getElementById("nvoDep").value, v:document.getElementById("nvoViaja").value,
+        exp:null, est:"Sin trámite"
+      };
+      /* Un NNA está ACOMPAÑADO cuando viaja con quien ejerce la patria
+         potestad, no cuando viaja con alguien. La clasificación la decide el
+         parentesco directo con una persona adulta del grupo, no el hecho de
+         ir juntos: viajar con la tía es exactamente el caso de separación. */
+      if (ed < 18) nuevoM.nna = clasificaNNA(g, par);
+      g.integrantes.push(nuevoM);
+      if (nuevoM.nna === "Separado") g.oficio = "pendiente";
+      panelAbierto = null;
+      pintarLista(); pintarDetalle();
+    }
+  });
+
+  /* Permite abrir un grupo concreto: familiar.html?g=2 */
+  var q = parseInt(new URLSearchParams(location.search).get("g"), 10);
+  if (!isNaN(q) && q >= 0 && q < grupos.length) actual = q;
+
+  pintarLista();
+  pintarDetalle();
+})();
+</script>
+</body>
+</html>

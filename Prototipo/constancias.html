@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constancias · SIMH</title>
+<link rel="icon" href="assets/img/simh-isotipo-96.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/simh.css">
+<style>
+  /* ======================================================================
+     CONSTANCIAS DE REGISTRO (RF10)
+     Documento que se entrega a la persona. Se dibuja en milímetros y se
+     imprime a tamaño real.
+     Las piezas compartidas están en simh.css: `.filtros-fila` (§20),
+     `.accion` (§21), `.oficio-hoja` (§22) y el bloque de módulo (§23) con
+     `.sec-tit`, `.vacio`, `.cartera`, `.req-item` y el piso de foco.
+     ================================================================== */
+  /* --- Cartera de expedientes (constancias) ------------------------------- */
+  .g-cons{display:grid;grid-template-columns:296px 1fr;gap:22px;align-items:start}
+  @media (max-width:1100px){ .g-cons{grid-template-columns:1fr} }
+  .cartera{border:1px solid var(--linea);border-radius:var(--radio);background:var(--blanco);
+    overflow:hidden}
+  .cart-item{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;
+    padding:12px 14px;min-height:44px;background:none;border:0;cursor:pointer;
+    border-bottom:1px solid var(--linea-suave);font-family:var(--f-texto)}
+  .cart-item:last-child{border-bottom:0}
+  .cart-item:hover{background:var(--hueso-claro)}
+  .cart-item[aria-selected="true"]{background:var(--jade-050)}
+  .cart-item .k-tx{flex:1;min-width:0}
+  .cart-item .k-n{display:block;font-size:13px;font-weight:700;color:var(--tinta);line-height:1.3}
+  .cart-item .k-f{display:block;font-size:11.5px;color:var(--gris);margin-top:3px;line-height:1.4;
+    font-variant-numeric:tabular-nums;word-break:break-word}
+  .cart-item .k-e{display:block;margin-top:6px}
+
+  /* --- Opciones de emisión ------------------------------------------------
+     Van en una fila por encima de la vista previa, que es lo que gobiernan. */
+  .opciones{display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap;background:var(--blanco);
+    border:1px solid var(--linea);border-radius:var(--radio);padding:12px 14px;margin-bottom:16px}
+  .opciones .campo{margin:0}
+  .opciones .campo select{min-height:40px}
+  .op-sop{display:flex;gap:8px}
+  .op-sop button{display:flex;flex-direction:column;gap:2px;align-items:flex-start;
+    min-height:44px;padding:6px 12px;border:1px solid var(--linea);border-radius:var(--radio-s);
+    background:var(--blanco);cursor:pointer;font-family:var(--f-texto)}
+  .op-sop button[aria-pressed="true"]{border-color:var(--jade);background:var(--jade-050)}
+  .op-sop .s-t{font-size:13px;font-weight:700;color:var(--tinta);line-height:1.2}
+  .op-sop .s-m{font-size:11px;color:var(--gris);line-height:1.35;font-variant-numeric:tabular-nums}
+  .op-sop button[aria-pressed="true"] .s-t{color:var(--jade-900)}
+  /* Nota dentro de la fila de opciones: es prosa, no un renglón flex. Poner
+     `display:flex` aquí convertía el icono, cada trozo de texto y el enlace
+     en elementos independientes y partía la frase en columnas. */
+  .op-nota{font-size:12.5px;color:var(--gris);line-height:1.45;max-width:300px;padding:8px 0}
+  .op-nota .op-ico{display:inline-block;vertical-align:-4px;margin-right:5px;color:var(--gris)}
+
+  /* --- La constancia ------------------------------------------------------
+     Se dibuja en milímetros, no en píxeles: el gafete se ve en pantalla al
+     tamaño con el que va a salir de la impresora y la hoja carta al 50 %.
+     Es la única forma de que la Dirección decida el soporte mirándolo, que
+     es la decisión abierta de AVANCES §5.3. Las medidas interiores van en
+     `em` sobre el cuerpo de cada soporte, así que la misma plantilla sirve
+     para los dos y no hay dos documentos que mantener.                   */
+  .lienzo{background:var(--hueso);border:1px solid var(--linea);border-radius:var(--radio);
+    padding:26px 20px;display:flex;justify-content:center}
+  .constancia{background:#fff;border:1px solid var(--linea);color:var(--tinta);
+    display:flex;flex-direction:column;overflow:hidden;font-family:var(--f-texto);
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .constancia.gafete{width:54mm;height:86mm;font-size:5.9pt}
+  .constancia.carta{width:108mm;height:139.5mm;font-size:5.5pt}
+
+  .constancia .k-cenefa{height:2.4mm;flex:none;background-image:var(--cenefa);
+    background-repeat:repeat-x;background-size:auto 2.4mm}
+  .constancia.carta .k-cenefa{height:3.2mm;background-size:auto 3.2mm}
+  .constancia .k-cab{padding:1.15em 1.3em .2em;text-align:center;flex:none}
+  .constancia.carta .k-cab{padding:2.2em 2.2em .4em}
+  .constancia .k-inst{display:block;font-family:var(--f-titulo);font-size:.78em;
+    letter-spacing:.09em;text-transform:uppercase;color:var(--guinda);line-height:1.65}
+  /* Los SVG de isotipo() traen height inline; sobrescribirlo pide !important.
+     Es la misma trampa ya documentada con los iconos de icono().          */
+  .constancia .k-iso svg{height:5.6mm!important;width:auto;display:block;margin:.7em auto .2em}
+  .constancia.carta .k-iso svg{height:8mm!important}
+  .constancia .k-tit{display:block;font-family:var(--f-titulo);font-size:1.16em;font-weight:700;
+    letter-spacing:.075em;text-transform:uppercase;color:var(--guinda);line-height:1.25;margin-top:.75em}
+  .constancia .k-cuerpo{flex:1;padding:1em 1.3em 0;display:flex;gap:1.1em;align-items:flex-start;min-height:0}
+  .constancia.carta .k-cuerpo{padding:1.6em 2.2em 0;gap:2em}
+  .constancia .k-foto{width:6.4em;height:8em;flex:none;border:1px solid var(--arena);
+    border-radius:.25em;background:var(--hueso-claro);display:grid;place-items:center;
+    color:var(--gris-claro)}
+  .constancia .k-foto svg{width:2.6em;height:2.6em;stroke-width:1.2;fill:none;stroke:currentColor}
+  .constancia .k-datos{flex:1;min-width:0}
+  .constancia .k-d{margin-bottom:.55em}
+  .constancia .k-d:last-child{margin-bottom:0}
+  .constancia .k-lab{display:block;font-size:.68em;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--gris);font-weight:700;line-height:1.35}
+  .constancia .k-val{display:block;font-size:1em;font-weight:700;color:var(--tinta);
+    line-height:1.3;word-break:break-word}
+  .constancia .k-val.folio{font-variant-numeric:tabular-nums}
+  .constancia.carta .k-foto{width:9.4em;height:11.8em}
+  .constancia.carta .k-datos{display:grid;grid-template-columns:1fr 1fr;gap:.9em 2.4em;
+    align-content:start}
+  .constancia.carta .k-d{margin-bottom:0}
+  .constancia .k-legal{flex:none;margin:.9em 1.3em 0;padding-top:.75em;font-size:.72em;
+    line-height:1.5;color:var(--gris);border-top:1px solid var(--linea-suave)}
+  .constancia.carta .k-legal{margin:1.6em 2.2em 0;padding-top:1.1em}
+  .constancia .k-legal b{color:var(--tinta)}
+  .constancia .k-firma{flex:none;padding:.7em 1.3em .9em;text-align:center;
+    font-family:var(--f-titulo);font-size:.66em;letter-spacing:.1em;color:var(--guinda);line-height:1.75}
+
+  /* El pie del documento promete validación "por folio y sello". En el gafete
+     el sello va al reverso, pero una hoja carta que lo promete y no deja
+     dónde ponerlo obliga a sellar encima de los datos. Ojo: `.s-raya` es un
+     span y necesita display:block, que es el error que ya apareció cuatro
+     veces en este prototipo.                                            */
+  .constancia .k-sello{flex:none;margin:0 2.2em;display:flex;gap:2.4em;align-items:flex-end;
+    justify-content:space-between}
+  .constancia .k-sello .s-caja{width:34mm;height:21mm;border:1px dashed var(--linea);
+    border-radius:.3em;display:grid;place-items:center;font-size:.68em;color:var(--gris-claro);
+    text-align:center;line-height:1.4;padding:.4em}
+  .constancia .k-sello .s-firma{flex:1;text-align:center;font-size:.72em;color:var(--gris);
+    line-height:1.5;max-width:60mm}
+  .constancia .k-sello .s-raya{display:block;border-top:1px solid var(--linea);margin-bottom:.45em}
+
+  /* Lo que cabe en carta y no en gafete se decide, no se recorta al azar. */
+  .constancia.gafete .solo-carta{display:none}
+
+  .lienzo-cap{font-size:11.5px;color:var(--gris-claro);text-align:center;margin-top:10px;line-height:1.55}
+
+  /* --- Historial de emisiones --------------------------------------------- */
+  table.t-emi{table-layout:fixed}
+  .t-emi col.c-cua{width:20%}
+  .t-emi col.c-mot{width:36%}
+  .t-emi col.c-sop{width:16%}
+  .t-emi col.c-qui{width:28%}
+  .t-emi th{white-space:normal}
+  .t-emi td{word-break:break-word;vertical-align:top;font-size:12.5px;line-height:1.45}
+  .t-emi .e-fol{display:block;font-weight:700;font-variant-numeric:tabular-nums}
+  .t-emi .e-fec{display:block;color:var(--gris);margin-top:2px;font-variant-numeric:tabular-nums}
+
+  /* --- Impresión ----------------------------------------------------------
+     El prototipo imprime de verdad: al mandar a imprimir sale la constancia
+     sola, a tamaño real y sin el chrome del sistema. El tamaño de página lo
+     reescribe el JS según el soporte elegido (bloque #estPagina).        */
+  @media print{
+    /* Se apaga todo salvo la hoja. Enumerar los bloques a ocultar dejaba
+       escapar el historial de emisiones y la constancia salía en la primera
+       de siete páginas; se apaga por exclusión, que no se puede olvidar. */
+    .topbar,.sidebar,.sidebar-velo{display:none!important}
+    .contenido{margin:0;padding:0;max-width:none}
+    .contenido > *:not(#panel){display:none!important}
+    #panel .accion,#panel .opciones,#panel .cartera,#panel .tarjeta,
+    #panel .lienzo-cap,#panel .filtros-fila{display:none!important}
+    .g-cons{display:block}
+    .lienzo{background:none;border:0;border-radius:0;padding:0;display:block}
+    .constancia{border:0}
+    .constancia.gafete{width:54mm;height:86mm;font-size:5.9pt}
+    /* En carta la hoja ES la página: el margen lo pone el documento, no
+       `@page`, o el ancho de 216 mm desborda y genera una página en blanco. */
+    .constancia.carta{width:216mm;height:279mm;font-size:11pt}
+  }
+</style>
+<style id="estPagina">@page{size:54mm 86mm;margin:0}</style>
+</head>
+<body>
+
+<main class="contenido">
+  <div class="migas"><a href="index.html">Inicio</a> › Constancias</div>
+
+  <div class="enc">
+    <div class="enc-txt">
+      <h1>Constancias</h1>
+      <div class="enc-sub">Constancia de registro imprimible en gafete u hoja carta, sin código QR (RF10)</div>
+    </div>
+    <div class="enc-acc" id="encAcc"></div>
+  </div>
+
+  <details class="plegable" id="avisoMod">
+    <summary>Qué acredita una constancia de registro</summary>
+    <div class="cuerpo" id="avisoModCuerpo"></div>
+  </details>
+
+  <div id="panel"></div>
+
+  <p id="anuncio" class="sr-solo" role="status" aria-live="polite"></p>
+</main>
+
+<script src="assets/js/simh.js"></script>
+<script src="assets/js/simh-datos.js"></script>
+<script>
+(function () {
+  "use strict";
+  SIMH.chrome("constancia");
+  var ico = SIMH.icono, esc = SIMH.esc;
+  /* Reloj, permisos y catálogo de personas: assets/js/simh-datos.js, que
+     comparten los cuatro módulos de documentos. */
+  var D = window.DATOS;
+  var HOY = D.HOY, fecha = D.fecha, hora = D.hora, fechaHora = D.fechaHora;
+  var dias = D.dias, edad = D.edad, plural = D.plural, persona = D.persona;
+  var PERS = D.PERS, YO = D.YO;
+  var $ = function (s) { return document.querySelector(s); };
+  var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+
+  /* Fila de un bloque de resumen. */
+  function rd(lab, val) {
+    return '<div class="resumen-dato"><span class="r-lab">' + esc(lab) + "</span>" +
+      '<span class="r-val">' + esc(val) + "</span></div>";
+  }
+  function anuncia(t) { $("#anuncio").textContent = t; }
+  function noSimulado(q) {
+    anuncia(q);
+    window.alert(q + "\n\nEn el prototipo la acción no se ejecuta.");
+  }
+
+  var isotipo = SIMH.isotipo, dt = D.dt;
+  var cSel = PERS[0].f;        /* expediente elegido */
+  var cSop = "gafete";         /* gafete | carta */
+  var cFoto = true, cMot = "";
+  var consSec = 768;           /* último folio de constancia emitido */
+
+  /* ======================================================================
+     El módulo de constancias (RF10)
+     ================================================================== */
+  var MOT_CONS = ["Reposición por extravío", "Reposición por deterioro",
+                  "Reimpresión por corrección de datos del expediente",
+                  "Segunda constancia para trámite ante otra institución"];
+
+  function vigencia(desde) {
+    var d = dt(desde);
+    return fecha((d.getFullYear() + 1) + "-" + ("0" + (d.getMonth() + 1)).slice(-2) +
+                 "-" + ("0" + d.getDate()).slice(-2));
+  }
+
+  function carteraConstancias() {
+    return '<div class="cartera" role="listbox" aria-label="Expedientes">' +
+      PERS.map(function (p) {
+        var s = p.f === cSel;
+        var chip = p.est === "cerrado"
+          ? '<span class="chip chip-guinda">' + ico("candado") + "Expediente cerrado</span>"
+          : (p.emis.length
+              ? '<span class="chip chip-jade">' + ico("check") +
+                plural(p.emis.length, "constancia", "constancias") + "</span>"
+              : '<span class="chip chip-rosa">' + ico("alerta") + "Sin constancia</span>");
+        return '<button class="cart-item" type="button" role="option" aria-selected="' + s +
+          '" data-c="' + p.f + '"><span class="avatar-mini">' + esc(p.ini) + "</span>" +
+          '<span class="k-tx"><span class="k-n">' + esc(p.n) + "</span>" +
+          '<span class="k-f">' + esc(p.f) + "</span>" +
+          '<span class="k-e">' + chip + "</span></span></button>";
+      }).join("") + "</div>";
+  }
+
+  function constanciaHtml(p) {
+    var conFoto = cFoto && p.foto;
+    var emision = p.emis.length ? p.emis[p.emis.length - 1] : null;
+    var desde = emision ? emision.t.slice(0, 10) : HOY.slice(0, 10);
+
+    return '<div class="constancia ' + cSop + '" role="img" aria-label="Constancia de registro de ' +
+      esc(p.n) + ', folio ' + esc(p.f) + '">' +
+      '<div class="k-cenefa"></div>' +
+      '<div class="k-cab">' +
+        '<span class="k-inst">Gobierno del Estado de Chiapas</span>' +
+        '<span class="k-inst">Secretaría de la Frontera Sur</span>' +
+        '<span class="k-iso">' + isotipo(40) + "</span>" +
+        '<span class="k-tit">Constancia de registro</span>' +
+      "</div>" +
+      '<div class="k-cuerpo">' +
+        (conFoto ? '<span class="k-foto">' + ico("persona") + "</span>" : "") +
+        '<span class="k-datos">' +
+          kd("Folio del expediente", p.f, "folio") +
+          kd("Nombre completo", p.n) +
+          kd("Nacionalidad", p.pais) +
+          kd("Fecha de nacimiento", fecha(p.nac)) +
+          kd("Fecha de registro", fecha(p.reg)) +
+          kd("Municipio de captura", p.mun) +
+          kd("Capturó", p.cap) +
+          kd("Vigencia", vigencia(desde)) +
+        "</span>" +
+      "</div>" +
+      '<div class="k-sello solo-carta">' +
+        '<span class="s-caja">Sello de la ventanilla</span>' +
+        '<span class="s-firma"><span class="s-raya"></span>' + esc(p.cap) +
+          "<br>Ventanilla de " + esc(p.mun) + "</span>" +
+      "</div>" +
+      '<div class="k-legal">' +
+        "<b>Este documento acredita el registro de la persona ante la Secretaría de la Frontera Sur. " +
+        "No es un documento migratorio ni acredita estancia regular en el país.</b> " +
+        '<span class="solo-carta">Se expide para los fines de identificación interna del Sistema ' +
+        "Integral de Movilidad Humana y para su presentación ante las instituciones a las que la " +
+        "Secretaría canalice a la persona. </span>" +
+        "Verificable con el folio en cualquier ventanilla del SIMH. Sin código QR." +
+        (p.nna ? '<span class="solo-carta"> Persona menor de edad: se entrega a ' +
+                 esc(p.tutor) + ".</span>" : "") +
+      "</div>" +
+      '<div class="k-firma">Humanismo que transforma<br>Gobierno de Chiapas 2024–2030</div>' +
+      '<div class="k-cenefa"></div>' +
+    "</div>";
+  }
+
+  function kd(lab, val, clase, soloCarta) {
+    return '<span class="k-d' + (soloCarta ? " solo-carta" : "") + '">' +
+      '<span class="k-lab">' + esc(lab) + "</span>" +
+      '<span class="k-val ' + (clase || "") + '">' + esc(val) + "</span></span>";
+  }
+
+  function opcionesConstancia(p) {
+    var primera = !p.emis.length;
+    return '<div class="opciones">' +
+      "<div><span class=\"etiqueta\">Soporte</span>" +
+      '<div class="op-sop" role="group" aria-label="Soporte de impresión">' +
+        '<button type="button" data-sop="gafete" aria-pressed="' + (cSop === "gafete") + '">' +
+          '<span class="s-t">Gafete</span><span class="s-m">54 × 86 mm</span></button>' +
+        '<button type="button" data-sop="carta" aria-pressed="' + (cSop === "carta") + '">' +
+          '<span class="s-t">Hoja carta</span><span class="s-m">216 × 279 mm</span></button>' +
+      "</div></div>" +
+
+      /* La casilla de fotografía no puede mentir: si el expediente no tiene
+         fotografía no se dibuja una casilla muerta, se dice qué falta y
+         dónde se resuelve. */
+      "<div>" + (p.foto
+        ? '<span class="etiqueta">Fotografía</span>' +
+          '<label class="check" style="min-height:44px;display:flex;align-items:center;gap:8px">' +
+          '<input type="checkbox" id="cFoto"' + (cFoto ? " checked" : "") +
+          "> Incluir la fotografía del expediente</label>"
+        : '<span class="etiqueta">Fotografía</span>' +
+          '<div class="op-nota">' +
+          '<span class="op-ico">' + ico("camara") + "</span>" +
+          "El expediente no tiene fotografía; la constancia sale sin ella. Se agrega desde " +
+          '<a href="expediente-detalle.html">el expediente</a>.</div>') + "</div>" +
+
+      "<div>" + (primera
+        ? '<span class="etiqueta">Motivo de emisión</span>' +
+          '<div style="font-size:13px;color:var(--tinta);font-weight:700;min-height:40px;' +
+          'display:flex;align-items:center">Primera emisión</div>'
+        : '<div class="campo"><label for="cMot">Motivo de la nueva emisión <span class="req">*</span></label>' +
+          '<select id="cMot"><option value="">Elige un motivo del catálogo…</option>' +
+          MOT_CONS.map(function (m) {
+            return "<option" + (cMot === m ? " selected" : "") + ">" + esc(m) + "</option>";
+          }).join("") + "</select></div>") + "</div>" +
+      "</div>";
+  }
+
+  function historialConstancias(p) {
+    if (!p.emis.length) {
+      return '<div class="tarjeta" style="padding:0;overflow:hidden;margin-top:18px">' +
+        '<div style="padding:15px 16px 13px;border-bottom:1px solid var(--linea)">' +
+        '<h3 class="sec-tit">Emisiones anteriores</h3></div>' +
+        '<div class="vacio">' + ico("doc") +
+        "Esta persona nunca ha recibido su constancia.</div></div>";
+    }
+    var filas = p.emis.slice().reverse().map(function (e) {
+      return "<tr><td><span class=\"e-fol\">" + esc(e.fol) + "</span>" +
+        '<span class="e-fec">' + fechaHora(e.t) + "</span></td>" +
+        "<td>" + esc(e.mot) + "</td>" +
+        "<td>" + (e.sop === "gafete" ? "Gafete 54 × 86 mm" : "Hoja carta") + "</td>" +
+        "<td>" + esc(e.por) + "</td></tr>";
+    }).join("");
+
+    return '<div class="tarjeta" style="padding:0;overflow:hidden;margin-top:18px">' +
+      '<div style="padding:15px 16px 13px;border-bottom:1px solid var(--linea)">' +
+      '<h3 class="sec-tit">Emisiones anteriores</h3>' +
+      '<div style="font-size:12.5px;color:var(--gris);margin-top:4px;line-height:1.5">' +
+      "Cada impresión es un hecho registrado: una constancia reimpresa sin motivo no se distingue " +
+      "de una falsificada.</div></div>" +
+      '<div style="overflow-x:auto"><table class="tabla t-emi">' +
+      '<colgroup><col class="c-cua"><col class="c-mot"><col class="c-sop"><col class="c-qui">' +
+      "</colgroup><thead><tr><th>Folio y fecha</th><th>Motivo</th><th>Soporte</th>" +
+      "<th>Quién la emitió</th></tr></thead><tbody>" + filas + "</tbody></table></div></div>";
+  }
+
+  function vistaConstancias() {
+    var p = persona(cSel) || PERS[0];
+
+    /* Expediente cerrado: nada se elimina (RNF03), pero un expediente fuera
+       de operación no ampara una constancia vigente. Se enuncia la regla y
+       qué la desbloquea; no se dibuja un botón apagado.                  */
+    if (p.est === "cerrado") {
+      return '<div class="g-cons">' +
+        "<div>" + carteraConstancias() + "</div>" +
+        "<div>" +
+          '<div class="accion urge">' + ico("candado") +
+          '<div class="a-tx"><span class="a-t">No se emite constancia de un expediente cerrado</span>' +
+          '<span class="a-n">El expediente de ' + esc(p.n) + " se cerró el " + fecha(p.cierre) +
+          " por " + esc(p.cierreMot.toLowerCase()) + ". El expediente se conserva íntegro y su " +
+          "constancia anterior sigue existiendo, pero una constancia nueva afirmaría un registro " +
+          "en operación que ya no lo está. Reabrir el expediente requiere oficio y autorización " +
+          "del Director de Área (RNF02, RNF03).</span></div></div>" +
+          historialConstancias(p) +
+        "</div></div>";
+    }
+
+    var primera = !p.emis.length;
+    var acc = primera
+      ? { tono:"tibia", i:"alerta", t:"Esta persona todavía no tiene su constancia",
+          n:"Se registró el " + fecha(p.reg) + " en " + p.mun + " y nunca se le entregó el " +
+            "documento que acredita su registro." +
+            (p.nna ? " Es una persona menor de edad: la constancia se entrega a " + p.tutor + "." : "") }
+      : { tono:"ok", i:"check", t:"Constancia vigente hasta el " +
+            vigencia(p.emis[p.emis.length - 1].t.slice(0, 10)),
+          n:"La última se emitió el " + fecha(p.emis[p.emis.length - 1].t) + " por " +
+            p.emis[p.emis.length - 1].mot.toLowerCase() + ". Una emisión nueva exige motivo, " +
+            "porque cada impresión queda registrada." };
+
+    return '<div class="g-cons">' +
+      "<div>" + carteraConstancias() + "</div>" +
+      "<div>" +
+        '<div class="accion ' + acc.tono + '">' + ico(acc.i) +
+          '<div class="a-tx"><span class="a-t">' + esc(acc.t) + "</span>" +
+          '<span class="a-n">' + esc(acc.n) + "</span></div>" +
+          '<div class="a-acc"><button class="btn btn-primario" type="button" id="btnImprimir">' +
+          ico("doc") + (primera ? "Emitir e imprimir" : "Emitir una nueva") + "</button></div></div>" +
+        opcionesConstancia(p) +
+        '<div class="lienzo">' + constanciaHtml(p) + "</div>" +
+        '<div class="lienzo-cap">' +
+          (cSop === "gafete"
+            ? "Gafete a tamaño real: 54 × 86 mm, lo mismo que sale de la impresora."
+            : "Hoja carta al 50 %: se imprime a tamaño real, 216 × 279 mm.") +
+          " Sin código QR, por la restricción del proyecto." +
+        "</div>" +
+        historialConstancias(p) +
+      "</div></div>";
+  }
+
+  function eventosConstancia() {
+
+    $$("[data-c]").forEach(function (b) {
+      b.onclick = function () {
+        cSel = this.getAttribute("data-c"); cMot = "";
+        pinta();
+        anuncia("Constancia de " + persona(cSel).n + ".");
+      };
+    });
+
+    $$("[data-sop]").forEach(function (b) {
+      b.onclick = function () {
+        cSop = this.getAttribute("data-sop");
+        /* El tamaño de página se reescribe para que la impresión salga en el
+           soporte elegido y no en A4 por omisión. */
+        $("#estPagina").textContent = cSop === "gafete"
+          ? "@page{size:54mm 86mm;margin:0}"
+          : "@page{size:216mm 279mm;margin:0}";
+        pinta();
+        anuncia(cSop === "gafete" ? "Soporte gafete, 54 por 86 milímetros."
+                                  : "Soporte hoja carta.");
+      };
+    });
+
+    var f = $("#cFoto");
+    if (f) f.onchange = function () { cFoto = this.checked; pinta(); };
+
+    var m = $("#cMot");
+    if (m) m.onchange = function () { cMot = this.value; };
+
+    var b = $("#btnImprimir");
+    if (b) b.onclick = function () {
+      var p = persona(cSel);
+      var primera = !p.emis.length;
+      if (!primera && !cMot) {
+        var d = $("#cMot");
+        if (d) d.focus();
+        anuncia("Elige el motivo de la nueva emisión: cada impresión queda registrada.");
+        return;
+      }
+      consSec += 1;
+      p.emis.push({ fol:"CR-" + ("000" + consSec).slice(-4) + "/2026", t:HOY,
+                    mot: primera ? "Primera emisión" : cMot, sop:cSop, por:YO.n });
+      cMot = "";
+      pinta();
+      anuncia("Constancia emitida y registrada. Se abre el diálogo de impresión.");
+      window.print();
+    };
+  }
+  /* ======================================================================
+     Pintado y arranque
+     ================================================================== */
+  $("#avisoModCuerpo").innerHTML =
+    '<div class="resumen-lista">' +
+    '<div class="resumen-dato"><span class="r-lab">La constancia dice qué NO es</span>' +
+      '<span class="r-val">Acredita el registro ante la Secretaría. <b>No es un documento ' +
+      'migratorio ni acredita estancia regular</b>, y lo lleva impreso: sin esa frase se va a usar ' +
+      'como si lo fuera.</span></div>' +
+    '<div class="resumen-dato"><span class="r-lab">Sin códigos QR</span>' +
+      '<span class="r-val">Restricción del proyecto: la población atendida no tiene acceso a ' +
+      'dispositivos móviles. La verificación es por folio y sello en ventanilla, y el documento ' +
+      'deja sitio para ese sello.</span></div>' +
+    '<div class="resumen-dato"><span class="r-lab">Cada impresión queda registrada</span>' +
+      '<span class="r-val">Una constancia reimpresa sin motivo no se distingue de una falsificada. ' +
+      'Toda emisión posterior a la primera exige motivo de catálogo y recibe folio propio.</span></div>' +
+    '<div class="resumen-dato"><span class="r-lab">Un expediente cerrado no ampara una constancia</span>' +
+      '<span class="r-val">El expediente se conserva íntegro (RNF03) y su constancia anterior sigue ' +
+      'existiendo, pero una nueva afirmaría un registro en operación que ya no lo está.</span></div>' +
+    "</div>";
+
+  function pinta() {
+    $("#encAcc").innerHTML = "";
+    $("#panel").innerHTML = vistaConstancias();
+    eventosConstancia();
+  }
+
+  /* Atajos de revisión: ?c=0410 una persona menor sin constancia previa,
+     ?c=0203 un expediente cerrado, ?sop=carta el soporte de hoja carta. */
+  var qs = new URLSearchParams(location.search);
+  var qc = qs.get("c");
+  if (qc) PERS.forEach(function (p) { if (p.f.indexOf(qc) >= 0) cSel = p.f; });
+  if (qs.get("sop") === "carta") {
+    cSop = "carta";
+    $("#estPagina").textContent = "@page{size:216mm 279mm;margin:0}";
+  }
+
+  pinta();
+})();
+</script>
+</body>
+</html>
