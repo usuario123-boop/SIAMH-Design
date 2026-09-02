@@ -408,12 +408,21 @@
               cita:"2026-09-12", acomp:"No" } }
   ];
 
-  /* Contadores de serie: la referencia interna y el folio son dos series
-     distintas, y por eso se cuentan por separado. El folio solo avanza
-     cuando alguien firma.                                              */
   var refSec = 35;
   var folioSec = 947;
   var consSec = 768;
+
+  /* Carga cruzada de oficios generados en Revalidación, Salud o Empleabilidad */
+  try {
+    var storedExtra = JSON.parse(localStorage.getItem("SIAMH_OFICIOS_EXTRA") || "[]");
+    if (Array.isArray(storedExtra)) {
+      storedExtra.forEach(function (ex) {
+        if (!OFI.some(function (o) { return o.id === ex.id || (ex.folio && o.folio === ex.folio); })) {
+          OFI.unshift(ex);
+        }
+      });
+    }
+  } catch (e) {}
 
   /* ======================================================================
      7. Estado de la pantalla
@@ -423,6 +432,10 @@
   var sel  = null;                             /* oficio seleccionado */
   var panelAcuse = false;
   var busca = "", fEst = "todos", fPl = "todos";
+
+  if (qs.get("pl")) {
+    fPl = qs.get("pl");
+  }
 
   function nuevoVacio() {
     return { pl:null, exp:"", campo:"", valor:"", prueba:"", motivo:"",

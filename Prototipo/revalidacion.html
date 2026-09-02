@@ -56,6 +56,9 @@
   .neg-item .n-m b{color:var(--tinta)}
   .neg-item .n-f{display:block;font-size:11.5px;color:var(--gris-claro);margin-top:4px;
     font-variant-numeric:tabular-nums}
+
+  .grid-oficio-educacion{display:grid;grid-template-columns:1.15fr 0.85fr;gap:20px;align-items:start}
+  @media (max-width:1100px){.grid-oficio-educacion{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -613,31 +616,66 @@
       '<div class="tarjeta-enc">' +
         '<div>' +
           '<h3 style="margin:0">Generar Oficio de Intervención / Canalización Educativa</h3>' +
-          '<span class="txt-min">Emite el documento institucional que sustenta y defiende el acceso escolar</span>' +
+          '<span class="txt-min">Emite el documento institucional que defiende el acceso escolar (se vincula a Canalizaciones)</span>' +
         '</div>' +
+        '<a class="btn btn-secundario btn-s" href="canalizaciones.html?pl=educacion" title="Ver todos los oficios de educación en el módulo de Canalizaciones">' +
+          ico("oficios") + 'Ver en Canalizaciones' +
+        '</a>' +
       '</div>' +
-      '<div class="fila">' +
-        '<div class="campo" style="flex:1.5">' +
-          '<label for="ofDest">Autoridad destinataria <span class="req">*</span></label>' +
-          '<input type="text" id="ofDest" value="Secretaría de Educación del Estado · Dirección de Educación Básica">' +
+
+      '<div class="grid-oficio-educacion">' +
+        '<div>' +
+          '<div class="fila">' +
+            '<div class="campo" style="flex:1.5">' +
+              '<label for="ofDest">Autoridad o Plantel Destinatario <span class="req">*</span></label>' +
+              '<input type="text" id="ofDest" value="' + esc(c.inst || "Secretaría de Educación del Estado · Dirección de Educación Básica") + '">' +
+            '</div>' +
+            '<div class="campo" style="flex:1">' +
+              '<label for="ofAsunto">Asunto / Tipo de intervención <span class="req">*</span></label>' +
+              '<select id="ofAsunto">' +
+                '<option value="Exhorto por negativa de inscripción (Acuerdo 286 SEP)">Exhorto por negativa de inscripción (Acuerdo 286 SEP)</option>' +
+                '<option value="Solicitud de revalidación parcial por materias">Solicitud de revalidación parcial por materias</option>' +
+                '<option value="Exención de pago de derechos de revalidación">Exención de pago de derechos de revalidación</option>' +
+                '<option value="Solicitud de valoración y examen de ubicación">Solicitud de valoración y examen de ubicación</option>' +
+                '<option value="Canalización a educación especial / USAER">Canalización a educación especial / USAER</option>' +
+                '<option value="Garantía de cupo y reubicación en zona escolar">Garantía de cupo y reubicación en zona escolar</option>' +
+              '</select>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="fila">' +
+            '<div class="campo" style="flex:1">' +
+              '<label for="ofCita">Fecha de gestión / Cita ante el plantel</label>' +
+              '<input type="date" id="ofCita" value="' + HOY.slice(0, 10) + '">' +
+            '</div>' +
+            '<div class="campo" style="flex:1">' +
+              '<label for="ofAcomp">Acompañamiento institucional</label>' +
+              '<select id="ofAcomp">' +
+                '<option value="Sí, personal de la Secretaría">Sí, personal de la Secretaría</option>' +
+                '<option value="Sí, intérprete lingüístico">Sí, intérprete lingüístico</option>' +
+                '<option value="No, gestión directa de la familia">No, gestión directa de la familia</option>' +
+              '</select>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="campo">' +
+            '<label for="ofFundamento">Fundamento legal y hechos citados</label>' +
+            '<textarea id="ofFundamento" rows="4">Con fundamento en el Artículo 3.° Constitucional, los artículos 61 y 62 de la Ley General de Educación, y el Acuerdo 286 de la SEP, se solicita la inscripción provisional e inmediata de ' + per.n + ', garantizando el interés superior de la niñez sin que la falta de documentos de origen condicione el ingreso al plantel.</textarea>' +
+          '</div>' +
+
+          '<div class="flex gap-8" style="justify-content:flex-end;margin-top:14px">' +
+            '<button class="btn btn-primario" type="button" id="btnGenerarOficio">' + ico("oficios") + 'Generar oficio oficial</button>' +
+          '</div>' +
         '</div>' +
-        '<div class="campo" style="flex:1">' +
-          '<label for="ofAsunto">Asunto / Tipo de intervención <span class="req">*</span></label>' +
-          '<select id="ofAsunto">' +
-            '<option value="Exhorto por negativa de inscripción (Acuerdo 286 SEP)">Exhorto por negativa de inscripción (Acuerdo 286 SEP)</option>' +
-            '<option value="Solicitud de revalidación parcial por materias">Solicitud de revalidación parcial por materias</option>' +
-            '<option value="Exención de pago de derechos de revalidación">Exención de pago de derechos de revalidación</option>' +
-            '<option value="Solicitud de valoración y examen de ubicación">Solicitud de valoración y examen de ubicación</option>' +
-            '<option value="Canalización a educación especial / USAER">Canalización a educación especial / USAER</option>' +
-          '</select>' +
+
+        '<div>' +
+          '<div style="font-size:11.5px;font-weight:700;text-transform:uppercase;color:var(--gris);letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">' +
+            '<span>Vista Previa del Oficio Oficial</span>' +
+            '<span class="chip chip-neutro">En vivo</span>' +
+          '</div>' +
+          '<div class="oficio-hoja" id="hojaOficio" style="font-size:10.5px;box-shadow:0 4px 18px rgba(0,0,0,.08);background:#fff"></div>' +
+          '<div class="oficio-cap">El documento se asentará en la bitácora y se enviará al módulo de Canalizaciones para firma y seguimiento.</div>' +
         '</div>' +
-      '</div>' +
-      '<div class="campo">' +
-        '<label for="ofFundamento">Fundamento legal y hechos citados</label>' +
-        '<textarea id="ofFundamento" rows="3">Con fundamento en el Artículo 3.° Constitucional, los artículos 61 y 62 de la Ley General de Educación, y el Acuerdo 286 de la SEP, se solicita la inscripción provisional e inmediata de ' + per.n + ', garantizando el interés superior de la niñez sin que la falta de documentos de origen condicione el ingreso al plantel.</textarea>' +
-      '</div>' +
-      '<div class="flex gap-8" style="justify-content:flex-end">' +
-        '<button class="btn btn-primario" type="button" id="btnGenerarOficio">' + ico("oficios") + 'Generar oficio en borrador</button>' +
       '</div>' +
     '</div>';
 
@@ -651,6 +689,52 @@
   function eventosDetalle() {
     var per = D.PERS[selPerIdx];
     var c = getCaso(per);
+    var N = NIVELES[c.nivel] || NIVELES.basica;
+
+    /* Pintar la hoja de vista previa en tiempo real */
+    function pintarHojaOficio() {
+      var dest = $("#ofDest") ? $("#ofDest").value.trim() : "Autoridad Destinataria";
+      var asunto = $("#ofAsunto") ? $("#ofAsunto").value : "Asunto del oficio";
+      var cita = $("#ofCita") ? $("#ofCita").value : "";
+      var citaTxt = cita ? cita.split("-").reverse().join("/") : "inmediata";
+      var acomp = $("#ofAcomp") ? $("#ofAcomp").value : "Sí, personal de la Secretaría";
+      var fund = $("#ofFundamento") ? $("#ofFundamento").value.trim() : "";
+      var folioPrevio = "SFS/" + ("000" + (folioSeq + 1)).slice(-4) + "/2026";
+
+      var hoja = $("#hojaOficio");
+      if (!hoja) return;
+
+      hoja.innerHTML =
+        '<div class="o-sello bor">' + ico("editar") + 'Borrador en edición · No válido sin firma del Director</div>' +
+        '<div class="o-membrete">' +
+          '<span class="o-inst">Gobierno del Estado de Chiapas</span>' +
+          '<span class="o-inst">Secretaría de la Frontera Sur</span>' +
+          '<span class="o-inst" style="color:var(--gris-claro)">Dirección de Atención a Personas en Movilidad</span>' +
+          '<div class="cenefa-fina" style="margin-top:7px"></div>' +
+        '</div>' +
+        '<div class="o-cuerpo">' +
+          '<span class="o-folio">Oficio <b>' + esc(folioPrevio) + '</b><br>Tapachula, Chiapas, a ' + fecha(HOY.slice(0, 10)) + '</span>' +
+          '<span class="o-dest">' + esc(dest.toUpperCase()) + '<br>P R E S E N T E</span>' +
+          '<p><b>Asunto:</b> ' + esc(asunto) + '</p>' +
+          '<p>Por medio del presente y en cumplimiento a las atribuciones de esta Secretaría, me permito intervenir en favor de la persona <span class="o-var">' + esc(per.n) + '</span>, de <span class="o-var">' + edad(per.nac) + ' años</span> de edad, nacionalidad <span class="o-var">' + esc(per.pais) + '</span>, con expediente SIAMH <span class="o-var">' + esc(per.f) + '</span>' + (per.curp ? ' y CURP <span class="o-var">' + esc(per.curp) + '</span>' : '') + '.</p>' +
+          '<p>' + esc(fund) + '</p>' +
+          '<p><b>Fecha de atención / gestión:</b> ' + esc(citaTxt) + '. <b>Acompañamiento:</b> ' + esc(acomp) + '.</p>' +
+          '<p>Agradeciendo de antemano la atención al presente oficio, quedo a sus distinguidas órdenes.</p>' +
+          '<div class="o-firma"><span class="o-raya"></span><b>' + esc(D.DIRECTOR.n) + '</b><br>' + esc(D.DIRECTOR.cargo) + '<br>Secretaría de la Frontera Sur</div>' +
+        '</div>' +
+        '<div class="o-pie">Documento oficial con validez por folio y sello ante la Secretaría de la Frontera Sur. Conforme al principio del interés superior de la niñez y el Acuerdo 286 de la SEP.</div>';
+    }
+
+    /* Eventos para actualizar la vista previa en vivo */
+    ["#ofDest", "#ofAsunto", "#ofCita", "#ofAcomp", "#ofFundamento"].forEach(function (sel) {
+      var el = $(sel);
+      if (el) {
+        el.addEventListener("input", pintarHojaOficio);
+        el.addEventListener("change", pintarHojaOficio);
+      }
+    });
+
+    pintarHojaOficio();
 
     /* Marcadores de barreras */
     $$("[data-barrera]").forEach(function (chk) {
@@ -675,6 +759,7 @@
         if (oa) oa.value = b.canaliza.motivo;
         $("#ofDest").focus();
         $("#ofDest").scrollIntoView({ behavior:"smooth", block:"center" });
+        pintarHojaOficio();
         if (SIMH.toast) SIMH.toast("Datos cargados en el formulario de oficio", "info");
       };
     });
@@ -775,6 +860,7 @@
         if (ofa) ofa.value = "Exhorto por negativa de inscripción (Acuerdo 286 SEP)";
         $("#ofDest").focus();
         $("#ofDest").scrollIntoView({ behavior:"smooth", block:"center" });
+        pintarHojaOficio();
       };
     }
 
@@ -784,26 +870,67 @@
       bgo.onclick = function () {
         var dest = $("#ofDest") ? $("#ofDest").value.trim() : "";
         var asunto = $("#ofAsunto") ? $("#ofAsunto").value : "";
+        var cita = $("#ofCita") ? $("#ofCita").value : "";
+        var citaTxt = cita ? cita.split("-").reverse().join("/") : "inmediata";
+        var acomp = $("#ofAcomp") ? $("#ofAcomp").value : "Sí, personal de la Secretaría";
+        var fund = $("#ofFundamento") ? $("#ofFundamento").value.trim() : "";
         if (!dest) {
           alert("Indica la autoridad destinataria del oficio.");
           return;
         }
         var folio = folioOficio();
-        c.can.push({
+        var nuevoCan = {
           fecha: fecha(HOY.slice(0, 10)),
           inst: dest,
           motivo: asunto,
           of: folio,
           est: "Emitido · en seguimiento"
-        });
+        };
+        c.can.push(nuevoCan);
+
         // Si hay una negativa abierta, vincularla
         var na = c.neg.find(function (x) { return !x.oficio; });
         if (na) {
           na.oficio = folio;
-          na.hizo = "Se emitió oficio de intervención legal.";
+          na.hizo = "Se emitió oficio de intervención legal ante " + dest + ".";
         }
+
+        // Crear objeto completo para el módulo de Canalizaciones
+        var ofiCompleto = {
+          id: "o_edu_" + Date.now(),
+          ref: "BOR-" + ("000" + (folioSeq)).slice(-4),
+          folio: folio,
+          pl: "educacion",
+          est: "emitido",
+          asunto: asunto,
+          per: per.f,
+          dest: { inst: dest, cargo: "Dirección / Autoridad Educativa", mun: per.mun || "Tapachula" },
+          origen: "oficios",
+          folioDep: "VENT-" + (per.mun ? per.mun.slice(0,3).toUpperCase() : "TAP") + "/2026/" + Math.floor(100 + Math.random()*900),
+          creado: { por: D.YO.n, rol: D.YO.rol, t: D.HOY },
+          firmado: { por: D.DIRECTOR.n, cargo: D.DIRECTOR.cargo, t: D.HOY },
+          acusePlazo: "2026-09-05",
+          datos: {
+            nivel: N.t,
+            plantel: dest,
+            negativa: asunto,
+            pide: fund,
+            cita: citaTxt,
+            acomp: acomp
+          }
+        };
+
+        // Guardar en localStorage para que aparezca en canalizaciones.html
+        try {
+          var lista = JSON.parse(localStorage.getItem("SIAMH_OFICIOS_EXTRA") || "[]");
+          lista.unshift(ofiCompleto);
+          localStorage.setItem("SIAMH_OFICIOS_EXTRA", JSON.stringify(lista));
+        } catch(e) {}
+
         pintarDetalle();
-        if (SIMH.toast) SIMH.toast("Oficio " + folio + " generado en borrador", "ok");
+        if (SIMH.toast) {
+          SIMH.toast("Oficio " + folio + " generado y registrado en Canalizaciones", "ok");
+        }
       };
     }
   }
