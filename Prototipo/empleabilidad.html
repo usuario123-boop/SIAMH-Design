@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Empleabilidad · Vinculación laboral y seguimiento · SIMH</title>
+<title>Empleabilidad · Vinculación laboral y seguimiento · SIAMH</title>
 <link rel="icon" href="assets/img/simh-isotipo-96.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -302,27 +302,8 @@
     <div class="cuerpo" id="avisoPermisosCuerpo"></div>
   </details>
 
-  <div class="g-maestro">
-    <!-- ================== Cartera de seguimiento ====================== -->
-    <section class="tarjeta maestro" style="padding:0" aria-labelledby="tCartera">
-      <div style="padding:13px 12px 12px;border-bottom:1px solid var(--linea)">
-        <h2 id="tCartera" class="sec-tit" style="margin-bottom:10px">Cartera de seguimiento</h2>
-        <label for="buscaPers" class="sr-solo">Buscar en la cartera por persona, folio o empresa</label>
-        <input type="text" id="buscaPers" placeholder="Buscar persona, folio o empresa"
-               style="width:100%;height:40px;border:1px solid var(--linea);border-radius:var(--radio-s);
-                      padding:0 11px;font-family:var(--f-texto);font-size:13.5px">
-        <div class="chips-filtro" id="chipsFiltro" role="group" aria-label="Filtrar la cartera"></div>
-      </div>
-      <div id="listaPers" role="listbox" aria-labelledby="tCartera"
-           style="max-height:58vh;overflow-y:auto"></div>
-      <div class="tabla-pie" style="border-radius:0 0 var(--radio) var(--radio)">
-        <span id="conteoPers"></span>
-      </div>
-    </section>
-
-    <!-- ========================== Detalle ============================= -->
-    <div id="detalle"></div>
-  </div>
+  <!-- ========================== Detalle a Pantalla Completa ============================= -->
+  <div id="detalle" style="max-width:100%"></div>
 
   <!-- El repintado por innerHTML no avisa de nada a un lector de pantalla:
        este renglón anuncia a quién se seleccionó y qué está pendiente.     -->
@@ -884,25 +865,50 @@
         esc(ACOMP_TXT[a.que] || a.que) + "</span>");
     });
 
-    /* La cabecera ya no repite los botones de la barra de acción: dos
-       controles idénticos a 200 px de distancia obligan a decidir cuál es
-       "el bueno". Aquí queda solo lo que siempre está disponible.        */
-    return '<div class="exp-cab">' +
-      '<div class="exp-foto" aria-hidden="true" style="width:64px;height:64px;border-radius:50%">' +
-        '<span style="display:block;font-size:19px;font-weight:700;color:var(--gris)">' + inic(p.n) + "</span></div>" +
-      '<div class="exp-id">' +
-        '<h2 class="exp-nombre" id="tPersona" tabindex="-1">' + esc(p.n) + "</h2>" +
-        '<div class="exp-folio">Expediente ' + p.e + " · " + esc(p.perfil) + "</div>" +
-        '<div class="exp-chips">' + chips.join("") + "</div>" +
-        '<div class="exp-meta">' +
-          "<span>Municipio de residencia<b>" + esc(p.mun) + "</b></span>" +
-          "<span>Disponibilidad<b>" + esc(p.disp) + "</b></span>" +
-          "<span>Responsable del seguimiento<b>" + esc(RESP) + "</b></span>" +
-        "</div></div>" +
-      '<div class="exp-acc">' +
-        '<button class="btn btn-secundario btn-s" type="button" id="btnNueva">' + ico("mas") + "Registrar vinculación</button>" +
-        '<a class="btn btn-secundario btn-s" href="expediente-detalle.html">' + ico("expedientes") + "Ver expediente</a>" +
-      "</div></div>";
+    var idxActual = PERSONAS.indexOf(p);
+
+    return '<div class="banner-caso-activo">' +
+      '<div class="bca-superior">' +
+        '<div class="bca-persona">' +
+          '<div class="bca-foto" style="font-size:16px;font-weight:700">' + esc(inic(p.n)) + '</div>' +
+          '<div class="bca-datos">' +
+            '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+              '<span class="bca-nombre" id="tPersona" tabindex="-1">' + esc(p.n) + '</span>' +
+              '<span class="folio-tag">Exp. ' + p.e + '</span>' +
+              chips.join("") +
+            '</div>' +
+            '<div class="bca-meta">' +
+              '<span>Perfil: <b>' + esc(p.perfil) + '</b></span>' +
+              '<span>·</span>' +
+              '<span>Municipio: <b>' + esc(p.mun) + '</b></span>' +
+              '<span>·</span>' +
+              '<span>Disponibilidad: <b>' + esc(p.disp) + '</b></span>' +
+              '<span>·</span>' +
+              '<span>Responsable: <b>' + esc(RESP) + '</b></span>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="flex gap-8">' +
+          '<button class="btn btn-secundario btn-s" type="button" id="btnNueva">' + ico("mas") + 'Registrar vinculación</button>' +
+          '<a class="btn btn-secundario btn-s" href="expediente-detalle.html">' + ico("expedientes") + 'Ver expediente</a>' +
+        '</div>' +
+      '</div>' +
+      '<div class="bca-controles">' +
+        '<div class="bca-nav">' +
+          '<button type="button" class="bca-nav-btn" id="btnCasoAnt"' + (idxActual <= 0 ? ' disabled' : '') + '>' +
+            ico("izq") + 'Anterior' +
+          '</button>' +
+          '<span class="bca-nav-pos">Persona ' + (idxActual + 1) + ' de ' + PERSONAS.length + ' en cartera</span>' +
+          '<button type="button" class="bca-nav-btn" id="btnCasoSig"' + (idxActual >= PERSONAS.length - 1 ? ' disabled' : '') + '>' +
+            'Siguiente ' + ico("der") +
+          '</button>' +
+        '</div>' +
+        '<button type="button" class="btn-cambiar-caso" id="btnAbrirSelector">' +
+          '<svg viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>' +
+          'Cambiar persona / Buscar en cartera <kbd>Ctrl+K</kbd>' +
+        '</button>' +
+      '</div>' +
+    '</div>';
   }
 
   /* --------------------------------------------------------------------
@@ -1790,27 +1796,9 @@
   /* ======================================================================
      8. Eventos de la cartera (elementos fijos del HTML)
      ================================================================== */
-  $("#chipsFiltro").addEventListener("click", function (ev) {
-    var b = ev.target.closest("[data-f]");
-    if (!b) return;
-    filtro = b.getAttribute("data-f");
-    pintaChips(); pintaLista();
-  });
+  function pintaChips() {}
+  function pintaLista() {}
 
-  $("#listaPers").addEventListener("click", function (ev) {
-    var b = ev.target.closest("[data-p]");
-    if (!b) return;
-    sel = b.getAttribute("data-p");
-    panel = null; pVinc = null; pHito = null; res = null; filaFil = "todas";
-    pest = pestPorOmision(persona());
-    pintaLista(); pintaDetalle();
-    anuncia();
-    window.scrollTo({ top:0, behavior:"smooth" });
-  });
-
-  /* Cambiar de persona reemplaza el detalle entero por innerHTML. Sin esto,
-     quien navega con teclado o lector de pantalla se queda con el foco en
-     un botón que ya no existe y sin noticia de que cambió media pantalla. */
   function anuncia() {
     var p = persona(), pe = pendiente(p);
     $("#anuncio").textContent = p.n + ", expediente " + p.e + ". " +
@@ -1819,9 +1807,40 @@
     if (h) h.focus({ preventScroll:true });
   }
 
-  $("#buscaPers").addEventListener("input", function () {
-    busca = this.value;
-    pintaLista();
+  var gestor = SIMH.gestorCaso({
+    items: PERSONAS,
+    indiceInicial: Math.max(0, PERSONAS.findIndex(function(p){ return p.e === sel; })),
+    titulo: "Cartera de Seguimiento Laboral",
+    placeholder: "Buscar persona, folio o empresa...",
+    filtraItem: function(p, txt) {
+      if (!txt) return true;
+      var t = (p.n + " " + p.e + " " + p.perfil + " " + p.mun + " " + (p.v.map(function(v){return v.emp+" "+v.vac;}).join(" "))).toLowerCase();
+      return t.indexOf(txt.toLowerCase()) >= 0;
+    },
+    renderItem: function(p, esActivo, idx) {
+      var vg = vigente(p), si = sinInicio(p), ep = enProceso(p);
+      var chip = vg ? '<span class="chip chip-jade">Colocada</span>'
+        : (si ? '<span class="chip chip-jade">Contratada</span>'
+        : (ep.length ? '<span class="chip chip-neutro">En proceso</span>'
+        : '<span class="chip chip-rosa">Sin colocación</span>'));
+
+      return '<button type="button" class="drawer-item' + (esActivo ? ' activo' : '') + '" data-idx="' + idx + '">' +
+        '<div class="drawer-item-avatar">' + esc(inic(p.n)) + '</div>' +
+        '<div class="drawer-item-txt">' +
+          '<span class="drawer-item-nom">' + esc(p.n) + '</span>' +
+          '<span class="drawer-item-sub">Exp. ' + p.e + ' · ' + esc(p.perfil) + '</span>' +
+        '</div>' +
+        chip +
+      '</button>';
+    },
+    onSelect: function(p, idx) {
+      sel = p.e;
+      panel = null; pVinc = null; pHito = null; res = null; filaFil = "todas";
+      pest = pestPorOmision(p);
+      pintaDetalle();
+      anuncia();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   });
 
   pest = pestPorOmision(persona());
@@ -1829,9 +1848,19 @@
     pest = qs.get("tab");
   }
   if (panel && PANEL_PEST[panel]) pest = PANEL_PEST[panel];
-  pintaChips();
-  pintaLista();
+
   pintaDetalle();
+
+  /* Eventos de navegación y apertura del selector */
+  document.addEventListener("click", function(e) {
+    if (e.target.closest("#btnAbrirSelector")) {
+      gestor.abrir();
+    } else if (e.target.closest("#btnCasoAnt")) {
+      gestor.anterior();
+    } else if (e.target.closest("#btnCasoSig")) {
+      gestor.siguiente();
+    }
+  });
 })();
 </script>
 </body>

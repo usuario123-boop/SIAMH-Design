@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Constancias · SIMH</title>
+<title>Constancias · SIAMH</title>
 <link rel="icon" href="assets/img/simh-isotipo-96.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -232,7 +232,14 @@
   }
 
   function carteraConstancias() {
-    return '<div class="cartera" role="listbox" aria-label="Expedientes">' +
+    return '<div class="tarjeta maestro" style="padding:0">' +
+      '<div style="padding:12px 14px 10px;border-bottom:1px solid var(--linea);display:flex;align-items:center;justify-content:space-between">' +
+        '<span style="font-size:11.5px;font-weight:700;text-transform:uppercase;color:var(--gris);letter-spacing:.06em">Expedientes</span>' +
+        '<button class="btn-colapsar-maestro" id="btnColapsarCons" type="button" title="Ocultar lista para ampliar el espacio (Alt + [)" aria-label="Ocultar lista">' +
+          '<svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg> Ocultar' +
+        '</button>' +
+      '</div>' +
+      '<div class="cartera" role="listbox" aria-label="Expedientes" style="border:0;border-radius:0">' +
       PERS.map(function (p) {
         var s = p.f === cSel;
         var chip = p.est === "cerrado"
@@ -246,7 +253,7 @@
           '<span class="k-tx"><span class="k-n">' + esc(p.n) + "</span>" +
           '<span class="k-f">' + esc(p.f) + "</span>" +
           '<span class="k-e">' + chip + "</span></span></button>";
-      }).join("") + "</div>";
+      }).join("") + "</div></div>";
   }
 
   function constanciaHtml(p) {
@@ -369,23 +376,66 @@
 
   function vistaConstancias() {
     var p = persona(cSel) || PERS[0];
+    var idxActual = PERS.findIndex(function (x) { return x.f === p.f; });
+    if (idxActual < 0) idxActual = 0;
+
+    var banner = '<div class="banner-caso-activo">' +
+      '<div class="bca-superior">' +
+        '<div class="bca-persona">' +
+          '<div class="bca-foto">' + (p.foto ? ico("persona") : esc(p.ini)) + '</div>' +
+          '<div class="bca-datos">' +
+            '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+              '<span class="bca-nombre">' + esc(p.n) + '</span>' +
+              '<span class="folio-tag">Folio ' + esc(p.f) + '</span>' +
+              (p.est === "cerrado"
+                ? '<span class="chip chip-guinda">' + ico("candado") + 'Cerrado</span>'
+                : (p.emis.length
+                    ? '<span class="chip chip-jade">' + ico("check") + 'Vigente</span>'
+                    : '<span class="chip chip-rosa">' + ico("alerta") + 'Sin constancia</span>')) +
+            '</div>' +
+            '<div class="bca-meta">' +
+              '<span>Nacionalidad: <b>' + esc(p.pais) + '</b></span>' +
+              '<span>·</span>' +
+              '<span>Nacimiento: <b>' + fecha(p.nac) + '</b> (' + edad(p.nac) + ' años)</span>' +
+              '<span>·</span>' +
+              '<span>Registro: <b>' + fecha(p.reg) + '</b> en ' + esc(p.mun) + '</span>' +
+              (p.nna ? '<span>·</span><span>Acompaña: <b>' + esc(p.tutor) + '</b></span>' : '') +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="flex gap-8">' +
+          '<a class="btn btn-secundario btn-s" href="expediente-detalle.html">' + ico("expedientes") + 'Ver expediente</a>' +
+        '</div>' +
+      '</div>' +
+      '<div class="bca-controles">' +
+        '<div class="bca-nav">' +
+          '<button type="button" class="bca-nav-btn" id="btnCasoAnt"' + (idxActual <= 0 ? ' disabled' : '') + '>' +
+            ico("izq") + 'Anterior' +
+          '</button>' +
+          '<span class="bca-nav-pos">Persona ' + (idxActual + 1) + ' de ' + PERS.length + ' expedientes</span>' +
+          '<button type="button" class="bca-nav-btn" id="btnCasoSig"' + (idxActual >= PERS.length - 1 ? ' disabled' : '') + '>' +
+            'Siguiente ' + ico("der") +
+          '</button>' +
+        '</div>' +
+        '<button type="button" class="btn-cambiar-caso" id="btnAbrirSelector">' +
+          '<svg viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>' +
+          'Cambiar persona / Buscar expediente <kbd>Ctrl+K</kbd>' +
+        '</button>' +
+      '</div>' +
+    '</div>';
 
     /* Expediente cerrado: nada se elimina (RNF03), pero un expediente fuera
-       de operación no ampara una constancia vigente. Se enuncia la regla y
-       qué la desbloquea; no se dibuja un botón apagado.                  */
+       de operación no ampara una constancia vigente. */
     if (p.est === "cerrado") {
-      return '<div class="g-cons">' +
-        "<div>" + carteraConstancias() + "</div>" +
-        "<div>" +
-          '<div class="accion urge">' + ico("candado") +
-          '<div class="a-tx"><span class="a-t">No se emite constancia de un expediente cerrado</span>' +
-          '<span class="a-n">El expediente de ' + esc(p.n) + " se cerró el " + fecha(p.cierre) +
-          " por " + esc(p.cierreMot.toLowerCase()) + ". El expediente se conserva íntegro y su " +
-          "constancia anterior sigue existiendo, pero una constancia nueva afirmaría un registro " +
-          "en operación que ya no lo está. Reabrir el expediente requiere oficio y autorización " +
-          "del Director de Área (RNF02, RNF03).</span></div></div>" +
-          historialConstancias(p) +
-        "</div></div>";
+      return banner +
+        '<div class="accion urge">' + ico("candado") +
+        '<div class="a-tx"><span class="a-t">No se emite constancia de un expediente cerrado</span>' +
+        '<span class="a-n">El expediente de ' + esc(p.n) + " se cerró el " + fecha(p.cierre) +
+        " por " + esc(p.cierreMot.toLowerCase()) + ". El expediente se conserva íntegro y su " +
+        "constancia anterior sigue existiendo, pero una constancia nueva afirmaría un registro " +
+        "en operación que ya no lo está. Reabrir el expediente requiere oficio y autorización " +
+        "del Director de Área (RNF02, RNF03).</span></div></div>" +
+        historialConstancias(p);
     }
 
     var primera = !p.emis.length;
@@ -400,24 +450,21 @@
             p.emis[p.emis.length - 1].mot.toLowerCase() + ". Una emisión nueva exige motivo, " +
             "porque cada impresión queda registrada." };
 
-    return '<div class="g-cons">' +
-      "<div>" + carteraConstancias() + "</div>" +
-      "<div>" +
-        '<div class="accion ' + acc.tono + '">' + ico(acc.i) +
-          '<div class="a-tx"><span class="a-t">' + esc(acc.t) + "</span>" +
-          '<span class="a-n">' + esc(acc.n) + "</span></div>" +
-          '<div class="a-acc"><button class="btn btn-primario" type="button" id="btnImprimir">' +
-          ico("doc") + (primera ? "Emitir e imprimir" : "Emitir una nueva") + "</button></div></div>" +
-        opcionesConstancia(p) +
-        '<div class="lienzo">' + constanciaHtml(p) + "</div>" +
-        '<div class="lienzo-cap">' +
-          (cSop === "gafete"
-            ? "Gafete a tamaño real: 54 × 86 mm, lo mismo que sale de la impresora."
-            : "Hoja carta al 50 %: se imprime a tamaño real, 216 × 279 mm.") +
-          " Sin código QR, por la restricción del proyecto." +
-        "</div>" +
-        historialConstancias(p) +
-      "</div></div>";
+    return banner +
+      '<div class="accion ' + acc.tono + '">' + ico(acc.i) +
+        '<div class="a-tx"><span class="a-t">' + esc(acc.t) + "</span>" +
+        '<span class="a-n">' + esc(acc.n) + "</span></div>" +
+        '<div class="a-acc"><button class="btn btn-primario" type="button" id="btnImprimir">' +
+        ico("doc") + (primera ? "Emitir e imprimir" : "Emitir una nueva") + "</button></div></div>" +
+      opcionesConstancia(p) +
+      '<div class="lienzo">' + constanciaHtml(p) + "</div>" +
+      '<div class="lienzo-cap">' +
+        (cSop === "gafete"
+          ? "Gafete a tamaño real: 54 × 86 mm, lo mismo que sale de la impresora."
+          : "Hoja carta al 50 %: se imprime a tamaño real, 216 × 279 mm.") +
+        " Sin código QR, por la restricción del proyecto." +
+      "</div>" +
+      historialConstancias(p);
   }
 
   function eventosConstancia() {
@@ -490,6 +537,7 @@
       'existiendo, pero una nueva afirmaría un registro en operación que ya no lo está.</span></div>' +
     "</div>";
 
+  var gestor = null;
   function pinta() {
     $("#encAcc").innerHTML = "";
     $("#panel").innerHTML = vistaConstancias();
@@ -506,7 +554,52 @@
     $("#estPagina").textContent = "@page{size:216mm 279mm;margin:0}";
   }
 
+  gestor = SIMH.gestorCaso({
+    items: PERS,
+    indiceInicial: Math.max(0, PERS.findIndex(function(p){ return p.f === cSel; })),
+    titulo: "Seleccionar Expediente para Constancia",
+    placeholder: "Buscar por nombre, folio o municipio...",
+    filtraItem: function(p, txt) {
+      if (!txt) return true;
+      var t = (p.n + " " + p.f + " " + p.pais + " " + p.mun).toLowerCase();
+      return t.indexOf(txt.toLowerCase()) >= 0;
+    },
+    renderItem: function(p, esActivo, idx) {
+      var chip = p.est === "cerrado"
+        ? '<span class="chip chip-guinda">Cerrado</span>'
+        : (p.emis.length
+            ? '<span class="chip chip-jade">' + p.emis.length + ' emitidas</span>'
+            : '<span class="chip chip-rosa">Sin constancia</span>');
+
+      return '<button type="button" class="drawer-item' + (esActivo ? ' activo' : '') + '" data-idx="' + idx + '">' +
+        '<div class="drawer-item-avatar">' + esc(p.ini) + '</div>' +
+        '<div class="drawer-item-txt">' +
+          '<span class="drawer-item-nom">' + esc(p.n) + '</span>' +
+          '<span class="drawer-item-sub">Folio ' + esc(p.f) + ' · ' + esc(p.pais) + '</span>' +
+        '</div>' +
+        chip +
+      '</button>';
+    },
+    onSelect: function(p, idx) {
+      cSel = p.f;
+      cMot = "";
+      pinta();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  });
+
   pinta();
+
+  /* Eventos de navegación y apertura del selector */
+  document.addEventListener("click", function(e) {
+    if (e.target.closest("#btnAbrirSelector")) {
+      gestor.abrir();
+    } else if (e.target.closest("#btnCasoAnt")) {
+      gestor.anterior();
+    } else if (e.target.closest("#btnCasoSig")) {
+      gestor.siguiente();
+    }
+  });
 })();
 </script>
 </body>

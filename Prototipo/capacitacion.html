@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Capacitación · Grupos ICATECH · SIMH</title>
+<title>Capacitación · Grupos ICATECH · SIAMH</title>
 <link rel="icon" href="assets/img/simh-isotipo-96.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -170,31 +170,8 @@
 
   <div class="aviso aviso-neutro" id="avisoPermisos"></div>
 
-  <div class="g-maestro">
-    <!-- ======================= Cartera de grupos ======================= -->
-    <div class="tarjeta" style="padding:0;position:sticky;top:calc(var(--topbar-h) + 16px)">
-      <div style="padding:12px 12px 11px;border-bottom:1px solid var(--linea)">
-        <input type="text" id="buscaGrupo" placeholder="Buscar curso, sede o folio de grupo"
-               aria-label="Buscar grupo de capacitación"
-               style="width:100%;height:34px;border:1px solid var(--linea);border-radius:var(--radio-s);
-                      padding:0 11px;font-family:var(--f-texto);font-size:13px">
-        <!-- Los cursos se asignan por municipio: el municipio es el primer
-             corte de la cartera, no un dato escondido en el nombre de la sede. -->
-        <label class="sr-solo" for="filMun">Municipio</label>
-        <select id="filMun" style="width:100%;height:34px;margin-top:8px;border:1px solid var(--linea);
-                border-radius:var(--radio-s);padding:0 9px;font-family:var(--f-texto);font-size:13px;
-                background:var(--blanco);color:var(--tinta)"></select>
-        <div class="chips-filtro" id="chipsFiltro" role="group" aria-label="Filtrar los grupos"></div>
-      </div>
-      <div id="listaGrupos" style="max-height:62vh;overflow-y:auto"></div>
-      <div class="tabla-pie" style="border-radius:0 0 var(--radio) var(--radio)">
-        <span id="conteoGrupos"></span>
-      </div>
-    </div>
-
-    <!-- ============================ Detalle ============================ -->
-    <div id="detalle"></div>
-  </div>
+  <!-- ============================ Detalle a Pantalla Completa ============================ -->
+  <div id="detalle" style="max-width:100%"></div>
 </main>
 
 <script src="assets/js/simh.js"></script>
@@ -212,7 +189,7 @@
   $("#btnFirma").innerHTML = ico("pdf") + "Lista para firma física";
   $("#avisoPermisos").innerHTML = ico("info") +
     "<span><strong>Qué hace este módulo y qué no</strong>La ventanilla <b>conforma el grupo y pasa lista</b>. " +
-    "La acreditación y la constancia de competencia las emite <b>ICATECH</b> al concluir el curso; el SIMH " +
+    "La acreditación y la constancia de competencia las emite <b>ICATECH</b> al concluir el curso; el SIAMH " +
     "solo verifica que cada persona llegue en condiciones de acreditar (RNF02). " +
     "<b>No hay límite de cursos por persona</b>: haber cursado antes nunca impide inscribirse.</span>";
 
@@ -687,12 +664,12 @@
                   : "Todas superan las " + Math.ceil(g.sesiones * MIN_ASIS) + " de " + g.sesiones + " sesiones"),
             !!r.perdida, sinIniciar) +
           filaReq("Evaluación final", r.listos, r.n,
-            evalPend ? "La aplica ICATECH al concluir el curso; el SIMH solo registra el resultado"
+            evalPend ? "La aplica ICATECH al concluir el curso; el SIAMH solo registra el resultado"
                      : "Resultado capturado por ICATECH el " + fecha(g.fin),
             false, evalPend) +
         "</div>" +
       "</div>" +
-      '<div class="tarjeta-pie">La acreditación es competencia de ICATECH. El SIMH verifica los requisitos y ' +
+      '<div class="tarjeta-pie">La acreditación es competencia de ICATECH. El SIAMH verifica los requisitos y ' +
         "conserva el expediente de la persona; no emite la constancia de competencia.</div></div>";
   }
 
@@ -881,7 +858,7 @@
     return '<div class="panel-add">' +
       "<h3>Agregar participante al grupo</h3>" +
       '<p style="font-size:12.5px;color:var(--gris);margin:0 0 11px;line-height:1.45">Solo se inscribe a personas ' +
-        "con expediente en el SIMH. La documentación incompleta no impide la inscripción: impide la acreditación.</p>" +
+        "con expediente en el SIAMH. La documentación incompleta no impide la inscripción: impide la acreditación.</p>" +
       '<input type="text" id="buscaCand" value="' + esc(buscaCand) +
         '" placeholder="Buscar por nombre, folio o nacionalidad" aria-label="Buscar persona con expediente" ' +
         'style="width:100%;height:36px;border:1px solid var(--linea);border-radius:var(--radio-s);' +
@@ -951,28 +928,60 @@
             : "") + "</span></div>"
       : "";
 
+    var idxActual = GRUPOS.indexOf(g);
+
+    var banner = '<div class="banner-caso-activo">' +
+      '<div class="bca-superior">' +
+        '<div class="bca-persona">' +
+          '<div class="bca-foto">' + ico("capacita") + '</div>' +
+          '<div class="bca-datos">' +
+            '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+              '<span class="bca-nombre">' + esc(g.curso) + '</span>' +
+              '<span class="folio-tag">Grupo ' + g.id + '</span>' +
+              '<span class="chip ' + e.c + '">' + e.t + '</span>' +
+              '<span class="chip chip-neutro">' + esc(g.modalidad) + '</span>' +
+            '</div>' +
+            '<div class="bca-meta">' +
+              '<span>Clave: <b>' + esc(g.clave) + '</b></span>' +
+              '<span>·</span>' +
+              '<span>Sede: <b>' + esc(g.sede) + '</b> (' + esc(g.aula) + ')</span>' +
+              '<span>·</span>' +
+              '<span>Municipio: <b>' + esc(g.mun) + '</b></span>' +
+              '<span>·</span>' +
+              '<span>Instructor: <b>' + esc(g.instructor) + '</b></span>' +
+              '<span>·</span>' +
+              '<span>Cupo: <b>' + r.n + '/' + g.cupo + ' inscritos</b></span>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="flex gap-8">' +
+          '<button class="btn btn-secundario btn-s" type="button">' + ico("excel") + 'Lista de asistencia</button>' +
+          '<button class="btn btn-secundario btn-s" type="button">' + ico("pdf") + 'Lista para firma</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="bca-controles">' +
+        '<div class="bca-nav">' +
+          '<button type="button" class="bca-nav-btn" id="btnCasoAnt"' + (idxActual <= 0 ? ' disabled' : '') + '>' +
+            ico("izq") + 'Anterior' +
+          '</button>' +
+          '<span class="bca-nav-pos">Grupo ' + (idxActual + 1) + ' de ' + GRUPOS.length + ' en cartera</span>' +
+          '<button type="button" class="bca-nav-btn" id="btnCasoSig"' + (idxActual >= GRUPOS.length - 1 ? ' disabled' : '') + '>' +
+            'Siguiente ' + ico("der") +
+          '</button>' +
+        '</div>' +
+        '<button type="button" class="btn-cambiar-caso" id="btnAbrirSelector">' +
+          '<svg viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>' +
+          'Cambiar grupo / Buscar en cartera <kbd>Ctrl+K</kbd>' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+
     var cab = '<div class="tarjeta" style="margin-bottom:16px">' +
-      '<div class="grp-cab"><div class="gc-txt">' +
-        '<div class="gc-chips"><span class="chip ' + e.c + '">' + e.t + "</span>" +
-          '<span class="chip chip-neutro">' + esc(g.modalidad) + "</span>" +
-          '<span class="chip chip-neutro">' + g.id + "</span></div>" +
-        "<h2>" + esc(g.curso) + "</h2>" +
-        '<div class="grp-meta">' +
-          "<span>Clave <b>" + esc(g.clave) + "</b></span>" +
-          "<span>Sede <b>" + esc(g.sede) + "</b> · " + esc(g.aula) + "</span>" +
-          "<span>Municipio <b>" + esc(g.mun) + "</b></span>" +
-          "<span>Instructor <b>" + esc(g.instructor) + "</b></span>" +
-          "<span><b>" + fecha(g.inicio) + " – " + fecha(g.fin) + "</b> · " + g.sesiones + " sesiones</span>" +
-        "</div></div>" +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
-          '<button class="btn btn-secundario btn-s" type="button">' + ico("excel") + "Lista de asistencia</button>" +
-          '<button class="btn btn-secundario btn-s" type="button">' + ico("pdf") + "Lista para firma</button>" +
-        "</div></div>" +
       '<div class="rejilla g-3">' + bloqueCupo(g, r) + bloqueProp(g, r) + bloquePlazo(g) + "</div>" +
       '<div class="tarjeta-pie">La lista para firma física se imprime con membrete, folio del grupo y espacio de ' +
         "sello. <strong>No lleva código QR</strong>: la validación es por folio y sello.</div></div>";
 
-    $("#detalle").innerHTML = acuse() + alerta + cab +
+    $("#detalle").innerHTML = banner + acuse() + alerta + cab +
       (panelAdd ? panelAgregar(g, r) : "") +
       '<div style="margin-bottom:16px">' + bloqueRequisitos(g, r) + "</div>" +
       tablaParticipantes(g, r) +
@@ -1083,43 +1092,52 @@
   /* ======================================================================
      8. Eventos de la cartera (elementos fijos del HTML)
      ================================================================== */
-  $("#chipsFiltro").addEventListener("click", function (ev) {
-    var b = ev.target.closest("[data-f]");
-    if (!b) return;
-    filtro = b.getAttribute("data-f");
-    pintaChips(); pintaLista();
+  function pintaChips() {}
+  function pintaLista() {}
+  function pintaMunicipios() {}
+
+  var gestor = SIMH.gestorCaso({
+    items: GRUPOS,
+    indiceInicial: Math.max(0, GRUPOS.findIndex(function(g){ return g.id === sel; })),
+    titulo: "Cartera de Grupos ICATECH",
+    placeholder: "Buscar curso, sede o folio de grupo...",
+    filtraItem: function(g, txt) {
+      if (!txt) return true;
+      var t = (g.curso + " " + g.sede + " " + g.id + " " + g.clave + " " + g.instructor + " " + g.mun).toLowerCase();
+      return t.indexOf(txt.toLowerCase()) >= 0;
+    },
+    renderItem: function(g, esActivo, idx) {
+      var r = resumen(g), e = EST[g.estado];
+      return '<button type="button" class="drawer-item' + (esActivo ? ' activo' : '') + '" data-idx="' + idx + '">' +
+        '<div class="drawer-item-avatar">' + ico("capacita") + '</div>' +
+        '<div class="drawer-item-txt">' +
+          '<span class="drawer-item-nom">' + esc(g.curso) + '</span>' +
+          '<span class="drawer-item-sub">Grupo ' + g.id + ' · ' + esc(g.sede) + ' · ' + r.n + '/' + g.cupo + '</span>' +
+        '</div>' +
+        '<span class="chip ' + e.c + '">' + e.t + '</span>' +
+      '</button>';
+    },
+    onSelect: function(g, idx) {
+      sel = g.id;
+      filaFil = "todos"; modoLista = false; panelAdd = false; bajaDe = null;
+      pase = {}; candSel = null; buscaCand = "";
+      pintaDetalle();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   });
 
-  $("#listaGrupos").addEventListener("click", function (ev) {
-    var b = ev.target.closest("[data-g]");
-    if (!b) return;
-    sel = b.getAttribute("data-g");
-    filaFil = "todos"; modoLista = false; panelAdd = false; bajaDe = null;
-    pase = {}; candSel = null; buscaCand = "";
-    pintaLista(); pintaDetalle();
-    window.scrollTo({ top:0, behavior:"smooth" });
-  });
-
-  $("#buscaGrupo").addEventListener("input", function () {
-    busca = this.value;
-    pintaLista();
-  });
-
-  /* Al cambiar de municipio puede desaparecer el grupo abierto: se pasa al
-     primero que sí pertenece al municipio en vez de dejar el detalle
-     mostrando un grupo que la lista ya no contiene. */
-  $("#filMun").addEventListener("change", function () {
-    fMun = this.value;
-    var vis = GRUPOS.filter(function (g) { return pasa(g, filtro) && pasaBusca(g); });
-    if (!vis.filter(function (g) { return g.id === sel; }).length) sel = vis.length ? vis[0].id : null;
-    pintaMunicipios(); pintaChips(); pintaLista(); pintaDetalle();
-    $("#filMun").focus({ preventScroll:true });
-  });
-
-  pintaMunicipios();
-  pintaChips();
-  pintaLista();
   pintaDetalle();
+
+  /* Eventos de navegación y apertura del selector */
+  document.addEventListener("click", function(e) {
+    if (e.target.closest("#btnAbrirSelector")) {
+      gestor.abrir();
+    } else if (e.target.closest("#btnCasoAnt")) {
+      gestor.anterior();
+    } else if (e.target.closest("#btnCasoSig")) {
+      gestor.siguiente();
+    }
+  });
 })();
 </script>
 </body>

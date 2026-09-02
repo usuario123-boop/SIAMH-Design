@@ -94,28 +94,9 @@
   }
 
   /* -------------------------------------------------------- Isotipo ------ */
-  /* Reconstrucción geométrica del símbolo textil "Humanismo que Transforma".
-     Sustituir por el SVG oficial cuando la Secretaría lo entregue.          */
+  /* Isotipo oficial del SIAMH · Secretaría de la Frontera Sur              */
   function isotipo(alto, mono) {
-    var jade = mono ? "currentColor" : "#009887";
-    var rosa = mono ? "currentColor" : "#C90166";
-    return '' +
-      '<svg viewBox="0 0 240 150" style="height:' + (alto || 40) + 'px;width:auto" role="img" aria-label="Humanismo que Transforma">' +
-      '<g fill="none" stroke="' + jade + '" stroke-width="11" stroke-linecap="square">' +
-      '<polyline points="70,16 26,60 70,104"/>' +
-      '<path d="M74 30 L104 60"/><path d="M86 18 L116 48"/><path d="M62 42 L92 72"/>' +
-      '<polyline points="170,16 214,60 170,104"/>' +
-      '<path d="M166 30 L136 60"/><path d="M154 18 L124 48"/><path d="M178 42 L148 72"/>' +
-      "</g>" +
-      '<g fill="none" stroke="' + rosa + '" stroke-width="11" stroke-linecap="square">' +
-      '<polyline points="92,58 92,84 120,112 148,84 148,58"/>' +
-      '<polyline points="92,58 104,58 104,72"/>' +
-      '<polyline points="148,58 136,58 136,72"/>' +
-      "</g>" +
-      '<g transform="rotate(45 120 82)">' +
-      '<rect x="109" y="71" width="22" height="22" fill="' + rosa + '"/>' +
-      '<rect x="114" y="76" width="12" height="12" fill="' + jade + '"/>' +
-      "</g></svg>";
+    return '<img class="marca-logo" src="assets/img/simh-isotipo.png" alt="Logo SIAMH" style="height:' + (alto || 38) + 'px;width:auto;flex:none;object-fit:contain">';
   }
 
   /* ------------------------------------------------ Chrome institucional -- */
@@ -141,6 +122,7 @@
   function chrome(paginaActiva) {
     var cont = document.createElement("div");
     cont.innerHTML =
+      '<a href="#contenidoPrincipal" class="saltar-enlace">Saltar al contenido principal</a>' +
       '<header class="topbar">' +
         /* Solo aparece por debajo de 900 px, que es donde el menú lateral se
            esconde. Sin él, en un teléfono no había forma de navegar: el
@@ -150,8 +132,9 @@
           '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" ' +
           'stroke-width="1.8" stroke-linecap="round" aria-hidden="true">' +
           '<path d="M4 7h16M4 12h16M4 17h16"/></svg></button>' +
-        '<a class="marca" href="index.html">' + isotipo(38, true) +
-          '<span><span class="marca-t">SIMH</span>' +
+        '<a class="marca" href="index.html">' +
+          '<img class="marca-logo" src="assets/img/simh-isotipo.png" alt="Logo SIAMH" width="38" height="38">' +
+          '<span><span class="marca-t">SIAMH</span>' +
           '<span class="marca-s">Secretaría de la Frontera Sur</span></span>' +
         "</a>" +
         '<div class="buscador">' +
@@ -198,6 +181,12 @@
     var frag = document.createDocumentFragment();
     while (cont.firstChild) frag.appendChild(cont.firstChild);
     document.body.insertBefore(frag, document.body.firstChild);
+
+    var main = document.querySelector(".contenido");
+    if (main && !main.id) {
+      main.id = "contenidoPrincipal";
+      main.setAttribute("tabindex", "-1");
+    }
 
     menuCuenta();
     menuLateral();
@@ -520,11 +509,211 @@
     });
   }
 
-  global.SIMH = {
+  /* ---------------------------------- Notificaciones Toast ------------------ */
+  function toast(mensaje, tipo, duracion) {
+    tipo = tipo || "ok";
+    duracion = duracion || 3200;
+    var cont = document.getElementById("toastContenedor");
+    if (!cont) {
+      cont = document.createElement("div");
+      cont.id = "toastContenedor";
+      cont.className = "toast-contenedor";
+      document.body.appendChild(cont);
+    }
+    var t = document.createElement("div");
+    t.className = "toast toast-" + tipo;
+    t.setAttribute("role", "status");
+    t.innerHTML = (tipo === "ok" ? icono("check") : tipo === "alerta" ? icono("alerta") : icono("info")) +
+      "<span>" + esc(mensaje) + "</span>";
+    cont.appendChild(t);
+    setTimeout(function () {
+      t.style.opacity = "0";
+      t.style.transform = "translateY(8px)";
+      setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 200);
+    }, duracion);
+  }
+
+  /* ------------------------------- Gestor de Caso y Cajón Selector ---------- */
+  function gestorCaso(config) {
+    config = config || {};
+    var items = config.items || [];
+    var indiceActual = config.indiceInicial || 0;
+    var tituloDrawer = config.titulo || "Seleccionar Persona";
+    var placeholder = config.placeholder || "Buscar por nombre, folio o CURP...";
+
+    // Inyectar Drawer en DOM si no existe
+    var drawerId = config.drawerId || "drawerSelectorGlobal";
+    var backdrop = document.getElementById(drawerId);
+    if (!backdrop) {
+      backdrop = document.createElement("div");
+      backdrop.id = drawerId;
+      backdrop.className = "drawer-backdrop";
+      backdrop.innerHTML =
+        '<div class="drawer-panel" role="dialog" aria-modal="true" aria-label="' + esc(tituloDrawer) + '">' +
+          '<div class="drawer-cab">' +
+            '<h3 class="drawer-cab-tit">' + esc(tituloDrawer) + '</h3>' +
+            '<button class="drawer-cerrar" type="button" aria-label="Cerrar selector">' +
+              '<svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>' +
+            '</button>' +
+          '</div>' +
+          '<div class="drawer-busqueda">' +
+            '<input type="text" class="drawer-input" placeholder="' + esc(placeholder) + '" aria-label="Buscar en la lista">' +
+            '<div class="drawer-chips" role="group" aria-label="Filtros"></div>' +
+          '</div>' +
+          '<div class="drawer-lista" role="listbox"></div>' +
+          '<div class="drawer-pie">' +
+            '<span class="drawer-conteo">0 registros</span>' +
+            '<span class="txt-min"><kbd>Esc</kbd> cerrar</span>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(backdrop);
+    }
+
+    var inputBusca = backdrop.querySelector(".drawer-input");
+    var listaEl = backdrop.querySelector(".drawer-lista");
+    var conteoEl = backdrop.querySelector(".drawer-conteo");
+    var btnCerrar = backdrop.querySelector(".drawer-cerrar");
+    var chipsEl = backdrop.querySelector(".drawer-chips");
+
+    var filtroTexto = "";
+    var filtroChip = "todos";
+
+    function abrirDrawer() {
+      backdrop.classList.add("drawer-abierto");
+      if (inputBusca) {
+        inputBusca.value = "";
+        filtroTexto = "";
+        pintarListaDrawer();
+        setTimeout(function () { inputBusca.focus(); }, 50);
+      }
+    }
+
+    function cerrarDrawer() {
+      backdrop.classList.remove("drawer-abierto");
+    }
+
+    function seleccionar(idx) {
+      if (idx < 0 || idx >= items.length) return;
+      indiceActual = idx;
+      cerrarDrawer();
+      if (config.onSelect) config.onSelect(items[idx], idx);
+    }
+
+    function siguiente() {
+      if (indiceActual < items.length - 1) seleccionar(indiceActual + 1);
+    }
+
+    function anterior() {
+      if (indiceActual > 0) seleccionar(indiceActual - 1);
+    }
+
+    function pintarListaDrawer() {
+      var vis = items.filter(function (it, i) {
+        if (config.filtraItem) return config.filtraItem(it, filtroTexto, filtroChip);
+        var t = JSON.stringify(it).toLowerCase();
+        return !filtroTexto || t.indexOf(filtroTexto.toLowerCase()) >= 0;
+      });
+
+      if (conteoEl) conteoEl.textContent = vis.length + " disponibles";
+
+      if (!vis.length) {
+        listaEl.innerHTML = '<div style="padding:24px 14px;text-align:center;color:var(--gris);font-size:13px">' +
+          'No se encontraron registros coincidentes.</div>';
+        return;
+      }
+
+      listaEl.innerHTML = vis.map(function (it) {
+        var idxReal = items.indexOf(it);
+        var esActivo = idxReal === indiceActual;
+        if (config.renderItem) return config.renderItem(it, esActivo, idxReal);
+        return '<button type="button" class="drawer-item' + (esActivo ? ' activo' : '') + '" data-idx="' + idxReal + '">' +
+          '<div class="drawer-item-avatar">' + (it.ini || (it.n ? it.n.charAt(0) : 'P')) + '</div>' +
+          '<div class="drawer-item-txt">' +
+            '<span class="drawer-item-nom">' + esc(it.n || it.curso || it.id || 'Caso') + '</span>' +
+            '<span class="drawer-item-sub">' + esc(it.f || it.id || '') + ' · ' + esc(it.pais || it.sede || '') + '</span>' +
+          '</div>' +
+          (it.urg && it.urg !== 'fin' ? '<span class="chip chip-rosa">!</span>' : '') +
+        '</button>';
+      }).join("");
+    }
+
+    // Eventos del Drawer
+    if (btnCerrar) btnCerrar.onclick = cerrarDrawer;
+    if (backdrop) {
+      backdrop.onclick = function (e) {
+        if (e.target === backdrop) cerrarDrawer();
+      };
+    }
+
+    if (inputBusca) {
+      inputBusca.oninput = function () {
+        filtroTexto = this.value;
+        pintarListaDrawer();
+      };
+    }
+
+    if (listaEl) {
+      listaEl.onclick = function (e) {
+        var btn = e.target.closest("[data-idx]");
+        if (btn) {
+          var idx = parseInt(btn.getAttribute("data-idx"), 10);
+          seleccionar(idx);
+        }
+      };
+    }
+
+    // Atajos de teclado: Ctrl+K / Alt+P abre drawer, Esc cierra
+    document.addEventListener("keydown", function (e) {
+      if ((e.ctrlKey && e.key.toLowerCase() === "k") || (e.altKey && e.key.toLowerCase() === "p")) {
+        e.preventDefault();
+        abrirDrawer();
+      } else if (e.key === "Escape" && backdrop.classList.contains("drawer-abierto")) {
+        cerrarDrawer();
+      }
+    });
+
+    return {
+      abrir: abrirDrawer,
+      cerrar: cerrarDrawer,
+      seleccionar: seleccionar,
+      siguiente: siguiente,
+      anterior: anterior,
+      getIndice: function () { return indiceActual; },
+      setItems: function (nuevos) { items = nuevos; pintarListaDrawer(); }
+    };
+  }
+
+  /* ------------------------------- Colapso de panel maestro (retrocompatible) */
+  function panelMaestro(config) {
+    return { isColapsado: function () { return true; }, setColapsado: function () {} };
+  }
+
+  /* ----------------------------------------- Atajos globales de teclado --- */
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    var isInput = tag === "input" || tag === "select" || tag === "textarea" || e.target.isContentEditable;
+    if (e.key === "/" && !isInput && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      var b = document.querySelector('.buscador input[type="text"]');
+      if (b) { e.preventDefault(); b.focus(); b.select(); }
+    }
+    if (e.altKey && (e.key === "n" || e.key === "N")) {
+      e.preventDefault(); location.href = "registro.html";
+    }
+    if (e.altKey && (e.key === "e" || e.key === "E")) {
+      e.preventDefault(); location.href = "expedientes.html";
+    }
+    if (e.altKey && (e.key === "i" || e.key === "I")) {
+      e.preventDefault(); location.href = "index.html";
+    }
+  });
+
+  global.SIMH = global.SIAMH = {
     icono: icono, isotipo: isotipo, chrome: chrome,
     n: n, pct: pct, esc: esc,
     columnas: columnas, sparkline: sparkline, barrasH: barrasH, apilada: apilada,
     mapaBurbujas: mapaBurbujas, tablaDatos: tablaDatos, grafica: grafica, pestanas: pestanas,
+    toast: toast, panelMaestro: panelMaestro, gestorCaso: gestorCaso,
     TINTA: TINTA, CAT: CAT
   };
 })(window);
+

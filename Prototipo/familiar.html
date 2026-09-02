@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Expediente Familiar · SIMH</title>
+<title>Expediente Familiar · SIAMH</title>
 <link rel="icon" href="assets/img/simh-isotipo-96.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -67,26 +67,8 @@
     </div>
   </div>
 
-  <div class="g-maestro">
-    <!-- ======================== Lista de grupos ======================== -->
-    <div class="tarjeta" style="padding:0;position:sticky;top:calc(var(--topbar-h) + 16px)">
-      <div style="padding:12px 12px 10px;border-bottom:1px solid var(--linea)">
-        <input type="text" placeholder="Buscar folio o titular" aria-label="Buscar grupo familiar"
-               style="width:100%;height:34px;border:1px solid var(--linea);border-radius:var(--radio-s);
-                      padding:0 11px;font-family:var(--f-texto);font-size:13px">
-        <label class="check" style="margin:10px 0 0;font-size:12.5px">
-          <input type="checkbox" id="soloPendientes"><span>Solo con NNA pendiente de oficio</span>
-        </label>
-      </div>
-      <div id="listaGrupos" style="max-height:62vh;overflow-y:auto"></div>
-      <div class="tabla-pie" style="border-radius:0 0 var(--radio) var(--radio)">
-        <span id="conteoGrupos"></span>
-      </div>
-    </div>
-
-    <!-- =========================== Detalle ============================= -->
-    <div id="detalle"></div>
-  </div>
+  <!-- =========================== Detalle a Pantalla Completa ============================= -->
+  <div id="detalle" style="max-width:100%"></div>
 </main>
 
 <script src="assets/js/simh.js"></script>
@@ -153,50 +135,46 @@
   /* ------------------------------------------------------------ Datos --- */
   var grupos = [
     {
-      id:"SIMH-FAM-2026-0341", tipo:"Nuclear", mun:"Tapachula", fecha:"24/08/2026", juntos:true,
+      id:"SIAMH-FAM-2026-0341", tipo:"Nuclear", mun:"Tapachula", fecha:"24/08/2026", juntos:true,
       origen:"Honduras", ingreso:"28/07/2026", ruta:"Guatemala", oficio:null,
       integrantes:[
         { n:"Yolanda Esperanza Martínez Cruz", i:"YM", e:32, p:"Titular", dep:"—", v:"Sí",
-          exp:"SIMH-2026-TAP-0412", est:"Solicitante de refugio", cond:"Embarazo", titular:true },
+          exp:"SIAMH-2026-TAP-0412", est:"Solicitante de refugio", cond:"Embarazo", titular:true },
         { n:"Wilmer Josué Aguilar Paz", i:"WA", e:9, p:"Hijo", dep:"Sí", v:"Sí",
-          exp:"SIMH-2026-TAP-0408", est:"Solicitante de refugio", nna:"Acompañado" },
+          exp:"SIAMH-2026-TAP-0408", est:"Solicitante de refugio", nna:"Acompañado" },
         { n:"Rosa Elena Cruz Medina", i:"RC", e:58, p:"Madre", dep:"Sí", v:"Sí",
           exp:null, est:"Sin trámite", cond:"Adulta mayor" }
       ]
     },
     {
-      id:"SIMH-FAM-2026-0338", tipo:"Extendido", mun:"Tapachula", fecha:"22/08/2026", juntos:true,
+      id:"SIAMH-FAM-2026-0338", tipo:"Extendido", mun:"Tapachula", fecha:"22/08/2026", juntos:true,
       origen:"Venezuela", ingreso:"19/08/2026", ruta:"Colombia · Panamá · Guatemala", oficio:"pendiente",
       integrantes:[
-        /* La tía no es parentesco directo. Ese es exactamente el motivo por
-           el que las dos personas menores de edad están SEPARADAS: viajan
-           con alguien que no ejerce la patria potestad. Antes se declaraba
-           "tía / sobrino" y la clasificación de separados no se explicaba. */
         { n:"Marisol Rojas Peña", i:"MR", e:38, p:"Persona acompañante", pd:false, dep:"—", v:"Sí",
-          exp:"SIMH-2026-TAP-0415", est:"Solicitante de refugio", titular:true },
+          exp:"SIAMH-2026-TAP-0415", est:"Solicitante de refugio", titular:true },
         { n:"Keiner Alexander Rojas Mora", i:"KR", e:16, p:"Persona acompañante", pd:false,
           dep:"Sí", v:"Sí",
-          exp:"SIMH-2026-TAP-0410", est:"Sin trámite", nna:"Separado" },
+          exp:"SIAMH-2026-TAP-0410", est:"Sin trámite", nna:"Separado" },
         { n:"Dariana Rojas Mora", i:"DR", e:7, p:"Persona acompañante", pd:false, dep:"Sí", v:"Sí",
           exp:null, est:"Sin trámite", nna:"Separado" }
       ]
     },
     {
-      id:"SIMH-FAM-2026-0332", tipo:"Nuclear", mun:"Suchiate", fecha:"18/08/2026", juntos:true,
+      id:"SIAMH-FAM-2026-0332", tipo:"Nuclear", mun:"Suchiate", fecha:"18/08/2026", juntos:true,
       origen:"Guatemala", ingreso:"12/08/2026", ruta:"—", oficio:null,
       integrantes:[
         { n:"Marta Lucía Xicoténcatl Pérez", i:"MX", e:41, p:"Titular", dep:"—", v:"Sí",
-          exp:"SIMH-2026-SUC-0177", est:"Refugiado / Residente", titular:true },
+          exp:"SIAMH-2026-SUC-0177", est:"Refugiado / Residente", titular:true },
         { n:"Diego Armando Xicoténcatl", i:"DX", e:14, p:"Hijo", dep:"Sí", v:"Sí",
           exp:null, est:"Refugiado / Residente", nna:"Acompañado" }
       ]
     },
     {
-      id:"SIMH-FAM-2026-0327", tipo:"Unipersonal", mun:"Motozintla", fecha:"12/08/2026", juntos:true,
+      id:"SIAMH-FAM-2026-0327", tipo:"Unipersonal", mun:"Motozintla", fecha:"12/08/2026", juntos:true,
       origen:"Guatemala", ingreso:"05/08/2026", ruta:"—", oficio:null,
       integrantes:[
         { n:"Rosalinda Gómez Vázquez", i:"RG", e:63, p:"Titular", dep:"—", v:"Sí",
-          exp:"SIMH-2026-MOT-0061", est:"Refugiado / Residente", cond:"Adulta mayor", titular:true }
+          exp:"SIAMH-2026-MOT-0061", est:"Refugiado / Residente", cond:"Adulta mayor", titular:true }
       ]
     }
   ];
@@ -209,33 +187,7 @@
   }
 
   /* ------------------------------------------------- Lista de grupos ---- */
-  function pintarLista() {
-    var soloP = $("#soloPendientes").checked;
-    var vis = grupos.map(function (g, i) { return { g:g, i:i }; })
-                    .filter(function (o) { return !soloP || pendiente(o.g); });
-    $("#listaGrupos").innerHTML = vis.map(function (o) {
-      var g = o.g, tit = g.integrantes.find(function (m) { return m.titular; });
-      var nna = g.integrantes.filter(function (m) { return m.nna; }).length;
-      var nInt = g.integrantes.length;
-      return '<button class="grupo-item' + (o.i === actual ? " activo" : "") + '" type="button" data-i="' + o.i + '">' +
-        '<span class="g-folio">' + g.id + "</span>" +
-        '<span class="g-tit">' + esc(tit.n) + "</span>" +
-        '<span class="g-meta">' + nInt + (nInt === 1 ? " integrante · " : " integrantes · ") + g.mun +
-        (nna ? " · " + nna + " NNA" : "") + "</span>" +
-        (pendiente(g) ? '<span class="g-meta" style="margin-top:4px"><span class="g-pend">' + ico("alerta") +
-          "Oficio pendiente</span></span>" : "") + "</button>";
-    }).join("");
-    $("#conteoGrupos").textContent = vis.length + " de " + grupos.length + " grupos";
-  }
-  $("#listaGrupos").addEventListener("click", function (e) {
-    var b = e.target.closest(".grupo-item");
-    if (!b) return;
-    actual = +b.getAttribute("data-i");
-    panelAbierto = null;
-    pintarLista(); pintarDetalle();
-    window.scrollTo({ top:0, behavior:"smooth" });
-  });
-  $("#soloPendientes").addEventListener("change", pintarLista);
+  function pintarLista() {}
 
   /* ----------------------------------------------------- Detalle -------- */
   function pintarDetalle() {
@@ -247,32 +199,54 @@
     var requieren = nna.filter(function (m) { return m.nna === "Separado" || m.nna === "No acompañado"; });
 
     var html =
-      /* ------------------------------ cabecera ------------------------- */
-      '<section class="exp-cab">' +
-        '<div class="exp-foto">' + ico("familia") + "</div>" +
-        '<div class="exp-id">' +
-          '<h1 class="exp-nombre">Grupo familiar de ' + esc(tit.n.split(" ").slice(0, 2).join(" ")) + "</h1>" +
-          '<div class="exp-folio">Folio ' + g.id + "</div>" +
-          '<div class="exp-chips">' +
-            '<span class="chip chip-neutro">' + g.tipo + "</span>" +
-            '<span class="chip chip-neutro">' + g.integrantes.length + " integrantes</span>" +
-            '<span class="chip ' + (g.juntos ? "chip-jade" : "chip-neutro") + '">' +
-              (g.juntos ? "Viajan juntos" : "Integrantes separados") + "</span>" +
-            (nna.length ? '<span class="chip chip-neutro">' + nna.length + " NNA</span>" : "") +
-          "</div>" +
-          '<div class="exp-meta">' +
-            "<span>Titular<b>" + esc(tit.n) + "</b></span>" +
-            "<span>Municipio<b>" + g.mun + "</b></span>" +
-            "<span>Conformado<b>" + g.fecha + "</b></span>" +
-            "<span>País de origen<b>" + g.origen + "</b></span>" +
-          "</div>" +
-        "</div>" +
-        '<div class="exp-acc">' +
-          '<button class="btn btn-primario" type="button" data-acc="agregar">' + ico("mas") + "Agregar integrante</button>" +
-          '<button class="btn btn-secundario" type="button" data-acc="reasignar">' + ico("registro") + "Reasignar titular</button>" +
-          '<button class="btn btn-secundario" type="button">' + ico("pdf") + "Constancia del grupo</button>" +
-        "</div>" +
-      "</section>";
+      /* ---------------- Banner de Caso Activo --------------------------- */
+      '<div class="banner-caso-activo">' +
+        '<div class="bca-superior">' +
+          '<div class="bca-persona">' +
+            '<div class="bca-foto">' + ico("familia") + '</div>' +
+            '<div class="bca-datos">' +
+              '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+                '<span class="bca-nombre">Grupo familiar de ' + esc(tit.n) + '</span>' +
+                '<span class="folio-tag">Folio ' + g.id + '</span>' +
+                '<span class="chip ' + (g.juntos ? "chip-jade" : "chip-neutro") + '">' +
+                  (g.juntos ? "Viajan juntos" : "Separados") + '</span>' +
+                (nna.length ? '<span class="chip chip-rosa">' + nna.length + ' NNA</span>' : '') +
+              '</div>' +
+              '<div class="bca-meta">' +
+                '<span>Titular: <b>' + esc(tit.n) + '</b></span>' +
+                '<span>·</span>' +
+                '<span><b>' + g.integrantes.length + ' integrantes</b> (' + deps + ' dependientes)</span>' +
+                '<span>·</span>' +
+                '<span>Origen: <b>' + esc(g.origen) + '</b></span>' +
+                '<span>·</span>' +
+                '<span>Municipio: <b>' + esc(g.mun) + '</b></span>' +
+                '<span>·</span>' +
+                '<span>Registro: <b>' + g.fecha + '</b></span>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="flex gap-8">' +
+            '<button class="btn btn-primario btn-s" type="button" data-acc="agregar">' + ico("mas") + 'Agregar integrante</button>' +
+            '<button class="btn btn-secundario btn-s" type="button" data-acc="reasignar">' + ico("registro") + 'Reasignar titular</button>' +
+            '<button class="btn btn-secundario btn-s" type="button">' + ico("pdf") + 'Constancia</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="bca-controles">' +
+          '<div class="bca-nav">' +
+            '<button type="button" class="bca-nav-btn" id="btnCasoAnt"' + (actual <= 0 ? ' disabled' : '') + '>' +
+              ico("izq") + 'Anterior' +
+            '</button>' +
+            '<span class="bca-nav-pos">Grupo ' + (actual + 1) + ' de ' + grupos.length + ' registrados</span>' +
+            '<button type="button" class="bca-nav-btn" id="btnCasoSig"' + (actual >= grupos.length - 1 ? ' disabled' : '') + '>' +
+              'Siguiente ' + ico("der") +
+            '</button>' +
+          '</div>' +
+          '<button type="button" class="btn-cambiar-caso" id="btnAbrirSelector">' +
+            '<svg viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>' +
+            'Cambiar grupo / Buscar en lista <kbd>Ctrl+K</kbd>' +
+          '</button>' +
+        '</div>' +
+      '</div>';
 
     /* ------------- lo que exige acción va primero, no al final ---------- */
     if (requieren.length && g.oficio === "pendiente") {
@@ -339,7 +313,7 @@
         "</div>" +
         '<div id="avisoParent"></div>' +
         '<div class="fila-3">' +
-          '<div class="campo"><label>Folio de expediente <span class="opc">(si ya tiene)</span></label><input type="text" placeholder="SIMH-2026-TAP-0000"></div>' +
+          '<div class="campo"><label>Folio de expediente <span class="opc">(si ya tiene)</span></label><input type="text" placeholder="SIAMH-2026-TAP-0000"></div>' +
           '<div class="campo"><label>¿Depende económicamente?</label><select id="nvoDep"><option>Sí</option><option>No</option></select></div>' +
           '<div class="campo"><label>¿Viaja con el grupo?</label><select id="nvoViaja"><option>Sí</option><option>No</option></select></div>' +
         "</div>" +
@@ -546,12 +520,49 @@
     }
   });
 
-  /* Permite abrir un grupo concreto: familiar.html?g=2 */
-  var q = parseInt(new URLSearchParams(location.search).get("g"), 10);
-  if (!isNaN(q) && q >= 0 && q < grupos.length) actual = q;
+  var gestor = SIMH.gestorCaso({
+    items: grupos,
+    indiceInicial: actual,
+    titulo: "Seleccionar Grupo Familiar",
+    placeholder: "Buscar por folio, titular o municipio...",
+    filtraItem: function(g, txt) {
+      if (!txt) return true;
+      var tit = g.integrantes.find(function(m){ return m.titular; });
+      var t = (g.id + " " + (tit ? tit.n : "") + " " + g.mun + " " + g.origen).toLowerCase();
+      return t.indexOf(txt.toLowerCase()) >= 0;
+    },
+    renderItem: function(g, esActivo, idx) {
+      var tit = g.integrantes.find(function(m){ return m.titular; });
+      var nna = g.integrantes.filter(function(m){ return m.nna; });
+      return '<button type="button" class="drawer-item' + (esActivo ? ' activo' : '') + '" data-idx="' + idx + '">' +
+        '<div class="drawer-item-avatar">' + (tit ? esc(tit.n.charAt(0)) : 'F') + '</div>' +
+        '<div class="drawer-item-txt">' +
+          '<span class="drawer-item-nom">Grupo de ' + esc(tit ? tit.n : "Sin titular") + '</span>' +
+          '<span class="drawer-item-sub">Folio ' + g.id + ' · ' + g.integrantes.length + ' integrantes · ' + esc(g.mun) + '</span>' +
+        '</div>' +
+        (nna.length ? '<span class="chip chip-rosa">' + nna.length + ' NNA</span>' : '') +
+      '</button>';
+    },
+    onSelect: function(g, idx) {
+      actual = idx;
+      panelAbierto = null;
+      pintarDetalle();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  });
 
-  pintarLista();
   pintarDetalle();
+
+  /* Eventos de navegación y apertura del selector */
+  document.addEventListener("click", function(e) {
+    if (e.target.closest("#btnAbrirSelector")) {
+      gestor.abrir();
+    } else if (e.target.closest("#btnCasoAnt")) {
+      gestor.anterior();
+    } else if (e.target.closest("#btnCasoSig")) {
+      gestor.siguiente();
+    }
+  });
 })();
 </script>
 </body>

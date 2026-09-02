@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Expedientes · SIMH</title>
+<title>Expedientes · SIAMH</title>
 <link rel="icon" href="assets/img/simh-isotipo-96.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -51,28 +51,28 @@
         <span class="ic" id="icoBuscar"></span>
         <input type="text" placeholder="Folio, CURP o nombre" aria-label="Buscar expediente">
       </span>
-      <select aria-label="Municipio"><option>Todos los municipios</option><option>Tapachula</option>
-        <option>Suchiate</option><option>Frontera Comalapa</option><option>Motozintla</option></select>
-      <select aria-label="Estatus del expediente"><option>Expedientes activos</option><option>Cerrados</option>
-        <option>Concluidos por deceso</option><option>Todos</option></select>
-      <button class="btn btn-texto ml-auto" type="button" id="btnMasFiltros">Más filtros</button>
+      <select id="filMun" aria-label="Municipio"><option value="">Todos los municipios</option><option value="Tapachula">Tapachula</option>
+        <option value="Suchiate">Suchiate</option><option value="F. Comalapa">Frontera Comalapa</option><option value="Motozintla">Motozintla</option></select>
+      <select id="filEst" aria-label="Estatus del expediente"><option value="activos">Expedientes activos</option><option value="cerrados">Cerrados</option>
+        <option value="deceso">Concluidos por deceso</option><option value="todos">Todos</option></select>
+      <button class="btn btn-texto ml-auto" type="button" id="btnMasFiltros" aria-expanded="false" aria-controls="filtrosAvanzados">Más filtros</button>
     </div>
 
     <div class="filtros-avanzados oculto" id="filtrosAvanzados">
       <span class="f-lab">Estatus migratorio</span>
-      <select><option>Todos</option><option>Solicitante de refugio</option><option>Refugiado / Residente</option>
+      <select id="filMigra"><option value="">Todos</option><option>Solicitante de refugio</option><option>Refugiado / Residente</option>
         <option>Naturalizado</option><option>Sin trámite</option></select>
       <span class="f-lab">Edad</span>
-      <select><option>Todas</option><option>0 a 5</option><option>6 a 11</option><option>12 a 17</option>
+      <select id="filEdad"><option value="">Todas</option><option>0 a 5</option><option>6 a 11</option><option>12 a 17</option>
         <option>18 a 29</option><option>30 a 44</option><option>45 a 59</option><option>60 y más</option></select>
       <span class="f-lab">Nacionalidad</span>
-      <select><option>Todas</option><option>Honduras</option><option>Haití</option><option>Venezuela</option>
+      <select id="filNac"><option value="">Todas</option><option>Honduras</option><option>Haití</option><option>Venezuela</option>
         <option>Guatemala</option><option>El Salvador</option><option>Cuba</option></select>
       <span class="f-lab">Vulnerabilidad</span>
-      <select><option>Todas</option><option>NNA no acompañado</option><option>Mujer embarazada</option>
+      <select id="filVuln"><option value="">Todas</option><option>NNA no acompañado</option><option>Mujer embarazada</option>
         <option>Persona con discapacidad</option><option>Adulta mayor</option></select>
-      <button class="btn btn-secundario btn-s" type="button">Aplicar</button>
-      <button class="btn btn-texto" type="button">Limpiar</button>
+      <button class="btn btn-secundario btn-s" type="button" id="btnAplicar">Aplicar</button>
+      <button class="btn btn-texto" type="button" id="btnLimpiar">Limpiar</button>
     </div>
   </div>
 
@@ -81,13 +81,13 @@
       <thead>
         <tr>
           <th>Persona</th><th class="num">Edad</th><th>Nacionalidad</th><th>Estatus migratorio</th>
-          <th>Municipio</th><th>Grupo familiar</th><th>Actualizado</th><th></th>
+          <th>Municipio</th><th>Grupo familiar</th><th>Actualizado</th><th>Acción</th>
         </tr>
       </thead>
       <tbody id="filas"></tbody>
     </table>
     <div class="tabla-pie">
-      <span>Mostrando 1–8 de <b>12,480</b> expedientes</span>
+      <span id="conteoExp">Mostrando 1–8 de <b>12,480</b> expedientes</span>
       <span class="flex gap-10 centro">
         <button class="btn btn-secundario btn-s" type="button">Anterior</button>
         <span class="txt-min">Página 1 de 1,560</span>
@@ -100,6 +100,7 @@
     Ningún registro se elimina: los expedientes solo cambian a <b>Cerrado</b> o
     <b>Concluido por deceso</b> y todos los históricos persisten (RNF03).
   </p>
+  <p id="anuncioExp" class="sr-solo" role="status" aria-live="polite"></p>
 </main>
 
 <script src="assets/js/simh.js"></script>
@@ -112,41 +113,68 @@
   document.getElementById("btnNuevo").innerHTML  = ico("mas") + "Nuevo registro";
   document.getElementById("icoBuscar").innerHTML = ico("buscar");
 
-  document.getElementById("btnMasFiltros").addEventListener("click", function () {
-    var f = document.getElementById("filtrosAvanzados");
-    f.classList.toggle("oculto");
-    this.textContent = f.classList.contains("oculto") ? "Más filtros" : "Menos filtros";
+  var btnMas = document.getElementById("btnMasFiltros");
+  var fAvan = document.getElementById("filtrosAvanzados");
+  btnMas.addEventListener("click", function () {
+    fAvan.classList.toggle("oculto");
+    var abierto = !fAvan.classList.contains("oculto");
+    this.textContent = abierto ? "Menos filtros" : "Más filtros";
+    this.setAttribute("aria-expanded", String(abierto));
   });
 
-  /* El estatus migratorio es una categoría, no un estado: va en chip neutro.
-     El color queda reservado para lo que exige acción (NNA no acompañado).  */
   var datos = [
-    {f:"SIMH-2026-TAP-0412", n:"Yolanda Esperanza Martínez Cruz", i:"YM", e:32, p:"Honduras",  s:"Solicitante de refugio", m:"Tapachula", g:"SIMH-FAM-0341", a:"Hoy 11:09"},
-    {f:"SIMH-2026-TAP-0411", n:"Jean-Baptiste Pierre Louis",      i:"JP", e:27, p:"Haití",     s:"Solicitante de refugio", m:"Tapachula", g:"—", a:"Hoy 10:41"},
-    {f:"SIMH-2026-TAP-0410", n:"Keiner Alexander Rojas Mora",     i:"KR", e:16, p:"Venezuela", s:"Sin trámite",            m:"Tapachula", g:"SIMH-FAM-0338", a:"Hoy 09:58", nna:true},
-    {f:"SIMH-2026-SUC-0177", n:"Marta Lucía Xicoténcatl Pérez",   i:"MX", e:41, p:"Guatemala", s:"Refugiado / Residente",  m:"Suchiate",  g:"SIMH-FAM-0332", a:"Ayer 17:22"},
-    {f:"SIMH-2026-TAP-0409", n:"Óscar Danilo Hernández Reyes",    i:"OH", e:35, p:"El Salvador", s:"Solicitante de refugio", m:"Tapachula", g:"—", a:"Ayer 16:05"},
-    {f:"SIMH-2026-FCO-0094", n:"Yamilé Rodríguez Betancourt",     i:"YR", e:29, p:"Cuba",      s:"Naturalizado",           m:"F. Comalapa", g:"—", a:"Ayer 12:30"},
-    {f:"SIMH-2026-TAP-0408", n:"Wilmer Josué Aguilar Paz",        i:"WA", e:9,  p:"Honduras",  s:"Solicitante de refugio", m:"Tapachula", g:"SIMH-FAM-0341", a:"22/08/2026"},
-    {f:"SIMH-2026-MOT-0061", n:"Rosalinda Gómez Vázquez",         i:"RG", e:63, p:"Guatemala", s:"Refugiado / Residente",  m:"Motozintla", g:"SIMH-FAM-0327", a:"22/08/2026"}
+    {f:"SIAMH-2026-TAP-0412", n:"Yolanda Esperanza Martínez Cruz", i:"YM", e:32, p:"Honduras",  s:"Solicitante de refugio", m:"Tapachula", g:"SIAMH-FAM-0341", a:"Hoy 11:09"},
+    {f:"SIAMH-2026-TAP-0411", n:"Jean-Baptiste Pierre Louis",      i:"JP", e:27, p:"Haití",     s:"Solicitante de refugio", m:"Tapachula", g:"—", a:"Hoy 10:41"},
+    {f:"SIAMH-2026-TAP-0410", n:"Keiner Alexander Rojas Mora",     i:"KR", e:16, p:"Venezuela", s:"Sin trámite",            m:"Tapachula", g:"SIAMH-FAM-0338", a:"Hoy 09:58", nna:true},
+    {f:"SIAMH-2026-SUC-0177", n:"Marta Lucía Xicoténcatl Pérez",   i:"MX", e:41, p:"Guatemala", s:"Refugiado / Residente",  m:"Suchiate",  g:"SIAMH-FAM-0332", a:"Ayer 17:22"},
+    {f:"SIAMH-2026-TAP-0409", n:"Óscar Danilo Hernández Reyes",    i:"OH", e:35, p:"El Salvador", s:"Solicitante de refugio", m:"Tapachula", g:"—", a:"Ayer 16:05"},
+    {f:"SIAMH-2026-FCO-0094", n:"Yamilé Rodríguez Betancourt",     i:"YR", e:29, p:"Cuba",      s:"Naturalizado",           m:"F. Comalapa", g:"—", a:"Ayer 12:30"},
+    {f:"SIAMH-2026-TAP-0408", n:"Wilmer Josué Aguilar Paz",        i:"WA", e:9,  p:"Honduras",  s:"Solicitante de refugio", m:"Tapachula", g:"SIAMH-FAM-0341", a:"22/08/2026"},
+    {f:"SIAMH-2026-MOT-0061", n:"Rosalinda Gómez Vázquez",         i:"RG", e:63, p:"Guatemala", s:"Refugiado / Residente",  m:"Motozintla", g:"SIAMH-FAM-0327", a:"22/08/2026"}
   ];
 
-  document.getElementById("filas").innerHTML = datos.map(function (d) {
-    return '<tr onclick="location.href=\'expediente-detalle.html\'">' +
-      '<td class="persona"><span class="persona-celda"><span class="avatar-mini">' + d.i + "</span><span>" +
-        '<span class="p-nom">' + d.n + "</span>" +
-        '<span class="folio">' + d.f + "</span>" +
-        (d.nna ? '<br><span class="marca-nna">' + ico("alerta") + "NNA no acompañado</span>" : "") +
-      "</span></span></td>" +
-      '<td class="num">' + d.e + "</td>" +
-      "<td>" + d.p + "</td>" +
-      '<td><span class="chip chip-neutro">' + d.s + "</span></td>" +
-      "<td>" + d.m + "</td>" +
-      '<td class="txt-min">' + d.g + "</td>" +
-      '<td class="txt-min">' + d.a + "</td>" +
-      '<td><a href="expediente-detalle.html">Abrir</a></td>' +
-    "</tr>";
-  }).join("");
+  function render(lista) {
+    document.getElementById("filas").innerHTML = lista.map(function (d) {
+      return '<tr>' +
+        '<td class="persona"><span class="persona-celda"><span class="avatar-mini">' + d.i + "</span><span>" +
+          '<a class="p-nom" href="expediente-detalle.html" aria-label="Abrir expediente de ' + d.n + '">' + d.n + "</a>" +
+          '<span class="folio">' + d.f + "</span>" +
+          (d.nna ? '<br><span class="marca-nna">' + ico("alerta") + "NNA no acompañado</span>" : "") +
+        "</span></span></td>" +
+        '<td class="num">' + d.e + "</td>" +
+        "<td>" + d.p + "</td>" +
+        '<td><span class="chip chip-neutro">' + d.s + "</span></td>" +
+        "<td>" + d.m + "</td>" +
+        '<td class="txt-min">' + d.g + "</td>" +
+        '<td class="txt-min">' + d.a + "</td>" +
+        '<td><a class="btn btn-secundario btn-s" href="expediente-detalle.html" aria-label="Abrir expediente ' + d.f + '">Abrir</a></td>' +
+      "</tr>";
+    }).join("");
+
+    var c = document.getElementById("conteoExp");
+    if (c) c.innerHTML = "Mostrando 1–" + lista.length + " de <b>" + lista.length + "</b> expedientes filtrados";
+    var a = document.getElementById("anuncioExp");
+    if (a) a.textContent = "Se muestran " + lista.length + " expedientes.";
+  }
+
+  function filtra() {
+    var mun = document.getElementById("filMun").value;
+    var filtrados = datos.filter(function (d) {
+      return !mun || d.m === mun;
+    });
+    render(filtrados);
+  }
+
+  document.getElementById("filMun").addEventListener("change", filtra);
+
+  /* Atajo de URL municipal ?mun=Tapachula */
+  var pMun = new URLSearchParams(location.search).get("mun");
+  if (pMun) {
+    var sel = document.getElementById("filMun");
+    if (sel) { sel.value = pMun; filtra(); }
+  } else {
+    render(datos);
+  }
 })();
 </script>
 </body>

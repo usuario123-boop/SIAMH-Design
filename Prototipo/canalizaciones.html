@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Canalizaciones · SIMH</title>
+<title>Canalizaciones · SIAMH</title>
 <link rel="icon" href="assets/img/simh-isotipo-96.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -274,7 +274,7 @@
   var OFI = [
     { id:"o1", ref:"BOR-0034", folio:null, pl:"nna", est:"firma",
       asunto:"Notificación por dos personas menores de edad clasificadas como separadas",
-      per:"SIMH-2026-TAP-0410",
+      per:"SIAMH-2026-TAP-0410",
       dest:{ inst:"Procuraduría Regional de Protección de Niñas, Niños y Adolescentes",
              cargo:"Titular de la Procuraduría Regional", mun:"Región Soconusco, Tapachula" },
       origen:"familiar",
@@ -283,7 +283,7 @@
       plazo:"2026-08-28 14:20",
       plazoNota:"El plazo de 24 horas corre desde que se clasificó a la segunda persona menor de " +
                 "edad del grupo, el 27/08/2026 a las 14:20 (RF06).",
-      datos:{ grupo:"SIMH-FAM-2026-0338", mun:"Tapachula", clasif:"separados",
+      datos:{ grupo:"SIAMH-FAM-2026-0338", mun:"Tapachula", clasif:"separados",
               nna:[{ n:"Keiner Alexander Rojas Mora", e:16 }, { n:"Dariana Rojas Mora", e:7 }] } },
 
     { id:"o2", ref:"BOR-0035", folio:null, pl:"institucional", est:"borrador",
@@ -300,7 +300,7 @@
 
     { id:"o3", ref:"BOR-0030", folio:"SFS/0947/2026", est:"emitido", pl:"canaliza",
       asunto:"Canalización por embarazo sin control prenatal",
-      per:"SIMH-2026-TAP-0412",
+      per:"SIAMH-2026-TAP-0412",
       dest:{ inst:"Hospital General de Tapachula", cargo:"Dirección Médica", mun:"Tapachula" },
       origen:"salud",
       creado:{ por:"María Gómez Pérez", rol:"Capturista Municipal", t:"2026-08-27 09:40" },
@@ -326,7 +326,7 @@
     /* El oficio con retraso de acuse: la fila que hace trabajar la pantalla. */
     { id:"o5", ref:"BOR-0026", folio:"SFS/0942/2026", est:"emitido", pl:"canaliza",
       asunto:"Canalización por valoración de salud mental",
-      per:"SIMH-2026-TAP-0411",
+      per:"SIAMH-2026-TAP-0411",
       dest:{ inst:"Jurisdicción Sanitaria VII", cargo:"Coordinación de Salud Mental", mun:"Tapachula" },
       origen:"salud",
       creado:{ por:"María Gómez Pérez", rol:"Capturista Municipal", t:"2026-08-23 10:05" },
@@ -338,7 +338,7 @@
 
     { id:"o6", ref:"BOR-0022", folio:"SFS/0938/2026", est:"cancelado", pl:"canaliza",
       asunto:"Canalización por valoración de salud mental",
-      per:"SIMH-2026-TAP-0411",
+      per:"SIAMH-2026-TAP-0411",
       dest:{ inst:"Hospital General de Huixtla", cargo:"Dirección Médica", mun:"Huixtla" },
       origen:"salud",
       creado:{ por:"María Gómez Pérez", rol:"Capturista Municipal", t:"2026-08-22 09:30" },
@@ -369,7 +369,7 @@
        papeles que la norma no exige. */
     { id:"o10", ref:"BOR-0028", folio:"SFS/0944/2026", est:"emitido", pl:"educacion",
       asunto:"Inscripción de persona menor de edad negada por falta de documentos",
-      per:"SIMH-2026-TAP-0408",
+      per:"SIAMH-2026-TAP-0408",
       dest:{ inst:"Secretaría de Educación del Estado de Chiapas",
              cargo:"Subsecretaría de Educación Estatal · Región Soconusco", mun:"Tapachula" },
       origen:"oficios", folioDep:"VENT-TAP/2026/118",
@@ -384,7 +384,7 @@
 
     { id:"o8", ref:"BOR-0019", folio:"SFS/0931/2026", est:"acusado", pl:"canaliza",
       asunto:"Canalización a atención psicológica por violencia de género",
-      per:"SIMH-2026-FCO-0094",
+      per:"SIAMH-2026-FCO-0094",
       dest:{ inst:"Jurisdicción Sanitaria VII · atención a víctimas",
              cargo:"Coordinación de Atención a Víctimas", mun:"Frontera Comalapa" },
       origen:"salud",
@@ -397,7 +397,7 @@
 
     { id:"o9", ref:"BOR-0008", folio:"SFS/0912/2026", est:"acusado", pl:"canaliza",
       asunto:"Canalización para control prenatal",
-      per:"SIMH-2026-TAP-0412",
+      per:"SIAMH-2026-TAP-0412",
       dest:{ inst:"Centro de Salud Urbano de Tapachula", cargo:"Dirección", mun:"Tapachula" },
       origen:"salud",
       creado:{ por:"María Gómez Pérez", rol:"Capturista Municipal", t:"2026-08-11 15:30" },
@@ -904,9 +904,15 @@
         (a.n ? '<span class="a-n">' + esc(a.n) + "</span>" : "") + "</div>" +
         (a.btn ? '<div class="a-acc">' + a.btn + "</div>" : "") + "</div>" +
       (panelAcuse ? panelAcuseHtml(o) : "") +
-      '<div class="g-ofi" style="margin-top:16px">' +
+      '<div class="flex gap-10 centro justify-between mt-16">' +
+        '<span class="txt-min">Vista dividida: expediente y documento</span>' +
+        '<button class="btn-colapsar-maestro" id="btnColapsarOfi" type="button" title="Ocultar hoja de documento para ampliar datos (Alt + [)">' +
+          '<svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg> Alternar visor de documento' +
+        '</button>' +
+      '</div>' +
+      '<div class="g-ofi" id="gridOfi" style="margin-top:10px">' +
         "<div>" + ficha + "</div>" +
-        '<div><div class="etiqueta" style="margin-bottom:6px">El documento</div>' +
+        '<div class="ofi-visor"><div class="etiqueta" style="margin-bottom:6px">El documento</div>' +
           hoja(o, "hoja-lectura") + "</div>" +
       "</div>" +
       '<div style="margin-top:18px">' +
@@ -1205,7 +1211,7 @@
       '<input type="text" id="nFolDep" value="' + esc(nuevo.folioDep) +
       '" placeholder="Ej. VENT-TAP/2026/119">' +
       '<div class="ayuda">El número que este oficio lleva en el libro de la ventanilla. El folio ' +
-      "del SIMH es aparte y se asigna al firmar: el municipio cita el suyo y la Secretaría el " +
+      "del SIAMH es aparte y se asigna al firmar: el municipio cita el suyo y la Secretaría el " +
       "de la serie, y el registro los guarda juntos.</div></div>";
   }
 
@@ -1228,14 +1234,20 @@
         "consecutivo se asigna en el momento de la firma del Director de Área.</span></div>" +
         '<div class="a-acc"><button class="btn btn-secundario" type="button" id="btnVolver">' +
         ico("izq") + "Volver al registro</button></div></div>" +
-      '<div class="g-ofi">' +
+      '<div class="flex gap-10 centro justify-between mt-16">' +
+        '<span class="txt-min">Redacción con previsualización en tiempo real</span>' +
+        '<button class="btn-colapsar-maestro" id="btnColapsarOfi" type="button" title="Ocultar previsualización (Alt + [)">' +
+          '<svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg> Alternar vista previa' +
+        '</button>' +
+      '</div>' +
+      '<div class="g-ofi" id="gridOfi" style="margin-top:10px">' +
         "<div>" +
           '<div class="etiqueta" style="margin-bottom:6px">1 · Plantilla</div>' +
           listaPlantillas() +
           '<div class="etiqueta" style="margin:18px 0 6px">2 · Datos del oficio</div>' +
           formularioNuevo() +
         "</div>" +
-        '<div><div class="etiqueta" style="margin-bottom:6px">Vista previa</div>' +
+        '<div class="ofi-visor"><div class="etiqueta" style="margin-bottom:6px">Vista previa</div>' +
           (nuevo.pl && plantilla(nuevo.pl).aqui
             ? hoja(o, "hoja-lectura")
             : '<div class="tarjeta"><div class="vacio">' + ico("doc") +
@@ -1534,15 +1546,25 @@
      una negativa por oficio: `?nuevo=educacion&caso=r2`. El caso se guarda
      en sessionStorage porque el cuerpo del oficio se arma con la negativa
      registrada, que vive en el otro módulo. */
-  var qCaso = qs.get("caso");
-  if (qCaso) nuevo.caso = qCaso;
-  try {
-    var traido = sessionStorage.getItem("simh-caso-edu");
-    if (traido && nuevo.pl === "educacion" && !nuevo.caso) nuevo.caso = traido;
-    if (traido) sessionStorage.removeItem("simh-caso-edu");
-  } catch (e) { /* sin sessionStorage el compositor abre en blanco */ }
+  var pm = null;
+  function pintaTodo() {
+    pinta();
+    if (!pm) {
+      pm = SIMH.panelMaestro({
+        grid: "#gridOfi",
+        btnId: "btnColapsarOfi",
+        btnExpandirId: "btnColapsarOfi"
+      });
+    }
+  }
 
-  pinta();
+  pintaTodo();
+
+  /* Reasignar eventos tras repintado */
+  document.addEventListener("click", function(e) {
+    var btn = e.target.closest("#btnColapsarOfi");
+    if (btn && pm) pm.setColapsado(!pm.isColapsado());
+  });
 })();
 </script>
 </body>

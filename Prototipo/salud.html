@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Salud y Vulnerabilidad · SIMH</title>
+<title>Salud y Vulnerabilidad · SIAMH</title>
 <link rel="icon" href="assets/img/simh-isotipo-96.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -131,25 +131,8 @@
 
   <div class="aviso aviso-rosa" id="avisoSensible"></div>
 
-  <div class="g-maestro">
-    <!-- ===================== Lista de trabajo ========================== -->
-    <div class="tarjeta" style="padding:0;position:sticky;top:calc(var(--topbar-h) + 16px)">
-      <div style="padding:12px 12px 11px;border-bottom:1px solid var(--linea)">
-        <input type="text" id="buscaPersona" placeholder="Buscar folio, nombre o CURP"
-               aria-label="Buscar persona en la lista de valoración"
-               style="width:100%;height:34px;border:1px solid var(--linea);border-radius:var(--radio-s);
-                      padding:0 11px;font-family:var(--f-texto);font-size:13px">
-        <div class="chips-filtro" id="chipsFiltro" role="group" aria-label="Filtrar la lista"></div>
-      </div>
-      <div id="listaPersonas" style="max-height:60vh;overflow-y:auto"></div>
-      <div class="tabla-pie" style="border-radius:0 0 var(--radio) var(--radio)">
-        <span id="conteoPersonas"></span>
-      </div>
-    </div>
-
-    <!-- ========================== Detalle ============================== -->
-    <div id="detalle"></div>
-  </div>
+  <!-- ========================== Detalle a Pantalla Completa ============================== -->
+  <div id="detalle" style="max-width:100%"></div>
 </main>
 
 <script src="assets/js/simh.js"></script>
@@ -268,8 +251,8 @@
   };
 
   var P = [
-    { f:"SIMH-2026-TAP-0410", n:"Keiner Alexander Rojas Mora", ini:"KR", ed:16, pais:"Venezuela",
-      mun:"Tapachula", curp:"ROMK100722HNEXXX03", grupo:"SIMH-FAM-2026-0338", grupoHref:"familiar.html?g=1",
+    { f:"SIAMH-2026-TAP-0410", n:"Keiner Alexander Rojas Mora", ini:"KR", ed:16, pais:"Venezuela",
+      mun:"Tapachula", curp:"ROMK100722HNEXXX03", grupo:"SIAMH-FAM-2026-0338", grupoHref:"familiar.html?g=1",
       urg:"inm", motivo:"NNA separado detectado en ventanilla · 2 días sin valorar",
       resp:"Sin asignar", ultima:"Sin valoración clínica",
       vuln:["nna","nnasep","calle"],
@@ -277,8 +260,8 @@
               est:"Activa", fecha:"24/08/2026", por:"Ventanilla · M. Gómez"} ],
       can:[] },
 
-    { f:"SIMH-2026-SUC-0177", n:"Marta Lucía Xicoténcatl Pérez", ini:"MX", ed:41, pais:"Guatemala",
-      mun:"Suchiate", curp:"XIPM850214MNEXXX07", grupo:"SIMH-FAM-2026-0332", grupoHref:"familiar.html?g=2",
+    { f:"SIAMH-2026-SUC-0177", n:"Marta Lucía Xicoténcatl Pérez", ini:"MX", ed:41, pais:"Guatemala",
+      mun:"Suchiate", curp:"XIPM850214MNEXXX07", grupo:"SIAMH-FAM-2026-0332", grupoHref:"familiar.html?g=2",
       urg:"vencida", motivo:"No acudió a la cita del 20/08 · requiere reprogramación",
       resp:"Luis A. Ramírez", ultima:"12/08/2026",
       vuln:["cronica","indig"],
@@ -289,29 +272,29 @@
       can:[ {fecha:"12/08/2026", inst:"Centro de Salud Municipal", motivo:"Control metabólico y surtido de metformina",
              of:"SFS/0874/2026", cita:"20/08/2026", est:"No acudió"} ] },
 
-    { f:"SIMH-2026-TAP-0409", n:"Óscar Danilo Hernández Reyes", ini:"OH", ed:35, pais:"El Salvador",
+    { f:"SIAMH-2026-TAP-0409", n:"Óscar Danilo Hernández Reyes", ini:"OH", ed:35, pais:"El Salvador",
       mun:"Tapachula", curp:"HERO910930HNEXXX01", grupo:"—", grupoHref:"",
       urg:"inm", motivo:"Víctima de delito en tránsito · marcado en ventanilla ayer",
       resp:"Sin asignar", ultima:"Sin valoración clínica",
       vuln:["victima"],
       cond:[], can:[] },
 
-    { f:"SIMH-2026-MOT-0061", n:"Rosalinda Gómez Vázquez", ini:"RG", ed:63, pais:"Guatemala",
-      mun:"Motozintla", curp:"GOVR630405MNEXXX09", grupo:"SIMH-FAM-2026-0327", grupoHref:"familiar.html?g=3",
+    { f:"SIAMH-2026-MOT-0061", n:"Rosalinda Gómez Vázquez", ini:"RG", ed:63, pais:"Guatemala",
+      mun:"Motozintla", curp:"GOVR630405MNEXXX09", grupo:"SIAMH-FAM-2026-0327", grupoHref:"familiar.html?g=3",
       urg:"pend", motivo:"Adulta mayor · sin valoración desde el registro del 12/08",
       resp:"Sin asignar", ultima:"Sin valoración clínica",
       vuln:["mayor"],
       cond:[], can:[] },
 
-    { f:"SIMH-2026-TAP-0411", n:"Jean-Baptiste Pierre Louis", ini:"JP", ed:27, pais:"Haití",
+    { f:"SIAMH-2026-TAP-0411", n:"Jean-Baptiste Pierre Louis", ini:"JP", ed:27, pais:"Haití",
       mun:"Tapachula", curp:"PILJ990118HNEXXX05", grupo:"—", grupoHref:"",
       urg:"pend", motivo:"Lesiones en pies por el trayecto · requiere intérprete de creole",
       resp:"Sin asignar", ultima:"Sin valoración clínica",
       vuln:["indig"],
       cond:[], can:[] },
 
-    { f:"SIMH-2026-TAP-0412", n:"Yolanda Esperanza Martínez Cruz", ini:"YM", ed:32, pais:"Honduras",
-      mun:"Tapachula", curp:"MACY940318MNEXXX01", grupo:"SIMH-FAM-2026-0341", grupoHref:"familiar.html?g=0",
+    { f:"SIAMH-2026-TAP-0412", n:"Yolanda Esperanza Martínez Cruz", ini:"YM", ed:32, pais:"Honduras",
+      mun:"Tapachula", curp:"MACY940318MNEXXX01", grupo:"SIAMH-FAM-2026-0341", grupoHref:"familiar.html?g=0",
       urg:"seg", motivo:"Embarazo de 22 semanas e hipertensión · próxima cita 12/09",
       resp:"Luis A. Ramírez", ultima:"18/08/2026",
       vuln:["emb","asilo"],
@@ -324,7 +307,7 @@
             {fecha:"24/08/2026", inst:"Hospital General de Tapachula", motivo:"Valoración por hipertensión",
              of:"SFS/0947/2026", cita:"03/09/2026", est:"Cita programada"} ] },
 
-    { f:"SIMH-2026-FCO-0094", n:"Yamilé Rodríguez Betancourt", ini:"YR", ed:29, pais:"Cuba",
+    { f:"SIAMH-2026-FCO-0094", n:"Yamilé Rodríguez Betancourt", ini:"YR", ed:29, pais:"Cuba",
       mun:"F. Comalapa", curp:"ROBY970712MNEXXX04", grupo:"—", grupoHref:"",
       urg:"seg", motivo:"Trastorno de ansiedad en tratamiento · cita de control 05/09",
       resp:"Luis A. Ramírez", ultima:"20/08/2026",
@@ -335,8 +318,8 @@
              motivo:"Atención psicológica por violencia de género", of:"SFS/0931/2026",
              cita:"05/09/2026", est:"Cita programada"} ] },
 
-    { f:"SIMH-2026-TAP-0408", n:"Wilmer Josué Aguilar Paz", ini:"WA", ed:9, pais:"Honduras",
-      mun:"Tapachula", curp:"AUPW170203HNEXXX06", grupo:"SIMH-FAM-2026-0341", grupoHref:"familiar.html?g=0",
+    { f:"SIAMH-2026-TAP-0408", n:"Wilmer Josué Aguilar Paz", ini:"WA", ed:9, pais:"Honduras",
+      mun:"Tapachula", curp:"AUPW170203HNEXXX06", grupo:"SIAMH-FAM-2026-0341", grupoHref:"familiar.html?g=0",
       urg:"fin", motivo:"NNA acompañado · valoración sin hallazgos el 22/08",
       resp:"Luis A. Ramírez", ultima:"22/08/2026",
       vuln:["nna"],
@@ -398,36 +381,8 @@
     }).join("");
   }
 
-  function pintarLista() {
-    var vs = visibles();
-    $("#listaPersonas").innerHTML = vs.length ? vs.map(function (p) {
-      var i = P.indexOf(p);
-      return '<button class="pers-item' + (i === sel ? " activo" : "") + '" type="button" data-i="' + i + '">' +
-        chipUrg(p) +
-        '<span class="p-nom">' + esc(p.n) + "</span>" +
-        '<span class="p-folio">' + esc(p.f) + " · " + p.ed + " años · " + esc(p.mun) + "</span>" +
-        '<span class="p-motivo">' + esc(p.motivo) + "</span>" +
-        "</button>";
-    }).join("") : '<div class="cat-vacio" style="padding:18px 14px">Ningún expediente coincide con el filtro.</div>';
-    $("#conteoPersonas").textContent = vs.length + " de " + P.length + " personas en la cartera";
-  }
-
-  $("#chipsFiltro").addEventListener("click", function (e) {
-    var b = e.target.closest("[data-f]");
-    if (!b) return;
-    filtro = b.getAttribute("data-f");
-    pintarChips(); pintarLista();
-  });
-  $("#listaPersonas").addEventListener("click", function (e) {
-    var b = e.target.closest("[data-i]");
-    if (!b) return;
-    sel = +b.getAttribute("data-i");
-    pintarLista(); pintarDetalle();
-    window.scrollTo({ top:0, behavior:"smooth" });
-  });
-  $("#buscaPersona").addEventListener("input", function (e) {
-    busca = e.target.value; pintarLista();
-  });
+  function pintarLista() {}
+  function pintarChips() {}
 
   /* ====================================================== Detalle ======= */
   function pintarDetalle() {
@@ -439,30 +394,51 @@
 
     var h = "";
 
-    /* ---------------- Cabecera de identidad -------------------------- */
-    h += '<div class="tarjeta exp-cab" style="margin-bottom:16px">' +
-      '<div class="exp-foto">' + ico("persona") + "</div>" +
-      '<div class="exp-id">' +
-        '<h2 class="exp-nombre">' + esc(p.n) + "</h2>" +
-        '<div class="exp-folio">Folio ' + esc(p.f) + " · CURP " + esc(p.curp) + "</div>" +
-        '<div class="exp-chips">' + chipUrg(p) +
-          '<span class="chip chip-neutro">' + p.ed + " años · " + esc(p.pais) + "</span>" +
-          '<span class="chip chip-neutro">' + esc(p.mun) + "</span>" +
-        "</div>" +
-        '<div class="exp-meta">' +
-          "<span>Última valoración<b>" + esc(p.ultima) + "</b></span>" +
-          "<span>Responsable clínico<b>" + esc(p.resp) + "</b></span>" +
-          "<span>Grupo familiar<b>" +
-            (p.grupoHref ? '<a href="' + p.grupoHref + '">' + esc(p.grupo) + "</a>" : "Sin grupo") + "</b></span>" +
-          "<span>Condiciones registradas<b>" + p.cond.length + "</b></span>" +
-          "<span>Canalizaciones<b>" + p.can.length + "</b></span>" +
-        "</div>" +
-      "</div>" +
-      '<div class="exp-acc">' +
-        '<a class="btn btn-secundario" href="expediente-detalle.html">' + ico("expedientes") + "Abrir expediente</a>" +
-        '<a class="btn btn-secundario btn-s" href="expediente-detalle.html?tab=bitacora">' + ico("doc") + "Ver bitácora</a>" +
-      "</div>" +
-    "</div>";
+    /* ---------------- Banner de Caso Activo --------------------------- */
+    h += '<div class="banner-caso-activo">' +
+      '<div class="bca-superior">' +
+        '<div class="bca-persona">' +
+          '<div class="bca-foto">' + ico("persona") + '</div>' +
+          '<div class="bca-datos">' +
+            '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+              '<span class="bca-nombre">' + esc(p.n) + '</span>' +
+              '<span class="folio-tag">Folio ' + esc(p.f) + '</span>' +
+              chipUrg(p) +
+            '</div>' +
+            '<div class="bca-meta">' +
+              '<span>CURP: <b>' + esc(p.curp) + '</b></span>' +
+              '<span>·</span>' +
+              '<span><b>' + p.ed + ' años</b> · ' + esc(p.pais) + '</span>' +
+              '<span>·</span>' +
+              '<span>Municipio: <b>' + esc(p.mun) + '</b></span>' +
+              '<span>·</span>' +
+              '<span>Última valoración: <b>' + esc(p.ultima) + '</b></span>' +
+              '<span>·</span>' +
+              '<span>Responsable: <b>' + esc(p.resp) + '</b></span>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="flex gap-8">' +
+          '<a class="btn btn-secundario btn-s" href="expediente-detalle.html">' + ico("expedientes") + 'Abrir expediente</a>' +
+          '<a class="btn btn-secundario btn-s" href="expediente-detalle.html?tab=bitacora">' + ico("doc") + 'Ver bitácora</a>' +
+        '</div>' +
+      '</div>' +
+      '<div class="bca-controles">' +
+        '<div class="bca-nav">' +
+          '<button type="button" class="bca-nav-btn" id="btnCasoAnt"' + (sel === 0 ? ' disabled' : '') + '>' +
+            ico("izq") + 'Anterior' +
+          '</button>' +
+          '<span class="bca-nav-pos">Persona ' + (sel + 1) + ' de ' + P.length + ' en fila</span>' +
+          '<button type="button" class="bca-nav-btn" id="btnCasoSig"' + (sel === P.length - 1 ? ' disabled' : '') + '>' +
+            'Siguiente ' + ico("der") +
+          '</button>' +
+        '</div>' +
+        '<button type="button" class="btn-cambiar-caso" id="btnAbrirSelector">' +
+          '<svg viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>' +
+          'Cambiar persona / Buscar <kbd>Ctrl+K</kbd>' +
+        '</button>' +
+      '</div>' +
+    '</div>';
 
     /* ---------------- Rutas con plazo, antes que nada ---------------- */
     if (rutas.length) {
@@ -725,28 +701,32 @@
     });
 
     /* Catálogo: marcar agrega la condición; desmarcar solo retira lo no guardado */
-    det.querySelector("#catGrupos").addEventListener("change", function (e) {
-      var chk = e.target.closest("[data-c]");
-      if (!chk) return;
-      var cod = chk.getAttribute("data-c");
-      var ya = p.cond.filter(function (c) { return c.cod === cod; })[0];
-      if (chk.checked && !ya) {
-        p.cond.push({ cod:cod, t:chk.getAttribute("data-t"), grupo:chk.getAttribute("data-g"),
-                      est:"Activa", fecha:hoy(), por:"Salud · M. Gómez", nuevo:true });
-      } else if (!chk.checked && ya) {
-        if (!ya.nuevo) { chk.checked = true; return; }   /* lo guardado no se retira */
-        p.cond.splice(p.cond.indexOf(ya), 1);
-      }
-      p.sucio = true;
-      pintarDetalle();
-    });
+    var catGr = det.querySelector("#catGrupos");
+    if (catGr) {
+      catGr.addEventListener("change", function (e) {
+        var chk = e.target.closest("[data-c]");
+        if (!chk) return;
+        var cod = chk.getAttribute("data-c");
+        var ya = p.cond.filter(function (c) { return c.cod === cod; })[0];
+        if (chk.checked && !ya) {
+          p.cond.push({ cod:cod, t:chk.getAttribute("data-t"), grupo:chk.getAttribute("data-g"),
+                        est:"Activa", fecha:hoy(), por:"Salud · M. Gómez", nuevo:true });
+        } else if (!chk.checked && ya) {
+          if (!ya.nuevo) { chk.checked = true; return; }   /* lo guardado no se retira */
+          p.cond.splice(p.cond.indexOf(ya), 1);
+        }
+        p.sucio = true;
+        pintarDetalle();
+      });
+    }
 
     var bc = det.querySelector("#buscaCat");
-    bc.addEventListener("input", function () { pintarCatalogo(bc.value); });
+    if (bc) bc.addEventListener("input", function () { pintarCatalogo(bc.value); });
 
     /* Condición fuera del catálogo */
     function agregarOtra() {
       var inp = det.querySelector("#otraCond");
+      if (!inp) return;
       var v = inp.value.trim();
       if (!v) { inp.focus(); return; }
       p.cond.push({ cod:"—", t:v, grupo:"Otra · pendiente de codificar", est:"Activa",
@@ -754,10 +734,14 @@
       p.sucio = true;
       pintarDetalle();
     }
-    det.querySelector("#btnOtra").addEventListener("click", agregarOtra);
-    det.querySelector("#otraCond").addEventListener("keydown", function (e) {
-      if (e.key === "Enter") { e.preventDefault(); agregarOtra(); }
-    });
+    var bOtra = det.querySelector("#btnOtra");
+    if (bOtra) bOtra.addEventListener("click", agregarOtra);
+    var inpOtra = det.querySelector("#otraCond");
+    if (inpOtra) {
+      inpOtra.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") { e.preventDefault(); agregarOtra(); }
+      });
+    }
 
     /* Estado y retiro de condiciones */
     det.querySelectorAll("[data-est]").forEach(function (s) {
@@ -776,71 +760,86 @@
     });
 
     /* Guardar / descartar */
-    det.querySelector("#btnGuardar").addEventListener("click", function () {
-      p.cond.forEach(function (c) { delete c.nuevo; });
-      p.sucio = false;
-      p.ultima = hoy();
-      if (p.resp === "Sin asignar") p.resp = "María Gómez Pérez";
-      if (p.urg === "pend" || p.urg === "inm") p.urg = p.can.length ? "seg" : "pend";
-      pintarLista(); pintarChips(); pintarDetalle();
-      avisar("jade", "check", "Valoración guardada",
-        "Se asentó en la bitácora del expediente " + p.f + " con su autor, área y fecha (RF08).");
-    });
-    det.querySelector("#btnDescartar").addEventListener("click", function () {
-      p.cond = p.cond.filter(function (c) { return !c.nuevo; });
-      p.sucio = false;
-      pintarDetalle();
-    });
+    var bG = det.querySelector("#btnGuardar");
+    if (bG) {
+      bG.addEventListener("click", function () {
+        p.cond.forEach(function (c) { delete c.nuevo; });
+        p.sucio = false;
+        p.ultima = hoy();
+        if (p.resp === "Sin asignar") p.resp = "María Gómez Pérez";
+        if (p.urg === "pend" || p.urg === "inm") p.urg = p.can.length ? "seg" : "pend";
+        pintarLista(); pintarChips(); pintarDetalle();
+        avisar("jade", "check", "Valoración guardada",
+          "Se asentó en la bitácora del expediente " + p.f + " con su autor, área y fecha (RF08).");
+      });
+    }
+    var bD = det.querySelector("#btnDescartar");
+    if (bD) {
+      bD.addEventListener("click", function () {
+        p.cond = p.cond.filter(function (c) { return !c.nuevo; });
+        p.sucio = false;
+        pintarDetalle();
+      });
+    }
 
     /* Precargar la canalización desde una ruta obligada */
     det.querySelectorAll("[data-pre]").forEach(function (b) {
       b.addEventListener("click", function () {
         var v = VULN_IDX[b.getAttribute("data-pre")];
         if (!v || !v.canaliza) return;
-        det.querySelector("#cInst").value = v.canaliza.inst;
-        det.querySelector("#cMotivo").value = v.canaliza.motivo;
+        var ci = det.querySelector("#cInst"); if (ci) ci.value = v.canaliza.inst;
+        var cm = det.querySelector("#cMotivo"); if (cm) cm.value = v.canaliza.motivo;
         pintarOficio();
-        det.querySelector("#cCita").focus();
-        det.querySelector("#cCita").scrollIntoView({ behavior:"smooth", block:"center" });
+        var cc = det.querySelector("#cCita");
+        if (cc) { cc.focus(); cc.scrollIntoView({ behavior:"smooth", block:"center" }); }
       });
     });
 
     /* Vista previa en vivo */
     ["#cInst", "#cMotivo", "#cCita", "#cAcomp"].forEach(function (s) {
-      det.querySelector(s).addEventListener("input", pintarOficio);
-      det.querySelector(s).addEventListener("change", pintarOficio);
+      var el = det.querySelector(s);
+      if (el) {
+        el.addEventListener("input", pintarOficio);
+        el.addEventListener("change", pintarOficio);
+      }
     });
 
     /* Generación del oficio */
-    det.querySelector("#btnOficio").addEventListener("click", function () {
-      var mot = det.querySelector("#cMotivo");
-      if (!mot.value.trim()) {
-        det.querySelector("#cErr").style.display = "block";
-        mot.closest(".campo").classList.add("error");
-        mot.focus();
-        return;
-      }
-      var cita = det.querySelector("#cCita").value;
-      var folio = nuevoFolio();
-      p.can.push({ fecha:hoy(), inst:det.querySelector("#cInst").value, motivo:mot.value.trim(),
-                   of:folio, cita:cita ? cita.split("-").reverse().join("/") : "",
-                   est:"Borrador · pendiente de firma" });
-      if (p.urg !== "seg" && p.urg !== "fin") p.urg = "seg";
-      p.ultima = hoy();
-      pintarLista(); pintarChips(); pintarDetalle();
-      avisar("jade", "oficios", "Oficio " + folio + " generado en borrador",
-        "Queda pendiente de la firma del Director de Área. Se adjuntó al expediente " + p.f +
-        " y se registró en la bitácora.");
-    });
+    var bOf = det.querySelector("#btnOficio");
+    if (bOf) {
+      bOf.addEventListener("click", function () {
+        var mot = det.querySelector("#cMotivo");
+        if (!mot || !mot.value.trim()) {
+          var err = det.querySelector("#cErr");
+          if (err) err.style.display = "block";
+          if (mot) { mot.closest(".campo").classList.add("error"); mot.focus(); }
+          return;
+        }
+        var citaEl = det.querySelector("#cCita");
+        var cita = citaEl ? citaEl.value : "";
+        var folio = nuevoFolio();
+        var instEl = det.querySelector("#cInst");
+        p.can.push({ fecha:hoy(), inst:instEl ? instEl.value : "", motivo:mot.value.trim(),
+                     of:folio, cita:cita ? cita.split("-").reverse().join("/") : "",
+                     est:"Borrador · pendiente de firma" });
+        if (p.urg !== "seg" && p.urg !== "fin") p.urg = "seg";
+        p.ultima = hoy();
+        pintarLista(); pintarChips(); pintarDetalle();
+        avisar("jade", "oficios", "Oficio " + folio + " generado en borrador",
+          "Queda pendiente de la firma del Director de Área. Se adjuntó al expediente " + p.f +
+          " y se registró en la bitácora.");
+      });
+    }
   }
 
-  /* Aviso efímero al principio del detalle */
+  /* Aviso efímero y Toast flotante */
   function avisar(tono, icono, titulo, texto) {
     var d = document.createElement("div");
     d.className = "aviso aviso-" + tono;
     d.innerHTML = ico(icono) + "<span><strong>" + esc(titulo) + "</strong>" + esc(texto) + "</span>";
     var det = document.getElementById("detalle");
     det.insertBefore(d, det.firstChild);
+    if (SIMH.toast) SIMH.toast(titulo, tono === "jade" ? "ok" : "alerta");
     window.scrollTo({ top:0, behavior:"smooth" });
   }
 
@@ -850,9 +849,46 @@
   if (q) {
     P.forEach(function (p, i) { if (p.f.indexOf(q) >= 0) sel = i; });
   }
-  pintarChips();
-  pintarLista();
+
+  var gestor = SIMH.gestorCaso({
+    items: P,
+    indiceInicial: sel,
+    titulo: "Seleccionar Persona para Valoración",
+    placeholder: "Buscar por nombre, folio o CURP...",
+    filtraItem: function(p, txt) {
+      if (!txt) return true;
+      var t = (p.n + " " + p.f + " " + p.curp + " " + p.pais + " " + p.mun).toLowerCase();
+      return t.indexOf(txt.toLowerCase()) >= 0;
+    },
+    renderItem: function(p, esActivo, idx) {
+      return '<button type="button" class="drawer-item' + (esActivo ? ' activo' : '') + '" data-idx="' + idx + '">' +
+        '<div class="drawer-item-avatar">' + esc(p.n.charAt(0)) + '</div>' +
+        '<div class="drawer-item-txt">' +
+          '<span class="drawer-item-nom">' + esc(p.n) + '</span>' +
+          '<span class="drawer-item-sub">Folio ' + esc(p.f) + ' · ' + p.ed + ' años · ' + esc(p.pais) + '</span>' +
+        '</div>' +
+        chipUrg(p) +
+      '</button>';
+    },
+    onSelect: function(p, idx) {
+      sel = idx;
+      pintarDetalle();
+      window.scrollTo({ top:0, behavior:"smooth" });
+    }
+  });
+
   pintarDetalle();
+
+  /* Eventos de navegación y apertura del selector */
+  document.addEventListener("click", function(e) {
+    if (e.target.closest("#btnAbrirSelector") || e.target.closest("#btnBuscar")) {
+      gestor.abrir();
+    } else if (e.target.closest("#btnCasoAnt")) {
+      gestor.anterior();
+    } else if (e.target.closest("#btnCasoSig")) {
+      gestor.siguiente();
+    }
+  });
 })();
 </script>
 </body>

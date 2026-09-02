@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Administración · Usuarios, permisos y bitácora · SIMH</title>
+<title>Administración · Usuarios, permisos y bitácora · SIAMH</title>
 <link rel="icon" href="assets/img/simh-isotipo-96.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -156,7 +156,7 @@
   </div>
 
   <details class="plegable" id="avisoPermisos">
-    <summary>Cómo funcionan los permisos en el SIMH</summary>
+    <summary>Cómo funcionan los permisos en el SIAMH</summary>
     <div class="cuerpo" id="avisoPermisosCuerpo"></div>
   </details>
 
@@ -361,22 +361,22 @@
      ================================================================== */
   var BIT = [
     { t:"2026-08-27 11:09", u:"María Gómez Pérez", rol:"capturista", mod:"registro",
-      acc:"Alta de expediente", reg:"SIMH-2026-TAP-0412", ip:"10.24.8.51" },
+      acc:"Alta de expediente", reg:"SIAMH-2026-TAP-0412", ip:"10.24.8.51" },
 
     { t:"2026-08-27 10:58", u:"María Gómez Pérez", rol:"capturista", mod:"expedientes",
-      acc:"Edición de expediente", reg:"SIMH-2026-TAP-0341", ip:"10.24.8.51",
+      acc:"Edición de expediente", reg:"SIAMH-2026-TAP-0341", ip:"10.24.8.51",
       oficio:"SFS/0943/2026",
       cambio:{ campo:"CURP", antes:"MACY940318MNEXXX01", despues:"MACY940318MCSRRL07" } },
 
     /* Un intento impedido es evidencia de que el control opera. Sin este
        renglón, RNF01 solo se puede afirmar; con él, se demuestra.        */
     { t:"2026-08-27 10:41", u:"Dr. Luis A. Ramírez Toledo", rol:"director", mod:"empleo",
-      acc:"Intento de consulta denegado", reg:"SIMH-2026-TAP-0412", ip:"10.24.8.12",
+      acc:"Intento de consulta denegado", reg:"SIAMH-2026-TAP-0412", ip:"10.24.8.12",
       denegado:1, nota:"Aislamiento entre direcciones (RNF01): Atención y Salud no consulta " +
                        "Empleabilidad." },
 
     { t:"2026-08-27 10:52", u:"Lic. Adriana Molina Sántiz", rol:"director", mod:"empleo",
-      acc:"Cierre de vinculación laboral", reg:"SIMH-2026-TAP-0658", ip:"10.24.8.33",
+      acc:"Cierre de vinculación laboral", reg:"SIAMH-2026-TAP-0658", ip:"10.24.8.33",
       cambio:{ campo:"Estado de la vinculación", antes:"Colocación vigente", despues:"Concluida · renuncia voluntaria" } },
 
     { t:"2026-08-27 09:40", u:"Sistema", rol:"—", mod:"canaliza",
@@ -384,7 +384,7 @@
       nota:"Canalización al Hospital General de Tapachula, generada por marcador de vulnerabilidad." },
 
     { t:"2026-08-27 09:31", u:"Dr. Luis A. Ramírez Toledo", rol:"director", mod:"salud",
-      acc:"Registro de condición de salud", reg:"SIMH-2026-TAP-0412", ip:"10.24.8.12" },
+      acc:"Registro de condición de salud", reg:"SIAMH-2026-TAP-0412", ip:"10.24.8.12" },
 
     { t:"2026-08-27 08:22", u:"Mtro. Jorge Pineda Ovalle", rol:"super", mod:"admin",
       acc:"Excepción de permiso otorgada", reg:"María Gómez Pérez", ip:"10.24.1.4",
@@ -399,7 +399,7 @@
       nota:"Reporte anonimizado: sin nombres ni CURP." },
 
     { t:"2026-08-26 16:05", u:"María Gómez Pérez", rol:"capturista", mod:"expedientes",
-      acc:"Intento de cierre denegado", reg:"SIMH-2026-TAP-0341", ip:"10.24.8.51",
+      acc:"Intento de cierre denegado", reg:"SIAMH-2026-TAP-0341", ip:"10.24.8.51",
       denegado:1, nota:"El perfil de Capturista Municipal no cierra expedientes: requiere oficio y " +
                        "autorización del Director de Área (RNF02)." },
 

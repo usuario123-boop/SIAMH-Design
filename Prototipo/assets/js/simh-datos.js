@@ -79,9 +79,9 @@
      Ninguna edad está escrita a mano: sale de la fecha de nacimiento contra
      el reloj del prototipo.                                                */
   var PERS = [
-    { f:"SIMH-2026-TAP-0412", n:"Yolanda Esperanza Martínez Cruz", ini:"YM", pais:"Honduras",
+    { f:"SIAMH-2026-TAP-0412", n:"Yolanda Esperanza Martínez Cruz", ini:"YM", pais:"Honduras",
       nac:"1994-03-18", curp:"MACY940318MCSRRL07", reg:"2026-08-20", mun:"Tapachula",
-      cap:"María Gómez Pérez", est:"activo", foto:true, grupo:"SIMH-FAM-2026-0341",
+      cap:"María Gómez Pérez", est:"activo", foto:true, grupo:"SIAMH-FAM-2026-0341",
       emis:[
         { fol:"CR-0731/2026", t:"2026-08-20 12:40", mot:"Primera emisión", sop:"gafete",
           por:"María Gómez Pérez" },
@@ -89,20 +89,20 @@
           por:"María Gómez Pérez" }
       ] },
 
-    { f:"SIMH-2026-TAP-0410", n:"Keiner Alexander Rojas Mora", ini:"KR", pais:"Venezuela",
+    { f:"SIAMH-2026-TAP-0410", n:"Keiner Alexander Rojas Mora", ini:"KR", pais:"Venezuela",
       nac:"2010-07-22", curp:"ROMK100722HNEXXX03", reg:"2026-08-22", mun:"Tapachula",
-      cap:"María Gómez Pérez", est:"activo", foto:false, grupo:"SIMH-FAM-2026-0338",
+      cap:"María Gómez Pérez", est:"activo", foto:false, grupo:"SIAMH-FAM-2026-0338",
       nna:"Separado", tutor:"Marisol Rojas Peña · titular del grupo familiar", emis:[] },
 
-    { f:"SIMH-2026-SUC-0177", n:"Marta Lucía Xicoténcatl Pérez", ini:"MX", pais:"Guatemala",
+    { f:"SIAMH-2026-SUC-0177", n:"Marta Lucía Xicoténcatl Pérez", ini:"MX", pais:"Guatemala",
       nac:"1985-02-14", curp:"XIPM850214MNEXXX07", reg:"2026-08-18", mun:"Suchiate",
-      cap:"Ing. Rubén Castellanos Díaz", est:"activo", foto:true, grupo:"SIMH-FAM-2026-0332",
+      cap:"Ing. Rubén Castellanos Díaz", est:"activo", foto:true, grupo:"SIAMH-FAM-2026-0332",
       emis:[
         { fol:"CR-0702/2026", t:"2026-08-18 10:15", mot:"Primera emisión", sop:"gafete",
           por:"Ing. Rubén Castellanos Díaz" }
       ] },
 
-    { f:"SIMH-2026-FCO-0094", n:"Yamilé Rodríguez Betancourt", ini:"YR", pais:"Cuba",
+    { f:"SIAMH-2026-FCO-0094", n:"Yamilé Rodríguez Betancourt", ini:"YR", pais:"Cuba",
       nac:"1997-07-12", curp:"ROBY970712MNEXXX04", reg:"2026-08-14", mun:"F. Comalapa",
       cap:"María Gómez Pérez", est:"activo", foto:true, grupo:"—",
       emis:[
@@ -110,13 +110,13 @@
           por:"María Gómez Pérez" }
       ] },
 
-    { f:"SIMH-2026-TAP-0411", n:"Jean-Baptiste Pierre Louis", ini:"JP", pais:"Haití",
+    { f:"SIAMH-2026-TAP-0411", n:"Jean-Baptiste Pierre Louis", ini:"JP", pais:"Haití",
       nac:"1999-01-18", curp:"PILJ990118HNEXXX05", reg:"2026-08-21", mun:"Tapachula",
       cap:"María Gómez Pérez", est:"activo", foto:false, grupo:"—", emis:[] },
 
-    { f:"SIMH-2026-TAP-0408", n:"Wilmer Josué Aguilar Paz", ini:"WA", pais:"Honduras",
+    { f:"SIAMH-2026-TAP-0408", n:"Wilmer Josué Aguilar Paz", ini:"WA", pais:"Honduras",
       nac:"2017-02-03", curp:"AUPW170203HNEXXX06", reg:"2026-08-20", mun:"Tapachula",
-      cap:"María Gómez Pérez", est:"activo", foto:true, grupo:"SIMH-FAM-2026-0341",
+      cap:"María Gómez Pérez", est:"activo", foto:true, grupo:"SIAMH-FAM-2026-0341",
       nna:"Acompañado", tutor:"Yolanda Esperanza Martínez Cruz · titular del grupo familiar",
       emis:[
         { fol:"CR-0733/2026", t:"2026-08-20 12:52", mot:"Primera emisión", sop:"gafete",
@@ -126,7 +126,7 @@
     /* Expediente cerrado: no se elimina nunca (RNF03), pero tampoco ampara
        una constancia vigente. Las pantallas lo dicen y dicen qué lo
        desbloquea, en vez de dibujar un botón apagado.                      */
-    { f:"SIMH-2026-HUI-0203", n:"Nery Estuardo Batz Cuc", ini:"NB", pais:"Guatemala",
+    { f:"SIAMH-2026-HUI-0203", n:"Nery Estuardo Batz Cuc", ini:"NB", pais:"Guatemala",
       nac:"1991-11-09", curp:"BACN911109HNEXXX02", reg:"2026-08-02", mun:"Huixtla",
       cap:"Sofía Márquez Ruiz", est:"cerrado", cierre:"2026-08-24",
       cierreMot:"Retorno voluntario asistido", foto:true, grupo:"—",
@@ -181,7 +181,7 @@
   ];
 
   var REVAL = [
-    { id:"r1", per:"SIMH-2026-TAP-0408", nivel:"basica",
+    { id:"r1", per:"SIAMH-2026-TAP-0408", nivel:"basica",
       destino:"Inscripción a 2.º de primaria en el ciclo en curso",
       inst:"Escuela Primaria Federal Belisario Domínguez · Tapachula",
       abierto:"2026-08-24", limite:"2026-09-01", limiteTxt:"Inicio del ciclo escolar",
@@ -193,7 +193,7 @@
               hizo:"Se emitió oficio a la Secretaría de Educación del Estado.",
               oficio:"SFS/0944/2026" } ] },
 
-    { id:"r2", per:"SIMH-2026-TAP-0410", nivel:"media",
+    { id:"r2", per:"SIAMH-2026-TAP-0410", nivel:"media",
       destino:"Revalidación parcial de 1.º y 2.º de bachillerato",
       inst:"Secretaría de Educación del Estado · Departamento de Revalidación",
       abierto:"2026-08-25", limite:"2026-09-15", limiteTxt:"Cierre de inscripciones extemporáneas",
@@ -204,21 +204,21 @@
                       "certificado apostillado, siendo que la parcial se resuelve por cotejo.",
               hizo:"", oficio:null } ] },
 
-    { id:"r3", per:"SIMH-2026-SUC-0177", nivel:"superior",
+    { id:"r3", per:"SIAMH-2026-SUC-0177", nivel:"superior",
       destino:"Revalidación de licenciatura en enfermería para ejercer en Chiapas",
       inst:"Secretaría de Educación del Estado · Departamento de Revalidación",
       abierto:"2026-08-19", limite:null, limiteTxt:"",
       req:{ cert:"si", plan:"si", apost:"si", trad:"tramite", ident:"si", curp:"si", pago:"falta" },
       neg:[] },
 
-    { id:"r4", per:"SIMH-2026-TAP-0411", nivel:"superior",
+    { id:"r4", per:"SIAMH-2026-TAP-0411", nivel:"superior",
       destino:"Revalidación de estudios técnicos en construcción",
       inst:"Secretaría de Educación del Estado · Departamento de Revalidación",
       abierto:"2026-08-22", limite:null, limiteTxt:"",
       req:{ cert:"si", plan:"falta", apost:"falta", trad:"falta", ident:"si", curp:"si", pago:"na" },
       neg:[] },
 
-    { id:"r5", per:"SIMH-2026-FCO-0094", nivel:"superior",
+    { id:"r5", per:"SIAMH-2026-FCO-0094", nivel:"superior",
       destino:"Revalidación de licenciatura en contaduría",
       inst:"Secretaría de Educación del Estado · Departamento de Revalidación",
       abierto:"2026-08-05", limite:null, limiteTxt:"", resuelto:"2026-08-24",

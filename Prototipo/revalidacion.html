@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Revalidación de Estudios · SIMH</title>
+<title>Revalidación de Estudios · SIAMH</title>
 <link rel="icon" href="assets/img/simh-isotipo-96.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -233,7 +233,14 @@
 
   function carteraReval() {
     var ord = REVAL.slice().sort(function (a, b) { return pesoR(a) - pesoR(b); });
-    return '<div class="cartera" role="listbox" aria-label="Casos de revalidación">' +
+    return '<div class="tarjeta maestro" style="padding:0">' +
+      '<div style="padding:12px 14px 10px;border-bottom:1px solid var(--linea);display:flex;align-items:center;justify-content:space-between">' +
+        '<span style="font-size:11.5px;font-weight:700;text-transform:uppercase;color:var(--gris);letter-spacing:.06em">Casos de revalidación</span>' +
+        '<button class="btn-colapsar-maestro" id="btnColapsarReval" type="button" title="Ocultar lista para ampliar el espacio (Alt + [)" aria-label="Ocultar lista">' +
+          '<svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg> Ocultar' +
+        '</button>' +
+      '</div>' +
+      '<div class="cartera" role="listbox" aria-label="Casos de revalidación" style="border:0;border-radius:0">' +
       ord.map(function (c) {
         var p = persona(c.per), e = estadoR(c), sl = c.id === rSel;
         return '<button class="cart-item" type="button" role="option" aria-selected="' + sl +
@@ -243,7 +250,7 @@
           '<span class="k-f">' + esc(NIVELES[c.nivel].t.split(" · ")[0]) + "</span>" +
           '<span class="k-e"><span class="chip ' + e.c + '">' + ico(e.i) + esc(e.t) +
           "</span></span></span></button>";
-      }).join("") + "</div>";
+      }).join("") + "</div></div>";
   }
 
   function accionReval(c) {
@@ -353,14 +360,61 @@
       : '<div class="vacio">' + ico("check") +
         "Ninguna institución ha negado la atención en este caso.</div>";
 
-    return '<div class="accion ' + a.tono + '">' + ico(a.i) +
+    var ord = REVAL.slice().sort(function (a, b) { return pesoR(a) - pesoR(b); });
+    var idxActual = ord.findIndex(function (x) { return x.id === c.id; });
+    if (idxActual < 0) idxActual = 0;
+
+    var banner = '<div class="banner-caso-activo">' +
+      '<div class="bca-superior">' +
+        '<div class="bca-persona">' +
+          '<div class="bca-foto">' + ico("persona") + '</div>' +
+          '<div class="bca-datos">' +
+            '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+              '<span class="bca-nombre" id="tReval" tabindex="-1">' + esc(p.n) + '</span>' +
+              '<span class="folio-tag">Exp. ' + esc(p.f) + '</span>' +
+              '<span class="chip ' + e.c + '">' + ico(e.i) + esc(e.t) + '</span>' +
+              '<span class="chip chip-neutro">' + esc(N.t.split(" · ")[0]) + '</span>' +
+            '</div>' +
+            '<div class="bca-meta">' +
+              '<span>Nivel: <b>' + N.t + '</b></span>' +
+              '<span>·</span>' +
+              '<span>Objetivo: <b>' + esc(c.destino) + '</b></span>' +
+              '<span>·</span>' +
+              '<span>Ante: <b>' + esc(c.inst) + '</b></span>' +
+              '<span>·</span>' +
+              '<span>Edad: <b>' + edad(p.nac) + ' años</b> (' + esc(p.pais) + ')</span>' +
+              (p.nna ? '<span>·</span><span>Acompaña: <b>' + esc(p.tutor) + '</b></span>' : '') +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="flex gap-8">' +
+          '<a class="btn btn-secundario btn-s" href="expediente-detalle.html">' + ico("expedientes") + 'Ver expediente</a>' +
+        '</div>' +
+      '</div>' +
+      '<div class="bca-controles">' +
+        '<div class="bca-nav">' +
+          '<button type="button" class="bca-nav-btn" id="btnCasoAnt"' + (idxActual <= 0 ? ' disabled' : '') + '>' +
+            ico("izq") + 'Anterior' +
+          '</button>' +
+          '<span class="bca-nav-pos">Caso ' + (idxActual + 1) + ' de ' + ord.length + ' en revalidación</span>' +
+          '<button type="button" class="bca-nav-btn" id="btnCasoSig"' + (idxActual >= ord.length - 1 ? ' disabled' : '') + '>' +
+            'Siguiente ' + ico("der") +
+          '</button>' +
+        '</div>' +
+        '<button type="button" class="btn-cambiar-caso" id="btnAbrirSelector">' +
+          '<svg viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>' +
+          'Cambiar caso / Buscar <kbd>Ctrl+K</kbd>' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+
+    return banner +
+      '<div class="accion ' + a.tono + '">' + ico(a.i) +
         '<div class="a-tx"><span class="a-t">' + esc(a.t) + "</span>" +
         '<span class="a-n">' + esc(a.n) + "</span></div>" +
         (a.btn ? '<div class="a-acc">' + a.btn + "</div>" : "") + "</div>" +
 
       '<div class="tarjeta" style="margin-bottom:16px">' +
-        '<div class="tarjeta-enc"><h2 class="sec-tit" id="tReval" tabindex="-1">' + esc(p.n) +
-          '</h2><span class="chip ' + e.c + '">' + ico(e.i) + esc(e.t) + "</span></div>" +
         '<div class="resumen-grupo"><h4>El trámite</h4><div class="resumen-lista">' +
           rd("Expediente", p.f + " · " + edad(p.nac) + " años · " + p.pais) +
           rd("Nivel", N.t) +
@@ -397,14 +451,11 @@
       c = REVAL.slice().sort(function (a, b) { return pesoR(a) - pesoR(b); })[0];
       rSel = c.id;
     }
-    return '<div class="g-reval"><div>' + carteraReval() + "</div>" +
-      "<div>" + detalleReval(c) + "</div></div>";
+    return detalleReval(c);
   }
 
   /* ------------------------------------- Eventos de revalidación ------- */
   function eventosReval() {
-    if (pest !== "reval") return;
-
     $$("[data-r]").forEach(function (b) {
       b.onclick = function () {
         rSel = this.getAttribute("data-r");
@@ -491,6 +542,7 @@
       'que los sostienen.</span></div>' +
     "</div>";
 
+  var gestor = null;
   function pinta() {
     $("#encAcc").innerHTML = "";
     $("#panel").innerHTML = vistaReval();
@@ -506,7 +558,52 @@
     });
   }
 
+  var ord = REVAL.slice().sort(function (a, b) { return pesoR(a) - pesoR(b); });
+  var idxInicial = ord.findIndex(function(c){ return c.id === rSel; });
+  if (idxInicial < 0) idxInicial = 0;
+
+  gestor = SIMH.gestorCaso({
+    items: ord,
+    indiceInicial: idxInicial,
+    titulo: "Seleccionar Caso de Revalidación",
+    placeholder: "Buscar por nombre, expediente o nivel...",
+    filtraItem: function(c, txt) {
+      if (!txt) return true;
+      var p = persona(c.per);
+      var t = (p.n + " " + p.f + " " + c.destino + " " + c.inst + " " + NIVELES[c.nivel].t).toLowerCase();
+      return t.indexOf(txt.toLowerCase()) >= 0;
+    },
+    renderItem: function(c, esActivo, idx) {
+      var p = persona(c.per), e = estadoR(c);
+      return '<button type="button" class="drawer-item' + (esActivo ? ' activo' : '') + '" data-idx="' + idx + '">' +
+        '<div class="drawer-item-avatar">' + esc(p.ini) + '</div>' +
+        '<div class="drawer-item-txt">' +
+          '<span class="drawer-item-nom">' + esc(p.n) + '</span>' +
+          '<span class="drawer-item-sub">Exp. ' + p.f + ' · ' + esc(NIVELES[c.nivel].t.split(" · ")[0]) + '</span>' +
+        '</div>' +
+        '<span class="chip ' + e.c + '">' + esc(e.t) + '</span>' +
+      '</button>';
+    },
+    onSelect: function(c, idx) {
+      rSel = c.id;
+      panelNeg = false;
+      pinta();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  });
+
   pinta();
+
+  /* Eventos de navegación y apertura del selector */
+  document.addEventListener("click", function(e) {
+    if (e.target.closest("#btnAbrirSelector")) {
+      gestor.abrir();
+    } else if (e.target.closest("#btnCasoAnt")) {
+      gestor.anterior();
+    } else if (e.target.closest("#btnCasoSig")) {
+      gestor.siguiente();
+    }
+  });
 })();
 </script>
 </body>

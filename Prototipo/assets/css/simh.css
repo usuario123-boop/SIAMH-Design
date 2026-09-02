@@ -63,14 +63,8 @@
   --hueso:#EFEDE8;
   --hueso-claro:#F7F6F3;
   --blanco:#FFFFFF;
-  --gris:#5F5F5F;
-  /* Era #8C8C8C: 3.36:1 sobre blanco y 2.87:1 sobre el hueso de la página,
-     por debajo del 4.5:1 que exige AA para texto normal — y lo usan las
-     migas de pan, los rótulos de dato y las fechas de la ruta, que son
-     texto para leer, no adorno. #6A6A6A es el gris más claro que pasa AA
-     sobre las dos superficies (5.41:1 y 4.62:1) y sigue siendo un escalón
-     más claro que --gris, así que la jerarquía no se pierde.             */
-  --gris-claro:#6A6A6A;
+  --gris:#444444;          /* Ratio de contraste elevado (6.4:1 sobre blanco / 5.5:1 sobre hueso) */
+  --gris-claro:#525252;    /* Pasa WCAG AA/AAA para textos y rótulos secundarios */
   --linea:#E4E0D8;
   --linea-suave:#EFECE5;
 
@@ -103,16 +97,22 @@ body{
 h1,h2{font-family:var(--f-titulo);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin:0}
 h1{font-size:19px;color:var(--guinda);line-height:1.25}
 h2{font-size:15px;color:var(--guinda)}
-/* Título de tarjeta: chrome discreto, no color de marca */
-h3{font-family:var(--f-texto);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;
+/* Título de tarjeta: chrome discreto, tamaño accesible */
+h3{font-family:var(--f-texto);font-size:12px;letter-spacing:.08em;text-transform:uppercase;
    font-weight:700;color:var(--gris);margin:0}
 a{color:var(--jade-900);text-decoration:none}
 a:hover{text-decoration:underline}
 p{margin:0 0 10px}
-small,.txt-min{font-size:12px;color:var(--gris);line-height:1.45}
+small,.txt-min{font-size:12.5px;color:var(--gris);line-height:1.45}
 .txt-gris{color:var(--gris)}
 .mono{font-variant-numeric:tabular-nums}
-:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
+:focus-visible{outline:2.5px solid var(--jade);outline-offset:2px}
+
+/* Enlace accesible para saltar directo al contenido (WCAG 2.4.1) */
+.saltar-enlace{position:fixed;top:-100px;left:16px;z-index:999;background:var(--jade-900);color:#fff;
+  padding:10px 18px;font-weight:700;font-size:13.5px;border-radius:var(--radio-s);
+  box-shadow:0 6px 18px rgba(0,0,0,.35);text-decoration:none;transition:top .15s ease}
+.saltar-enlace:focus{top:16px;outline:3px solid #fff;outline-offset:2px;text-decoration:none}
 
 .cenefa{height:7px;background-image:var(--cenefa);background-repeat:repeat-x;background-size:auto 7px}
 .cenefa-fina{height:4px;background-image:var(--cenefa);background-repeat:repeat-x;background-size:auto 4px}
@@ -134,8 +134,9 @@ small,.txt-min{font-size:12px;color:var(--gris);line-height:1.45}
 
 .marca{display:flex;align-items:center;gap:10px;min-width:calc(var(--sidebar-w) - 20px);color:#fff;text-decoration:none}
 .marca:hover{text-decoration:none}
-.marca svg{flex:none}
-.marca .marca-t{font-family:var(--f-titulo);font-size:14px;letter-spacing:.1em;line-height:1;font-weight:700}
+.marca svg,.marca img,.marca-logo{flex:none}
+.marca-logo{height:38px;width:auto;object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,.25))}
+.marca .marca-t{font-family:var(--f-titulo);font-size:15px;letter-spacing:.08em;line-height:1;font-weight:700}
 .marca .marca-s{font-size:10.5px;letter-spacing:.03em;opacity:.85;display:block;margin-top:2px;font-family:var(--f-texto)}
 
 .buscador{flex:1;max-width:420px;position:relative}
@@ -264,7 +265,126 @@ small,.txt-min{font-size:12px;color:var(--gris);line-height:1.45}
 .g-55-45{grid-template-columns:55fr 45fr;align-items:start}
 .g-2-1{grid-template-columns:2fr 1fr}
 .g-hero{grid-template-columns:minmax(300px,1.15fr) 2fr}
-.mt-16{margin-top:16px}.mt-20{margin-top:20px}.mt-28{margin-top:28px}
+/* ------------------------------------- 5.1 Banner de Caso Activo y Cajón Selector (Estándar de Gestión) */
+.banner-caso-activo{
+  background:var(--blanco);border:1px solid var(--linea);border-left:4px solid var(--jade);
+  border-radius:var(--radio);padding:14px 18px;margin-bottom:18px;
+  display:flex;flex-direction:column;gap:12px;box-shadow:0 1px 3px rgba(0,0,0,.03);
+}
+.bca-superior{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.bca-persona{display:flex;align-items:center;gap:14px}
+.bca-foto{
+  width:44px;height:44px;border-radius:var(--radio-s);background:var(--jade-050);
+  border:1px solid var(--jade-200);display:grid;place-items:center;flex:none;color:var(--jade-900);
+}
+.bca-foto svg{width:24px;height:24px;stroke:currentColor;fill:none}
+.bca-datos{display:flex;flex-direction:column;gap:3px}
+.bca-nombre{font-family:var(--f-titulos);font-size:18px;font-weight:700;color:var(--tinta);line-height:1.2}
+.bca-meta{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--gris);flex-wrap:wrap}
+.bca-meta b{color:var(--tinta);font-weight:600}
+.bca-meta .folio-tag{
+  background:var(--hueso);border:1px solid var(--linea);border-radius:var(--radio-s);
+  padding:2px 7px;font-family:var(--f-texto);font-size:12px;font-weight:700;color:var(--tinta);letter-spacing:.02em;
+}
+
+.bca-controles{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding-top:10px;border-top:1px solid var(--linea-suave);flex-wrap:wrap;
+}
+.bca-nav{display:flex;align-items:center;gap:6px}
+.bca-nav-btn{
+  display:inline-flex;align-items:center;gap:5px;height:32px;padding:0 11px;
+  background:var(--hueso-claro);border:1px solid var(--linea);border-radius:var(--radio-s);
+  font-family:var(--f-texto);font-size:12.5px;font-weight:600;color:var(--tinta);cursor:pointer;
+  transition:all .15s ease;
+}
+.bca-nav-btn:hover:not(:disabled){background:var(--jade-050);border-color:var(--jade);color:var(--jade-900)}
+.bca-nav-btn:disabled{opacity:.4;cursor:not-allowed}
+.bca-nav-btn svg{width:14px;height:14px;stroke:currentColor;fill:none}
+.bca-nav-pos{font-size:12px;font-weight:600;color:var(--gris);padding:0 6px;font-variant-numeric:tabular-nums}
+
+.btn-cambiar-caso{
+  display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 14px;
+  background:var(--jade-900);border:1px solid var(--jade-900);border-radius:var(--radio-s);
+  color:#fff;font-family:var(--f-texto);font-size:13px;font-weight:700;cursor:pointer;
+  transition:all .15s ease;
+}
+.btn-cambiar-caso:hover{background:var(--jade);border-color:var(--jade);color:#fff}
+.btn-cambiar-caso svg{width:15px;height:15px;stroke:#fff;fill:none}
+.btn-cambiar-caso kbd{
+  background:rgba(255,255,255,.2);border-radius:3px;padding:1px 5px;font-size:10.5px;font-family:inherit;
+}
+
+/* Cajón Lateral Deslizante (Drawer) */
+.drawer-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(2px);
+  z-index:950;opacity:0;pointer-events:none;transition:opacity .22s ease;
+}
+.drawer-backdrop.drawer-abierto{opacity:1;pointer-events:auto}
+
+.drawer-panel{
+  position:fixed;top:0;right:0;bottom:0;width:440px;max-width:92vw;
+  background:var(--blanco);z-index:951;transform:translateX(100%);
+  transition:transform .25s cubic-bezier(0.16,1,0.3,1);display:flex;flex-direction:column;
+  box-shadow:-8px 0 32px rgba(0,0,0,.2);
+}
+.drawer-backdrop.drawer-abierto .drawer-panel{transform:translateX(0)}
+
+.drawer-cab{
+  padding:16px 18px;border-bottom:1px solid var(--linea);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--hueso-claro);
+}
+.drawer-cab-tit{font-family:var(--f-titulos);font-size:16px;font-weight:700;color:var(--tinta);margin:0}
+.drawer-cerrar{
+  width:32px;height:32px;border-radius:var(--radio-s);border:1px solid var(--linea);
+  background:var(--blanco);display:grid;place-items:center;cursor:pointer;color:var(--gris);
+  transition:all .15s ease;
+}
+.drawer-cerrar:hover{background:var(--guinda-050);border-color:var(--guinda);color:var(--guinda-900)}
+.drawer-cerrar svg{width:16px;height:16px;stroke:currentColor;fill:none}
+
+.drawer-busqueda{padding:14px 18px;border-bottom:1px solid var(--linea-suave);background:var(--blanco)}
+.drawer-input{
+  width:100%;height:38px;border:1px solid var(--linea);border-radius:var(--radio-s);
+  padding:0 12px;font-family:var(--f-texto);font-size:13.5px;color:var(--tinta);outline:none;
+}
+.drawer-input:focus{border-color:var(--jade);box-shadow:0 0 0 2px var(--jade-050)}
+.drawer-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+
+.drawer-lista{flex:1;overflow-y:auto;padding:8px 12px}
+.drawer-item{
+  display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:var(--radio-s);
+  border:1px solid transparent;background:var(--blanco);cursor:pointer;margin-bottom:4px;
+  width:100%;text-align:left;font-family:var(--f-texto);transition:all .12s ease;
+}
+.drawer-item:hover{background:var(--jade-050);border-color:var(--jade-200)}
+.drawer-item.activo{background:var(--jade-050);border-color:var(--jade);border-left:4px solid var(--jade)}
+.drawer-item-avatar{
+  width:36px;height:36px;border-radius:var(--radio-s);background:var(--hueso);
+  display:grid;place-items:center;font-weight:700;font-size:12px;color:var(--tinta);flex:none;
+}
+.drawer-item.activo .drawer-item-avatar{background:var(--jade);color:#fff}
+.drawer-item-txt{flex:1;min-width:0}
+.drawer-item-nom{display:block;font-size:13.5px;font-weight:700;color:var(--tinta);line-height:1.25}
+.drawer-item-sub{display:block;font-size:12px;color:var(--gris);margin-top:2px}
+
+.drawer-pie{
+  padding:12px 18px;border-top:1px solid var(--linea);background:var(--hueso-claro);
+  font-size:12px;color:var(--gris);display:flex;align-items:center;justify-content:space-between;
+}
+
+/* Notificaciones flotantes Toast */
+.toast-contenedor{position:fixed;bottom:24px;right:24px;z-index:1000;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{
+  pointer-events:auto;display:inline-flex;align-items:center;gap:10px;background:var(--tinta);
+  color:#fff;padding:12px 18px;border-radius:var(--radio);font-size:13px;font-weight:600;
+  box-shadow:0 8px 24px rgba(0,0,0,.25);animation:toastEntra .2s ease;transition:opacity .2s ease,transform .2s ease;
+}
+.toast svg{width:16px;height:16px;stroke:#fff;fill:none;flex:none}
+.toast.toast-ok{background:var(--ok)}
+.toast.toast-alerta{background:var(--alerta)}
+.toast.toast-info{background:var(--jade-900)}
+@keyframes toastEntra{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 
 /* ------------------------------------- 6. Superficies (planas, sin sombra) */
 .tarjeta{background:var(--blanco);border:1px solid var(--linea);border-radius:var(--radio);padding:18px}
@@ -455,55 +575,109 @@ table.tabla .num{text-align:right;font-variant-numeric:tabular-nums}
 /* --------------------------------------------------- 15. Login (P1) ----- */
 .login{min-height:100vh;display:grid;grid-template-columns:52fr 48fr}
 
-/* -- Columna de marca: video de fondo + velo + contenido ------------------ */
+/* -- Columna de marca: video de fondo + velo luminoso + contenido ---------- */
 .login-marca{position:relative;overflow:hidden;padding:48px 52px;color:#fff;
-  /* Respaldo si el video no carga. Era un plano #2A0A15 casi negro; con un
-     degradado de guinda a jade la columna tiene fondo aunque falte el video. */
-  background:linear-gradient(150deg,#5A1226 0%,#2E0A18 48%,#0A3D38 100%);
+  background:
+    radial-gradient(circle at 85% 20%, rgba(0, 152, 135, 0.60) 0%, transparent 55%),
+    radial-gradient(circle at 15% 80%, rgba(201, 1, 102, 0.45) 0%, transparent 55%),
+    linear-gradient(140deg, #8C142A 0%, #54142B 38%, #0A534B 78%, #007D70 100%);
   display:flex;flex-direction:column;justify-content:space-between}
-/* El video entra más claro: la toma original es oscura y la columna se leía
-   apagada al lado del hueso del formulario. */
+/* Video de fondo con mayor brillo, saturación y modo de fusión */
 .login-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-  z-index:0;pointer-events:none;filter:brightness(1.28) saturate(1.06)}
-/* Velo: garantiza el contraste del texto SIN apagar la imagen entera. Antes
-   era un velo parejo del 62 % y por eso la columna se veía negra. Ahora el
-   peso se concentra en la banda izquierda, que es donde está el texto, y el
-   resto de la imagen queda claro: se sube el brillo donde no hay nada que
-   leer y se conserva el contraste donde sí lo hay.                       */
+  z-index:0;pointer-events:none;filter:brightness(1.65) contrast(1.12) saturate(1.35);
+  mix-blend-mode:screen;opacity:.55}
+/* Velo luminoso y sutil: garantiza contraste óptimo con frescura visual */
 .login-velo{position:absolute;inset:0;z-index:1;pointer-events:none;
   background:
-    linear-gradient(180deg,rgba(28,6,14,.34) 0%,rgba(28,6,14,.08) 45%,rgba(4,32,30,.52) 100%),
-    linear-gradient(90deg,rgba(16,4,10,.60) 0%,rgba(16,4,10,.20) 46%,rgba(16,4,10,0) 76%)}
-/* El isotipo actúa como textura, no como logotipo: sangra por el borde */
-.login-marca .marca-agua{position:absolute;z-index:1;right:-19%;bottom:-16%;
-  width:min(72%,560px);opacity:.15;pointer-events:none;filter:saturate(1.4)}
-/* Solo el contenido sube de capa: si esto alcanza a .login-video le quita el
-   position:absolute y el video pasa a ser un elemento de flujo. */
+    radial-gradient(circle at 85% 25%, rgba(0, 152, 135, 0.35) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(20, 5, 12, 0.12) 0%, rgba(0, 0, 0, 0) 50%, rgba(0, 48, 42, 0.22) 100%),
+    linear-gradient(90deg, rgba(20, 5, 12, 0.32) 0%, rgba(20, 5, 12, 0.08) 50%, rgba(20, 5, 12, 0) 85%)}
+/* El isotipo como textura luminosa con presencia viva */
+.login-marca .marca-agua{position:absolute;z-index:1;right:-14%;bottom:-10%;
+  width:min(76%,600px);opacity:.35;pointer-events:none;filter:saturate(1.3) drop-shadow(0 0 40px rgba(0,152,135,.4))}
+/* Solo el contenido sube de capa */
 .marca-tope,.marca-cuerpo,.marca-pie{position:relative;z-index:2}
 
 .marca-tope{display:flex;align-items:center;gap:11px;font-family:var(--f-titulo);
-  font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.90)}
-.marca-tope::before{content:"";width:26px;height:1px;background:rgba(255,255,255,.45);flex:none}
+  font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.95)}
+.marca-tope::before{content:"";width:26px;height:1px;background:rgba(255,255,255,.55);flex:none}
 
 .marca-cuerpo{max-width:460px;padding:32px 0}
-.marca-cuerpo h1{color:#fff;font-size:34px;line-height:1.18;letter-spacing:.055em;margin:0}
+.marca-cuerpo h1{color:#fff;font-size:34px;line-height:1.18;letter-spacing:.055em;margin:0;
+  text-shadow:0 2px 12px rgba(0,0,0,.25)}
 .marca-cuerpo .cenefa{width:168px;margin:22px 0 20px;opacity:.95}
-.marca-cuerpo p{font-size:15px;line-height:1.62;color:rgba(255,255,255,.90);margin:0;max-width:40ch}
+.marca-cuerpo p{font-size:15px;line-height:1.62;color:rgba(255,255,255,.94);margin:0;max-width:40ch;
+  text-shadow:0 1px 8px rgba(0,0,0,.2)}
 
 .marca-pie{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .marca-firma{font-family:var(--f-titulo);font-size:9px;letter-spacing:.13em;
-  line-height:1.9;color:rgba(255,255,255,.86)}
-.marca-entorno{font-size:10.5px;letter-spacing:.05em;color:rgba(255,255,255,.62);
-  border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:4px 11px;white-space:nowrap}
+  line-height:1.9;color:rgba(255,255,255,.90)}
+.marca-entorno{font-size:10.5px;letter-spacing:.05em;color:rgba(255,255,255,.78);
+  border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.15);backdrop-filter:blur(4px);
+  border-radius:999px;padding:4px 11px;white-space:nowrap}
 
-/* -- Columna de acceso ---------------------------------------------------- */
-.login-form{background:var(--hueso);display:flex;flex-direction:column;
+/* -- Columna de acceso (clara, limpia y moderna) -------------------------- */
+.login-form{
+  background:#F8FAFC;
+  background-image:
+    radial-gradient(at 100% 0%, rgba(0, 152, 135, 0.06) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(174, 25, 45, 0.04) 0px, transparent 50%);
+  display:flex;flex-direction:column;
   justify-content:center;align-items:center;padding:44px 40px}
-.login-form .caja{width:100%;max-width:392px}
-.login-form .tarjeta{padding:28px}
-.login-lockup{display:block;width:100%;max-width:304px;height:auto;margin:0 auto 26px}
-.login-form h2{font-size:16px;margin-bottom:6px}
-.login-pie{margin-top:auto;padding-top:30px;text-align:center;width:100%;max-width:392px}
+.login-form .caja{width:100%;max-width:408px}
+.login-form .tarjeta{
+  padding:32px 30px;
+  background:#FFFFFF;
+  border:1px solid #E2E8F0;
+  border-radius:14px;
+  box-shadow:0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.02)}
+.login-lockup{display:block;width:100%;max-width:304px;height:auto;margin:0 auto 24px}
+.login-form h2{font-size:18px;margin-bottom:6px;color:var(--guinda);letter-spacing:.04em}
+.login-form .txt-min{color:#525E6B}
+
+.login-form .campo label{color:#334155;font-size:11px;letter-spacing:.07em;font-weight:700}
+.login-form .campo input[type=text],
+.login-form .campo input[type=password]{
+  background:#FFFFFF;
+  border:1.5px solid #CBD5E1;
+  border-radius:8px;
+  font-size:14px;
+  color:var(--tinta);
+  transition:border-color .15s ease, box-shadow .15s ease}
+.login-form .campo input[type=text]:focus,
+.login-form .campo input[type=password]:focus{
+  border-color:var(--jade);
+  box-shadow:0 0 0 3px rgba(0, 152, 135, 0.16)}
+.login-form .campo .ayuda{color:#64748B;font-size:11.5px;line-height:1.42}
+
+.login-form .btn-primario{
+  background:linear-gradient(135deg, #00A693 0%, #008777 100%);
+  border:none;
+  box-shadow:0 4px 12px rgba(0, 152, 135, 0.25);
+  transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
+  font-size:14.5px;
+  letter-spacing:.02em}
+.login-form .btn-primario:hover{
+  background:linear-gradient(135deg, #00B39F 0%, #007668 100%);
+  box-shadow:0 6px 18px rgba(0, 152, 135, 0.35);
+  transform:translateY(-1px);
+  text-decoration:none}
+.login-form .btn-primario:active{
+  transform:translateY(0);
+  box-shadow:0 2px 8px rgba(0, 152, 135, 0.2)}
+
+.login-form .aviso-neutro{
+  background:#F0FDF9;
+  border:1px solid rgba(0, 152, 135, 0.20);
+  border-radius:10px;
+  color:#134E48;
+  padding:12px 14px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.02)}
+.login-form .aviso-neutro svg{stroke:var(--jade);stroke-width:1.8}
+.login-form .aviso-neutro strong{color:var(--jade-900)}
+
+.login-pie{margin-top:auto;padding-top:28px;text-align:center;width:100%;max-width:408px;color:#64748B}
+.login-pie a{color:var(--jade-900);font-weight:600}
 .firma-pie{font-family:var(--f-titulo);font-size:9px;letter-spacing:.11em;color:var(--guinda);line-height:1.8;margin-top:12px}
 
 /* Ojo de contraseña: el campo reserva el espacio, el botón no lo tapa */
@@ -511,8 +685,8 @@ table.tabla .num{text-align:right;font-variant-numeric:tabular-nums}
 .campo-clave input{padding-right:46px}
 .ver-clave{position:absolute;right:6px;top:50%;transform:translateY(-50%);
   background:none;border:0;cursor:pointer;color:var(--gris);line-height:0;padding:8px;
-  border-radius:var(--radio-s)}
-.ver-clave:hover{background:var(--hueso)}
+  border-radius:var(--radio-s);transition:background-color .15s}
+.ver-clave:hover{background:#F1F5F9}
 .ver-clave[aria-pressed=true]{color:var(--jade-900)}
 
 /* Errores del formulario: una sola región anunciada, encima de los campos */
@@ -816,3 +990,20 @@ h2[tabindex]:focus,h3[tabindex]:focus{outline:3px solid var(--jade);outline-offs
   .contenido{margin:0;padding:0}
   body{background:#fff}
 }
+
+/* ---------------------------------- 24. Modo de contraste forzado (a11y) - */
+@media (forced-colors: active){
+  .tarjeta, .tabla-caja, .kpi, .hero, .btn, .aviso, .sidebar, .menu-pop, .pasos, .filtros{
+    border: 1.5px solid ButtonText !important;
+  }
+  .btn-primario, .nav-item.activo, .chip-jade{
+    forced-color-adjust: none;
+    background: Highlight !important;
+    color: HighlightText !important;
+  }
+  :focus-visible{
+    outline: 3px solid Highlight !important;
+    outline-offset: 2px;
+  }
+}
+

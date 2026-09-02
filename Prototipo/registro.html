@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Registro de Persona · SIMH</title>
+<title>Registro de Persona · SIAMH</title>
 <link rel="icon" href="assets/img/simh-isotipo-96.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -308,7 +308,7 @@
           <div class="check"><input type="radio" name="fam" id="famNueva"><label for="famNueva" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--tinta);font-size:13.5px;margin:0">Crear grupo familiar y registrar a esta persona como titular</label></div>
           <div class="check"><input type="radio" name="fam" id="famExiste"><label for="famExiste" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--tinta);font-size:13.5px;margin:0">Vincular a un grupo familiar existente</label></div>
           <div class="campo oculto mt-16" id="campoFolioFam" style="max-width:340px;margin-bottom:0">
-            <label>Folio del grupo familiar</label><input type="text" placeholder="SIMH-FAM-2026-0341"></div>
+            <label>Folio del grupo familiar</label><input type="text" placeholder="SIAMH-FAM-2026-0341"></div>
         </fieldset>
 
         <!-- Bloque condicional: solo si la persona es menor de edad -->
@@ -420,7 +420,7 @@
 
         <div class="resumen-dato" style="border:0;padding:0 0 10px">
           <span class="r-lab">Folio provisional</span>
-          <span class="r-val" style="color:var(--guinda);font-weight:700">SIMH-2026-TAP-0000</span>
+          <span class="r-val" style="color:var(--guinda);font-weight:700">SIAMH-2026-TAP-0000</span>
         </div>
         <div class="resumen-dato" style="border:0;padding:0 0 10px">
           <span class="r-lab">Persona</span><span class="r-val" id="ladoNombre">—</span>
@@ -442,7 +442,7 @@
     <div class="exito">
       <div class="marca-ok" id="icoExito"></div>
       <h2 style="color:var(--jade-900)">Expediente creado</h2>
-      <div class="folio" id="folioExito">SIMH-2026-TAP-0413</div>
+      <div class="folio" id="folioExito">SIAMH-2026-TAP-0413</div>
       <p class="txt-min" id="txtExito"></p>
       <div class="cta-exito" id="ctaExito"></div>
       <div class="otras-acc">Otras acciones para este expediente</div>
@@ -857,7 +857,7 @@
   /* --------------------------------------------------------- Guardar ---- */
   function guardar() {
     altasSesion++;
-    folioActual = "SIMH-2026-TAP-" + String(412 + altasSesion).padStart(4, "0");
+    folioActual = "SIAMH-2026-TAP-" + String(412 + altasSesion).padStart(4, "0");
 
     $("#zonaCaptura").classList.add("oculto");
     $("#pasos").classList.add("oculto");
@@ -946,10 +946,10 @@
     if (acomp) {
       document.getElementById("famExiste").checked = true;
       $("#campoFolioFam").classList.remove("oculto");
-      $("#campoFolioFam").querySelector("input").value = "SIMH-FAM-2026-0341";
+      $("#campoFolioFam").querySelector("input").value = "SIAMH-FAM-2026-0341";
       $("#avisoAcomp").classList.remove("oculto");
       $("#avisoAcomp").innerHTML = ico("familia") +
-        "<span><strong>Registro de acompañante del grupo SIMH-FAM-2026-0341</strong>" +
+        "<span><strong>Registro de acompañante del grupo SIAMH-FAM-2026-0341</strong>" +
         "Se conservan los datos de movilidad y residencia del expediente " + folioPrevio +
         ". Capture únicamente la identidad de la persona.</span>";
     } else {
