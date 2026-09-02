@@ -275,6 +275,22 @@
     .g-maestro{grid-template-columns:1fr}
     .g-maestro > .maestro{position:static}
   }
+
+  /* Ruta visual de empleabilidad */
+  .ruta-empleo-barra{display:flex;background:var(--hueso);border-radius:var(--radio);padding:8px 12px;margin:12px 0 16px;gap:8px;align-items:center;overflow-x:auto}
+  .reb-paso{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--gris);white-space:nowrap;padding:4px 8px;border-radius:var(--radio-s);text-decoration:none}
+  .reb-paso.activo{background:var(--blanco);color:var(--jade-900);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .reb-paso.cumplido{color:var(--jade-900)}
+  .reb-num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--linea);font-size:11px;font-weight:700;color:var(--gris)}
+  .reb-paso.activo .reb-num{background:var(--jade);color:#fff}
+  .reb-paso.cumplido .reb-num{background:var(--jade-050);color:var(--jade-900)}
+  .reb-sep{color:var(--linea-fuerte);font-size:11px}
+
+  /* Chips de oficios */
+  .chip-oficio{display:inline-flex;align-items:center;gap:6px;background:var(--blanco);border:1px solid var(--linea);padding:6px 10px;border-radius:var(--radio-s);font-size:12px;cursor:pointer;user-select:none;transition:all .15s}
+  .chip-oficio:hover{border-color:var(--arena)}
+  .chip-oficio.sel{background:var(--jade-050);border-color:var(--jade);color:var(--jade-900);font-weight:700}
+  .chip-oficio input{margin:0;accent-color:var(--jade)}
 </style>
 </head>
 <body>
@@ -369,6 +385,15 @@
     "Servicios de hospedaje y alimentos", "Servicios de limpieza", "Textil y confección",
     "Transporte y almacenaje"];
 
+  var OFICIOS_CAT = [
+    "Albañilería y acabados", "Carpintería y herrería", "Cocinero(a) / Panadería",
+    "Costura y confección industrial", "Electricidad residencial/industrial",
+    "Soldadura y pailería", "Chofer / Transporte de carga", "Mecánica automotriz",
+    "Limpieza y mantenimiento", "Ventas y cajero(a)", "Atención a clientes y recepcionista",
+    "Auxiliar administrativo / Facturación", "Trabajo de campo / Agropecuario",
+    "Hotelería y camarista", "Seguridad y vigilancia"
+  ];
+
   var MEDIOS = ["Llamada telefónica al patrón", "Llamada telefónica a la persona",
     "Visita al centro de trabajo", "Comparecencia en ventanilla"];
 
@@ -385,6 +410,26 @@
                HTI:"Haití", CUB:"Cuba", VEN:"Venezuela", MEX:"México" };
 
   var RESP = "Lic. Adriana Molina Sántiz";
+
+  function getDiag(p) {
+    if (!p.diag) {
+      p.diag = {
+        sit: p.v.some(function(v){ return v.con===1 && !v.fin; }) ? "empleado" : "busqueda",
+        oficios: [p.perfil.split(" y ")[0] || "General"],
+        expAnios: parseInt(p.exp, 10) || 2,
+        expDetalle: p.exp || "",
+        esc: p.esc || "Secundaria concluida",
+        idiomaEsp: "Nativo / Fluido",
+        habDigital: "Básico",
+        turnos: p.disp || "Tiempo completo",
+        dispTraslado: "Sí, dentro del Soconusco",
+        sueldoMin: "$6,500 - $8,000 mensuales",
+        interesCapacita: !!(p.cursos && p.cursos.indexOf("ICATECH") >= 0),
+        cursoDeseado: p.cursos && p.cursos.indexOf("Sin") < 0 ? p.cursos : "Panadería y gastronomía básica"
+      };
+    }
+    return p.diag;
+  }
 
   /* ======================================================================
      2. Cartera. Datos a mano, como en el resto del prototipo.
@@ -889,7 +934,6 @@
           '</div>' +
         '</div>' +
         '<div class="flex gap-8">' +
-          '<button class="btn btn-secundario btn-s" type="button" id="btnNueva">' + ico("mas") + 'Registrar vinculación</button>' +
           '<a class="btn btn-secundario btn-s" href="expediente-detalle.html">' + ico("expedientes") + 'Ver expediente</a>' +
         '</div>' +
       '</div>' +
@@ -1113,22 +1157,176 @@
           (r.ac ? '<span class="rq-obs"><b>Acompañamiento desde el ' + fecha(r.ac.desde) + " · " +
                   esc(r.ac.quien) + ".</b> " + esc(r.ac.nota) + "</span>" : "") +
           "</span></div>";
-      }).join("") +
+     }).join("") +
       '<div class="tarjeta-pie">Ninguno impide postularse ni acudir a una entrevista: impiden <b>firmar</b>.' +
       "</div></div>";
   }
 
+  function rutaEmpleoBarra(p) {
+    var vg = vigente(p);
+    var tieneCursos = p.cursos && p.cursos.indexOf("Sin") < 0;
+    var tieneVinc = p.v && p.v.length > 0;
+    var tieneHitos = vg && hitos(vg).some(function (h) { return h.est === "hecho"; });
+
+    var pasos = [
+      { id:"diag", num:1, t:"Diagnóstico Laboral", act: pest === "diag", done: true },
+      { id:"cap",  num:2, t:"Capacitación ICATECH", link:"capacitacion.html", act: false, done: tieneCursos },
+      { id:"vinc", num:3, t:"Vinculación & Entrevistas", act: pest === "vinc", done: tieneVinc },
+      { id:"seg",  num:4, t:"Seguimiento (15 y 30 días)", act: pest === "seg", done: tieneHitos }
+    ];
+
+    return '<div class="ruta-empleo-barra">' +
+      pasos.map(function (s, idx) {
+        var cls = s.act ? " activo" : (s.done ? " cumplido" : "");
+        var contenido = '<span class="reb-num">' + (s.done && !s.act ? "✓" : s.num) + '</span>' +
+          '<span>' + esc(s.t) + '</span>';
+        var sep = idx < pasos.length - 1 ? '<span class="reb-sep">➔</span>' : '';
+        if (s.link) {
+          return '<a href="' + s.link + '" class="reb-paso' + cls + '" title="Ir al módulo de Capacitación">' + contenido + '</a>' + sep;
+        }
+        return '<button type="button" class="reb-paso' + cls + '" data-tab="' + s.id + '" style="background:none;border:0;cursor:pointer;font-family:inherit">' +
+          contenido + '</button>' + sep;
+      }).join("") +
+    '</div>';
+  }
+
+  function bloqueDiagnostico(p) {
+    var dg = getDiag(p);
+    var oficiosSel = dg.oficios || [];
+
+    var opcionesOficios = OFICIOS_CAT.map(function (o) {
+      var sel = oficiosSel.indexOf(o) >= 0;
+      return '<label class="chip-oficio' + (sel ? ' sel' : '') + '">' +
+        '<input type="checkbox" name="dgOficio" value="' + esc(o) + '"' + (sel ? ' checked' : '') + '> ' +
+        esc(o) +
+      '</label>';
+    }).join("");
+
+    return '<div class="tarjeta">' +
+      '<div class="tarjeta-enc">' +
+        '<div>' +
+          '<h3 class="sec-tit" style="margin:0">Diagnóstico Laboral y Perfil de Empleabilidad</h3>' +
+          '<span class="txt-min">Módulos 1 y 2 (SRS) · Evaluación para determinar ruta de capacitación o vinculación directa</span>' +
+        '</div>' +
+        '<span class="chip chip-jade">' + ico("check") + 'Expediente Activo</span>' +
+      '</div>' +
+
+      '<form id="formDiag" onsubmit="return false" style="margin-top:14px">' +
+        '<div class="fila">' +
+          '<div class="campo" style="flex:1">' +
+            '<label for="dgSit">Situación laboral actual <span class="req">*</span></label>' +
+            '<select id="dgSit">' +
+              '<option value="busqueda"' + (dg.sit === "busqueda" ? " selected" : "") + '>Búsqueda activa de empleo</option>' +
+              '<option value="desempleado"' + (dg.sit === "desempleado" ? " selected" : "") + '>Desempleado(a)</option>' +
+              '<option value="informal"' + (dg.sit === "informal" ? " selected" : "") + '>Ocupación informal o jornalero</option>' +
+              '<option value="autoempleo"' + (dg.sit === "autoempleo" ? " selected" : "") + '>Autoempleo / Oficio propio</option>' +
+              '<option value="empleado"' + (dg.sit === "empleado" ? " selected" : "") + '>Empleado(a) actualmente</option>' +
+            '</select>' +
+          '</div>' +
+          '<div class="campo" style="flex:1">' +
+            '<label for="dgEsc">Escolaridad alcanzada <span class="req">*</span></label>' +
+            '<select id="dgEsc">' +
+              ['Primaria concluida', 'Primaria trunca', 'Secundaria concluida', 'Secundaria trunca',
+               'Bachillerato concluido', 'Técnico / Carrera técnica', 'Licenciatura (trunca)', 'Licenciatura (concluida)', 'Sin instrucción formal'].map(function(e){
+                return '<option value="' + esc(e) + '"' + (dg.esc === e ? ' selected' : '') + '>' + esc(e) + '</option>';
+              }).join("") +
+            '</select>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="campo">' +
+          '<label>Oficios y competencias técnicas declaradas <span class="req">*</span> <small class="txt-min">(Selección múltiple)</small></label>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px" id="contChipsOficios">' +
+            opcionesOficios +
+          '</div>' +
+        '</div>' +
+
+        '<div class="fila">' +
+          '<div class="campo" style="flex:1">' +
+            '<label for="dgExpAnios">Años de experiencia en el oficio <span class="req">*</span></label>' +
+            '<input type="number" id="dgExpAnios" min="0" max="50" value="' + (dg.expAnios || 2) + '">' +
+          '</div>' +
+          '<div class="campo" style="flex:2">' +
+            '<label for="dgExpDet">Detalle de experiencia / Puestos en país de origen</label>' +
+            '<input type="text" id="dgExpDet" value="' + esc(dg.expDetalle || p.exp || "") + '" placeholder="Ej. 4 años en panadería y hornos">' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="fila-3">' +
+          '<div class="campo">' +
+            '<label for="dgEsp">Dominio del idioma español</label>' +
+            '<select id="dgEsp">' +
+              ['Nativo / Fluido', 'Intermedio (comprensión)', 'Básico (requiere apoyo)'].map(function(s){
+                return '<option value="' + esc(s) + '"' + (dg.idiomaEsp === s ? ' selected' : '') + '>' + esc(s) + '</option>';
+              }).join("") +
+            '</select>' +
+          '</div>' +
+          '<div class="campo">' +
+            '<label for="dgDig">Habilidades digitales</label>' +
+            '<select id="dgDig">' +
+              ['Básico (celular/mensajería)', 'Intermedio (Word/Excel)', 'Avanzado', 'Ninguna'].map(function(s){
+                return '<option value="' + esc(s) + '"' + (dg.habDigital === s ? ' selected' : '') + '>' + esc(s) + '</option>';
+              }).join("") +
+            '</select>' +
+          '</div>' +
+          '<div class="campo">' +
+            '<label for="dgTurno">Disponibilidad de turno</label>' +
+            '<select id="dgTurno">' +
+              ['Tiempo completo', 'Tiempo completo · turno matutino', 'Tiempo completo · turno vespertino', 'Medio tiempo · turno vespertino', 'Rol de turnos', 'Fines de semana'].map(function(s){
+                return '<option value="' + esc(s) + '"' + (dg.turnos === s ? ' selected' : '') + '>' + esc(s) + '</option>';
+              }).join("") +
+            '</select>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="fila">' +
+          '<div class="campo" style="flex:1">' +
+            '<label for="dgSueldo">Expectativa salarial mensual</label>' +
+            '<input type="text" id="dgSueldo" value="' + esc(dg.sueldoMin || "$6,500 - $8,000 mensuales") + '">' +
+          '</div>' +
+          '<div class="campo" style="flex:1">' +
+            '<label for="dgTraslado">Disponibilidad para trasladarse a otros municipios</label>' +
+            '<select id="dgTraslado">' +
+              ['Sí, dentro del Soconusco', 'Sí, a cualquier municipio de Chiapas', 'No, solo en municipio de residencia'].map(function(s){
+                return '<option value="' + esc(s) + '"' + (dg.dispTraslado === s ? ' selected' : '') + '>' + esc(s) + '</option>';
+              }).join("") +
+            '</select>' +
+          '</div>' +
+        '</div>' +
+
+        '<div style="background:var(--jade-020);border:1px solid var(--jade);border-radius:var(--radio-s);padding:14px;margin:14px 0">' +
+          '<div style="display:flex;align-items:flex-start;gap:10px">' +
+            '<input type="checkbox" id="dgCapCheck"' + (dg.interesCapacita ? ' checked' : '') + ' style="width:18px;height:18px;margin-top:2px;accent-color:var(--jade)">' +
+            '<div style="flex:1">' +
+              '<label for="dgCapCheck" style="font-weight:700;color:var(--tinta);cursor:pointer">Interés en Capacitación / Reconversión Laboral (Cursos ICATECH)</label>' +
+              '<div class="txt-min" style="margin-top:2px">Si la persona no cuenta con experiencia o desea aprender un nuevo oficio, se le asigna a conformación de grupo ICATECH.</div>' +
+              '<div id="boxCapCurso" style="margin-top:10px;' + (dg.interesCapacita ? '' : 'display:none') + '">' +
+                '<label for="dgCapCurso" class="txt-min" style="font-weight:700;display:block;margin-bottom:4px">Taller o curso ICATECH sugerido:</label>' +
+                '<input type="text" id="dgCapCurso" value="' + esc(dg.cursoDeseado || "") + '" placeholder="Ej. Panadería básica, Corte y confección, Soldadura industrial">' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="flex gap-8" style="justify-content:flex-end;margin-top:16px">' +
+          '<button class="btn btn-primario" type="button" id="btnGuardarDiag">' + ico("guardar") + 'Guardar Diagnóstico Laboral</button>' +
+        '</div>' +
+      '</form>' +
+    '</div>';
+  }
+
   function bloquePerfil(p) {
+    var dg = getDiag(p);
     var datos = [
-      ["Escolaridad", p.esc],
-      ["Experiencia declarada", p.exp],
+      ["Escolaridad", dg.esc || p.esc],
+      ["Experiencia declarada", dg.expDetalle || p.exp],
       ["Perfil de vinculación", p.perfil],
-      ["Disponibilidad", p.disp],
+      ["Disponibilidad", dg.turnos || p.disp],
       ["Capacitación ICATECH", p.cursos],
       ["Municipio de residencia", p.mun]
     ];
     return '<div class="tarjeta" style="padding:18px 0 0">' +
-      '<div class="tarjeta-enc" style="padding:0 18px"><h3>Perfil laboral</h3></div>' +
+      '<div class="tarjeta-enc" style="padding:0 18px"><h3>Perfil laboral sintetizado</h3></div>' +
       '<div class="resumen-lista">' + datos.map(function (d) {
         return '<div class="resumen-dato"><span class="r-lab">' + esc(d[0]) + "</span>" +
           '<span class="r-val">' + esc(d[1]) + "</span></div>";
@@ -1221,14 +1419,21 @@
     return '<div class="tarjeta" style="padding:0;overflow:hidden">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;' +
       'flex-wrap:wrap;padding:15px 16px 13px;border-bottom:1px solid var(--linea)">' +
-        '<h3 class="sec-tit">Historial laboral</h3>' +
-        '<div class="filtros-tabla" role="group" aria-label="Filtrar el historial">' +
-          FILAS.map(function (f) {
-            var n = p.v.filter(function (v) { return pasaFila(v, f.id); }).length;
-            return '<button type="button" class="chip ' + (f.id === filaFil ? "chip-jade" : "chip-neutro") +
-              '" data-ff="' + f.id + '" aria-pressed="' + (f.id === filaFil) + '">' + f.t + " " + n + "</button>";
-          }).join("") +
-        "</div></div>" +
+        '<div>' +
+          '<h3 class="sec-tit" style="margin:0">Vinculaciones y Entrevistas</h3>' +
+          '<span class="txt-min">Módulo 5 (SRS) · Postulaciones a empresas, talleres o patrones (captura flexible sin RFC)</span>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+          '<div class="filtros-tabla" role="group" aria-label="Filtrar el historial">' +
+            FILAS.map(function (f) {
+              var n = p.v.filter(function (v) { return pasaFila(v, f.id); }).length;
+              return '<button type="button" class="chip ' + (f.id === filaFil ? "chip-jade" : "chip-neutro") +
+                '" data-ff="' + f.id + '" aria-pressed="' + (f.id === filaFil) + '">' + f.t + " " + n + "</button>";
+            }).join("") +
+          "</div>" +
+          '<button class="btn btn-primario btn-s" type="button" id="btnAbrirNueva">' + ico("mas") + 'Registrar Nueva Vinculación</button>' +
+        '</div>' +
+      '</div>' +
       (vs.length
         ? '<div style="overflow-x:auto"><table class="tabla t-hist">' +
           '<colgroup><col class="c-vac"><col class="c-eta">' +
@@ -1236,7 +1441,7 @@
           "<th>Vacante, empresa y fechas</th><th>Etapa y resultado</th>" +
           "<th>Seguimiento 15 / 30 días</th><th>Acción</th>" +
           "</tr></thead><tbody>" + filas + "</tbody></table></div>"
-        : '<div class="vacio">' + ico("buscar") + "Ninguna vinculación con este filtro.</div>") +
+        : '<div class="vacio">' + ico("buscar") + "Ninguna vinculación con este filtro. Haz clic en <b>Registrar Nueva Vinculación</b> para postular a esta persona.</div>") +
       /* El porqué de la regla vive en el plegable de la cabecera; aquí basta
          la regla. Un párrafo de tres renglones al pie de cada tarjeta era
          lo que más hacía pesar la pantalla.                               */
@@ -1278,20 +1483,20 @@
     }
 
     return '<div class="panel" id="panelNueva">' +
-      "<h3>Registrar vinculación</h3>" +
-      '<p class="p-int">Alta de una postulación de <b>' + esc(p.n) + "</b>. El nombre de la empresa o patrón " +
-      "es de captura libre porque una parte del empleo en la región no está en el padrón (RF12).</p>" +
+      "<h3>Registrar vinculación a empleo</h3>" +
+      '<p class="p-int">Alta de una postulación de <b>' + esc(p.n) + "</b>. El nombre de la empresa, taller o patrón " +
+      "es de <b>captura libre</b> porque no se exige alta patronal ni RFC formal para vincular (RF12 / Reglas de Negocio).</p>" +
       conse +
       '<div class="fila">' +
-        '<div class="campo"><label for="nvVac">Vacante o actividad <span class="req">*</span></label>' +
-          '<input type="text" id="nvVac" placeholder="Ej. Auxiliar de producción">' +
+        '<div class="campo"><label for="nvVac">Vacante, oficio o actividad <span class="req">*</span></label>' +
+          '<input type="text" id="nvVac" placeholder="Ej. Auxiliar de producción, Cocinero, Soldador" value="' + esc(p.perfil) + '">' +
           '<span class="msg-error">Captura la vacante o la actividad.</span></div>' +
-        '<div class="campo"><label for="nvEmp">Empresa o patrón <span class="req">*</span></label>' +
-          '<input type="text" id="nvEmp" placeholder="Razón social o nombre del patrón">' +
+        '<div class="campo"><label for="nvEmp">Empresa, taller o patrón <span class="req">*</span></label>' +
+          '<input type="text" id="nvEmp" placeholder="Razón social, taller o nombre del patrón (sin RFC)">' +
           '<span class="msg-error">Captura la empresa o el patrón.</span></div>' +
       "</div>" +
       '<div class="fila-3">' +
-        '<div class="campo"><label for="nvSec">Sector <span class="req">*</span></label>' +
+        '<div class="campo"><label for="nvSec">Sector productivo <span class="req">*</span></label>' +
           '<select id="nvSec">' + selOpts(SECTORES) + "</select>" +
           '<span class="msg-error">Elige el sector.</span></div>' +
         '<div class="campo"><label for="nvMun">Municipio del centro de trabajo</label>' +
@@ -1300,9 +1505,13 @@
           '<input type="date" id="nvFec" value="' + HOY + '">' +
           '<span class="msg-error">Captura la fecha.</span></div>' +
       "</div>" +
-      '<div class="campo"><label for="nvResp">Responsable del seguimiento <span class="req">*</span></label>' +
-        '<input type="text" id="nvResp" value="' + esc(RESP) + '">' +
-        '<span class="msg-error">Captura quién dará seguimiento.</span></div>' +
+      '<div class="fila">' +
+        '<div class="campo" style="flex:1"><label for="nvEnt">Fecha de entrevista agendada <span class="opc">(opcional)</span></label>' +
+          '<input type="date" id="nvEnt" value="' + suma(HOY, 5) + '"></div>' +
+        '<div class="campo" style="flex:1"><label for="nvResp">Responsable del seguimiento <span class="req">*</span></label>' +
+          '<input type="text" id="nvResp" value="' + esc(RESP) + '">' +
+          '<span class="msg-error">Captura quién dará seguimiento.</span></div>' +
+      "</div>" +
       '<div class="flex gap-8">' +
         '<button class="btn btn-primario btn-s" type="button" id="okNueva">' + ico("guardar") + "Registrar vinculación</button>" +
         '<button class="btn btn-secundario btn-s" type="button" id="cancelaPanel">Cancelar</button>' +
@@ -1516,42 +1725,29 @@
 
   /* ======================================================================
      Pestañas del detalle
-     --------------------------------------------------------------------
-     El detalle mostraba siete bloques a la vez, unos 2 000 px de alto, en
-     los que competían por la misma atención lo que hay que hacer hoy
-     (seguimiento), el expediente laboral completo (historial) y la ficha de
-     referencia (requisitos y perfil). Son tres tareas distintas y solo la
-     primera es diaria, así que se separan en pestañas: es el componente
-     .pestanas que ya usa expediente-detalle.html, no uno nuevo.
-     La barra de acción y la cabecera quedan FUERA de las pestañas, de modo
-     que el pendiente del día se ve siempre, sea cual sea la pestaña.
      ================================================================== */
   var PESTS = [
-    { id:"seg",  t:"Seguimiento" },
-    { id:"vinc", t:"Vinculaciones" },
-    { id:"ficha", t:"Requisitos y perfil" }
+    { id:"diag",  t:"Diagnóstico y Perfil" },
+    { id:"vinc",  t:"Vinculaciones y Empleo" },
+    { id:"seg",   t:"Seguimiento (15 y 30 días)" },
+    { id:"ficha", t:"Requisitos y Documentos" }
   ];
 
-  /* Por omisión se abre Seguimiento, salvo cuando no hay colocación: ahí
-     esa pestaña sería un vacío y lo que importa es el historial.         */
   function pestPorOmision(p) {
-    /* "Seguimiento" solo cuando hay un reloj corriendo. Si la contratación
-       aún no tiene fecha de inicio, lo accionable está en el historial.  */
-    return vigente(p) ? "seg" : "vinc";
+    if (vigente(p)) return "seg";
+    if (p.v && p.v.length > 0) return "vinc";
+    return "diag";
   }
 
   function barraPestanas(p) {
     var pe = pendiente(p);
-    /* El contador de la pestaña avisa de lo que hay dentro sin abrirla:
-       eso es lo que permite cerrar las otras dos sin perder información. */
     var faltan = requisitos(p).filter(function (r) { return r.est === "no" || r.est === "pv"; }).length;
-    /* Un número junto a "Seguimiento" y otro junto a "Vinculaciones" se ven
-       iguales y no significan lo mismo: uno es una alerta y el otro un
-       recuento. La alerta lleva glifo, no cifra.                          */
-    var cta = { seg:  (pe && pe.peso <= 2)
-                        ? '<span class="cta urge" title="Requiere acción">!</span>' : "",
-                vinc: '<span class="cta">' + p.v.length + "</span>",
-                ficha: faltan ? '<span class="cta urge" title="Requisitos por atender">!</span>' : "" };
+    var cta = {
+      diag: '',
+      vinc: '<span class="cta">' + p.v.length + "</span>",
+      seg:  (pe && pe.peso <= 2) ? '<span class="cta urge" title="Requiere acción">!</span>' : "",
+      ficha: faltan ? '<span class="cta urge" title="Requisitos por atender">!</span>' : ""
+    };
     return '<div class="pestanas pest-det" role="tablist" aria-label="Secciones de la vinculación laboral">' +
       PESTS.map(function (t) {
         var act = t.id === pest;
@@ -1563,11 +1759,10 @@
   }
 
   function cuerpoPestana(p) {
+    if (pest === "diag") {
+      return bloqueDiagnostico(p);
+    }
     if (pest === "seg") {
-      /* Sin colocación en marcha no hay cifra que dar: la tarjeta héroe se
-         quedaba con un "—" al lado de una tarjeta vacía que explicaba lo
-         mismo que la barra de acción, tres veces el mismo dato. Con reloj
-         corriendo sí van las dos, porque cuentan cosas distintas.        */
       return vigente(p)
         ? '<div class="rejilla g-hero">' + heroe(p) + bloqueHitos(p) + "</div>"
         : bloqueHitos(p);
@@ -1583,15 +1778,6 @@
 
   function pintaDetalle() {
     var p = persona();
-    /* La pestaña activa NO se corrige aquí: pestPorOmision() ya elige la
-       correcta al cambiar de persona, y forzarla en cada pintado hacía que
-       un clic en "Seguimiento" sobre alguien sin colocación no hiciera
-       nada visible. Esa pestaña tiene su propio estado vacío explicado.  */
-
-    /* Los paneles de captura siempre aparecen en el mismo sitio —justo
-       bajo la barra de acción— en vez de brotar en cuatro alturas
-       distintas de la página según el modo. Salvo los dos que pertenecen
-       a una fila del historial, que se quedan junto a su tabla.          */
     var arriba = (panel === "verifica"  ? panelVerifica(p)  : "") +
                  (panel === "resultado" ? panelResultado(p) : "") +
                  (panel === "agenda"    ? panelAgenda(p)    : "") +
@@ -1600,6 +1786,7 @@
     $("#detalle").innerHTML =
       acuse() +
       cabecera(p) +
+      rutaEmpleoBarra(p) +
       '<div class="mt-16">' + accionBarra(p) + "</div>" +
       arriba +
       barraPestanas(p) +
@@ -1612,9 +1799,6 @@
   /* ======================================================================
      7. Eventos del detalle (se reenlazan tras cada repintado)
      ================================================================== */
-  /* Los paneles de alta y de cierre viven dentro de la pestaña del
-     historial: abrirlos desde fuera tiene que llevar ahí, o el panel se
-     pintaría en una pestaña que no está a la vista.                      */
   var PANEL_PEST = { nueva:"vinc", cierre:"vinc" };
 
   function abre(modo, vinc, h) {
@@ -1624,8 +1808,6 @@
     var el = $(".panel");
     if (el) {
       el.scrollIntoView({ behavior:"smooth", block:"center" });
-      /* El foco entra al panel: abrir un formulario y dejar el foco en el
-         botón que ya desapareció obliga a tabular toda la página.        */
       var primero = el.querySelector("input,select,textarea,button");
       if (primero) primero.focus({ preventScroll:true });
     }
@@ -1658,8 +1840,7 @@
   function eventosDetalle() {
     var p = persona();
 
-    /* Pestañas: clic y navegación con flechas, Inicio y Fin, como pide el
-       patrón de tablist. El repintado devuelve el foco a la pestaña.     */
+    /* Pestañas */
     $$("[data-tab]").forEach(function (b) {
       b.onclick = function () {
         pest = this.getAttribute("data-tab");
@@ -1682,11 +1863,72 @@
       };
     });
 
+    /* Chips de oficios en diagnóstico */
+    $$("#contChipsOficios input[type='checkbox']").forEach(function (chk) {
+      chk.onchange = function () {
+        this.closest(".chip-oficio").classList.toggle("sel", this.checked);
+      };
+    });
+
+    /* Toggle interés en cursos ICATECH */
+    var capChk = $("#dgCapCheck");
+    if (capChk) {
+      capChk.onchange = function () {
+        var box = $("#boxCapCurso");
+        if (box) box.style.display = this.checked ? "block" : "none";
+      };
+    }
+
+    /* Guardar diagnóstico laboral */
+    var bgd = $("#btnGuardarDiag");
+    if (bgd) {
+      bgd.onclick = function () {
+        var ofs = [];
+        $$("#contChipsOficios input[type='checkbox']:checked").forEach(function (c) {
+          ofs.push(c.value);
+        });
+        if (!ofs.length) {
+          alert("Por favor selecciona al menos un oficio o competencia técnica.");
+          return;
+        }
+        var dg = getDiag(p);
+        dg.sit = $("#dgSit").value;
+        dg.esc = $("#dgEsc").value;
+        dg.oficios = ofs;
+        dg.expAnios = parseInt($("#dgExpAnios").value, 10) || 0;
+        dg.expDetalle = $("#dgExpDet").value.trim();
+        dg.idiomaEsp = $("#dgEsp").value;
+        dg.habDigital = $("#dgDig").value;
+        dg.turnos = $("#dgTurno").value;
+        dg.sueldoMin = $("#dgSueldo").value.trim();
+        dg.dispTraslado = $("#dgTraslado").value;
+        dg.interesCapacita = $("#dgCapCheck").checked;
+        dg.cursoDeseado = $("#dgCapCurso") ? $("#dgCapCurso").value.trim() : "";
+
+        // Sincronizar campos principales de la persona
+        p.esc = dg.esc;
+        p.perfil = ofs.slice(0, 2).join(" y ");
+        p.exp = dg.expDetalle || (dg.expAnios + " años en " + ofs[0]);
+        p.disp = dg.turnos;
+        if (dg.interesCapacita && dg.cursoDeseado) {
+          p.cursos = dg.cursoDeseado + " · ICATECH (en conformación)";
+        }
+
+        pintaChips();
+        pintaLista();
+        pintaDetalle();
+        if (SIMH.toast) SIMH.toast("Diagnóstico laboral actualizado con éxito", "ok");
+      };
+    }
+
     var bn = $("#btnNueva");
     if (bn) bn.onclick = function () { abre("nueva"); };
 
     var bn2 = $("#btnNueva2");
     if (bn2) bn2.onclick = function () { abre("nueva"); };
+
+    var ban = $("#btnAbrirNueva");
+    if (ban) ban.onclick = function () { abre("nueva"); };
 
     var br = $("#btnResultado");
     if (br) br.onclick = function () { abre("resultado", entrevistaSinResultado(p)); };
@@ -1717,7 +1959,6 @@
     if (op) op.addEventListener("change", function (ev) {
       res = ev.target.value;
       pintaDetalle();
-      /* El repintado pierde el foco: se devuelve a la opción elegida. */
       var r = document.querySelector('#opcRes input[value="' + res + '"]');
       if (r) r.focus();
     });
@@ -1728,11 +1969,22 @@
     var on = $("#okNueva");
     if (on) on.onclick = function () {
       if (!valida(["nvVac", "nvEmp", "nvSec", "nvFec", "nvResp"])) return;
+      var fEnt = $("#nvEnt") && $("#nvEnt").value ? $("#nvEnt").value : null;
       p.v.unshift({
-        id:"V-" + p.e + "-" + (p.v.length + 1), vac:$("#nvVac").value, emp:$("#nvEmp").value,
-        sector:$("#nvSec").value, munEmp:$("#nvMun").value, resp:$("#nvResp").value,
-        post:$("#nvFec").value, ent:null, entRes:null, con:null,
-        inicio:null, fin:null, motFin:null, seg:{ "15":[], "30":[] }
+        id:"V-" + p.e + "-" + (p.v.length + 1),
+        vac:$("#nvVac").value,
+        emp:$("#nvEmp").value,
+        sector:$("#nvSec").value,
+        munEmp:$("#nvMun").value,
+        resp:$("#nvResp").value,
+        post:$("#nvFec").value,
+        ent:fEnt,
+        entRes:null,
+        con:null,
+        inicio:null,
+        fin:null,
+        motFin:null,
+        seg:{ "15":[], "30":[] }
       });
       cierra("Vinculación registrada en " + $("#nvEmp").value);
     };

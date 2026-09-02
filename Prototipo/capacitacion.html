@@ -163,8 +163,7 @@
       <div class="enc-sub">Conformación de grupos ICATECH, asistencia y requisitos de acreditación (RF13)</div>
     </div>
     <div class="enc-acc">
-      <button class="btn btn-secundario btn-s" type="button" id="btnXls"></button>
-      <button class="btn btn-secundario btn-s" type="button" id="btnFirma"></button>
+      <button class="btn btn-primario btn-s" type="button" id="btnNuevoGrupoTop"></button>
     </div>
   </div>
 
@@ -185,8 +184,17 @@
 
   var HOY = "2026-08-27";
 
-  $("#btnXls").innerHTML   = ico("excel") + "Exportar lista de asistencia";
-  $("#btnFirma").innerHTML = ico("pdf") + "Lista para firma física";
+  var bngt = $("#btnNuevoGrupoTop");
+  if (bngt) {
+    bngt.innerHTML = ico("mas") + "Abrir nuevo grupo ICATECH";
+    bngt.onclick = function () {
+      panelNuevo = true; panelAdd = false; bajaDe = null;
+      pintaDetalle();
+      var el = document.getElementById("panelNuevoGrupo");
+      if (el) el.scrollIntoView({ behavior:"smooth", block:"center" });
+    };
+  }
+
   $("#avisoPermisos").innerHTML = ico("info") +
     "<span><strong>Qué hace este módulo y qué no</strong>La ventanilla <b>conforma el grupo y pasa lista</b>. " +
     "La acreditación y la constancia de competencia las emite <b>ICATECH</b> al concluir el curso; el SIAMH " +
@@ -433,6 +441,7 @@
   var modoLista = false;
   var pase      = {};             /* folio → "P" | "A" | "J" */
   var panelAdd  = false;
+  var panelNuevo = false;
   var buscaCand = "";
   var candSel   = null;
   var bajaDe    = null;
@@ -778,9 +787,12 @@
           (x.baja ? '<div style="font-size:11px;color:var(--gris);margin-top:4px;line-height:1.35">' +
             esc(x.baja.m) + "</div>" : "") + "</td>" +
         '<td style="text-align:right;white-space:nowrap">' +
-          (x.baja || g.estado === "concluido" ? ""
-            : '<button class="btn btn-texto" type="button" data-baja="' + x.e +
-              '" style="color:var(--gris)">Registrar baja</button>') +
+          (x.baja ? ""
+            : '<a class="btn btn-texto btn-s" href="empleabilidad.html?e=' + x.e + '&tab=vinc" title="Vincular a empleo en el módulo de Empleabilidad" style="color:var(--jade-900);font-weight:700;margin-right:8px">' +
+                ico("empleo") + 'Vincular a empleo</a>' +
+              (g.estado === "concluido" ? ""
+                : '<button class="btn btn-texto btn-s" type="button" data-baja="' + x.e +
+                  '" style="color:var(--gris)">Registrar baja</button>')) +
         "</td></tr>";
     }).join("")
       : '<tr><td colspan="' + (modoLista ? 3 : 5) + '" style="text-align:center;padding:24px;color:var(--gris)">' +
@@ -907,6 +919,84 @@
       "</div></div>";
   }
 
+  function panelNuevoGrupo() {
+    return '<div class="tarjeta" id="panelNuevoGrupo" style="margin-bottom:16px;border:1.5px solid var(--jade);background:var(--jade-020)">' +
+      '<div class="tarjeta-enc">' +
+        '<div>' +
+          '<h3 class="sec-tit" style="margin:0">Apertura de Nuevo Grupo Formativo ICATECH</h3>' +
+          '<span class="txt-min">RF13 · Registro de curso, sede, instructor y asignación de cupo (15 a 18 lugares)</span>' +
+        '</div>' +
+      '</div>' +
+      '<form id="formNuevoGrupo" onsubmit="return false" style="margin-top:14px">' +
+        '<div class="fila">' +
+          '<div class="campo" style="flex:1.5">' +
+            '<label for="ngCurso">Nombre del curso o taller <span class="req">*</span></label>' +
+            '<input type="text" id="ngCurso" placeholder="Ej. Soldadura industrial, Electricidad básica, Gastronomía">' +
+          '</div>' +
+          '<div class="campo" style="flex:1">' +
+            '<label for="ngClave">Clave oficial del curso</label>' +
+            '<input type="text" id="ngClave" value="ICT-' + Math.floor(100 + Math.random()*900) + '-26">' +
+          '</div>' +
+        '</div>' +
+        '<div class="fila-3">' +
+          '<div class="campo">' +
+            '<label for="ngSede">Sede / Plantel ICATECH <span class="req">*</span></label>' +
+            '<select id="ngSede">' +
+              '<option value="ICATECH Tapachula">ICATECH Tapachula</option>' +
+              '<option value="ICATECH Huixtla">ICATECH Huixtla</option>' +
+              '<option value="Unidad Móvil Suchiate">Unidad Móvil Suchiate</option>' +
+              '<option value="Cacahoatán">Cacahoatán</option>' +
+            '</select>' +
+          '</div>' +
+          '<div class="campo">' +
+            '<label for="ngMod">Modalidad</label>' +
+            '<select id="ngMod">' +
+              '<option value="Presencial">Presencial</option>' +
+              '<option value="Taller en campo">Taller en campo</option>' +
+              '<option value="Híbrida">Híbrida</option>' +
+            '</select>' +
+          '</div>' +
+          '<div class="campo">' +
+            '<label for="ngAula">Aula o Taller</label>' +
+            '<input type="text" id="ngAula" value="Taller 1" placeholder="Ej. Taller de alimentos">' +
+          '</div>' +
+        '</div>' +
+        '<div class="fila">' +
+          '<div class="campo" style="flex:1.5">' +
+            '<label for="ngInst">Instructor(a) acreditado de ICATECH <span class="req">*</span></label>' +
+            '<input type="text" id="ngInst" placeholder="Nombre completo del instructor(a)">' +
+          '</div>' +
+          '<div class="campo" style="flex:1">' +
+            '<label for="ngCupo">Cupo máximo (Norma 15-18) <span class="req">*</span></label>' +
+            '<select id="ngCupo">' +
+              '<option value="18" selected>18 personas (Estándar)</option>' +
+              '<option value="16">16 personas</option>' +
+              '<option value="15">15 personas (Mínimo)</option>' +
+            '</select>' +
+          '</div>' +
+        '</div>' +
+        '<div class="fila-3">' +
+          '<div class="campo">' +
+            '<label for="ngIni">Fecha de inicio <span class="req">*</span></label>' +
+            '<input type="date" id="ngIni" value="' + suma(HOY, 10) + '">' +
+          '</div>' +
+          '<div class="campo">' +
+            '<label for="ngFin">Fecha de conclusión <span class="req">*</span></label>' +
+            '<input type="date" id="ngFin" value="' + suma(HOY, 45) + '">' +
+          '</div>' +
+          '<div class="campo">' +
+            '<label for="ngCie">Límite de inscripción <span class="req">*</span></label>' +
+            '<input type="date" id="ngCie" value="' + suma(HOY, 7) + '">' +
+          '</div>' +
+        '</div>' +
+        '<div class="flex gap-8" style="justify-content:flex-end;margin-top:14px">' +
+          '<button class="btn btn-primario btn-s" type="button" id="btnGuardarGrupo">' + ico("guardar") + 'Crear Grupo ICATECH</button>' +
+          '<button class="btn btn-secundario btn-s" type="button" id="btnCancelaGrupo">Cancelar</button>' +
+        '</div>' +
+      '</form>' +
+    '</div>';
+  }
+
   function acuse() {
     if (!altas.length) return "";
     return '<div class="aviso aviso-jade">' + ico("check") +
@@ -955,8 +1045,8 @@
           '</div>' +
         '</div>' +
         '<div class="flex gap-8">' +
-          '<button class="btn btn-secundario btn-s" type="button">' + ico("excel") + 'Lista de asistencia</button>' +
-          '<button class="btn btn-secundario btn-s" type="button">' + ico("pdf") + 'Lista para firma</button>' +
+          '<button class="btn btn-secundario btn-s" type="button" onclick="alert(\'Generando lista de asistencia en formato XLSX...\')">' + ico("excel") + 'Lista de asistencia</button>' +
+          '<button class="btn btn-secundario btn-s" type="button" onclick="alert(\'Generando lista oficial para firma física en formato PDF...\')">' + ico("pdf") + 'Lista para firma</button>' +
         '</div>' +
       '</div>' +
       '<div class="bca-controles">' +
@@ -982,6 +1072,7 @@
         "sello. <strong>No lleva código QR</strong>: la validación es por folio y sello.</div></div>";
 
     $("#detalle").innerHTML = banner + acuse() + alerta + cab +
+      (panelNuevo ? panelNuevoGrupo() : "") +
       (panelAdd ? panelAgregar(g, r) : "") +
       '<div style="margin-bottom:16px">' + bloqueRequisitos(g, r) + "</div>" +
       tablaParticipantes(g, r) +
@@ -996,11 +1087,51 @@
   function liga() {
     var g = grupo();
 
+    var bcng = $("#btnCancelaGrupo");
+    if (bcng) bcng.onclick = function () { panelNuevo = false; pintaDetalle(); };
+
+    var bgng = $("#btnGuardarGrupo");
+    if (bgng) bgng.onclick = function () {
+      var curso = $("#ngCurso").value.trim();
+      var inst = $("#ngInst").value.trim();
+      if (!curso || !inst) {
+        alert("Por favor captura el nombre del curso y del instructor.");
+        return;
+      }
+      var nuevoId = "G-2026-0" + (GRUPOS.length + 20);
+      var nuevoG = {
+        id: nuevoId,
+        curso: curso,
+        clave: $("#ngClave").value.trim(),
+        sede: $("#ngSede").value,
+        mun: $("#ngSede").value.indexOf("Huixtla") >= 0 ? "Huixtla" : ($("#ngSede").value.indexOf("Suchiate") >= 0 ? "Suchiate" : "Tapachula"),
+        modalidad: $("#ngMod").value,
+        aula: $("#ngAula").value.trim() || "Taller principal",
+        instructor: inst,
+        inicio: $("#ngIni").value,
+        fin: $("#ngFin").value,
+        cierre: $("#ngCie").value,
+        sesiones: 16,
+        sesion: 0,
+        cupo: parseInt($("#ngCupo").value, 10) || 18,
+        estado: "conformacion",
+        p: []
+      };
+      GRUPOS.unshift(nuevoG);
+      sel = nuevoId;
+      panelNuevo = false;
+      pintaMunicipios();
+      pintaChips();
+      pintaLista();
+      pintaDetalle();
+      if (SIMH.toast) SIMH.toast("Grupo " + nuevoId + " abierto con éxito", "ok");
+    };
+
     var bm = $("#btnModo");
     if (bm) bm.onclick = function () { modoLista = !modoLista; pase = {}; pintaDetalle(); };
 
     var ba = $("#btnAdd");
-    if (ba) ba.onclick = function () { panelAdd = true; candSel = null; modoLista = false; pintaDetalle(); };
+    if (ba) ba.onclick = function () { panelAdd = true; panelNuevo = false; candSel = null; modoLista = false; pintaDetalle(); };
 
     var bc = $("#btnCancAdd");
     if (bc) bc.onclick = function () { panelAdd = false; candSel = null; buscaCand = ""; pintaDetalle(); };
