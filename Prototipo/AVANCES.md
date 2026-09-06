@@ -148,8 +148,8 @@ etiqueta directa.
 | `expediente-detalle.html` | **Detalle del expediente**: identidad, 7 pestañas, bitácora con compositor, contacto histórico y permisos visibles | RF03, RF08, RF05–RF07, RNF01, RNF02 |
 | `familiar.html` | **Expediente familiar y NNA**: maestro-detalle de grupos, reasignación de titular, oficio automático a la Procuraduría | **RF05, RF06**, RNF02 |
 | `salud.html` | **Salud y Vulnerabilidad**: cartera de valoración, marcadores de vulnerabilidad con su ruta, catálogo OMS y canalización con oficio | **RF07**, RF11, RNF01, RNF03 |
-| `capacitacion.html` | **Capacitación · Grupos ICATECH**: cartera de grupos por urgencia, cupo y proporción con margen, requisitos de acreditación, pase de lista y baja con motivo | **RF13**, RNF02, RNF03 |
-| `empleabilidad.html` | **Empleabilidad**: cartera ordenada por vencimiento, hitos de verificación de 15 y 30 días como registro, requisitos para formalizar la contratación e historial laboral completo | **RF12**, RNF01, RNF02, RNF03 |
+| `capacitacion.html` | **Capacitación · Grupos ICATECH**: cartera de grupos por urgencia, cupo y proporción con margen, requisitos de acreditación (refactor 06/09: 4 bloques claros), pase de lista y baja con motivo | **RF13**, RNF02, RNF03 |
+| `empleabilidad.html` | **Empleabilidad**: cartera ordenada por vencimiento, hitos de verificación de 15 y 30 días como registro, requisitos para formalizar (refactor 06/09: bloqueantes vs. trámite), e historial laboral completo | **RF12**, RNF01, RNF02, RNF03 |
 | `censo.html` | **Censo Empresarial offline** (vista móvil): captura en campo por secciones, guardado incompleto, estado de conexión y sincronización diferida | **RF15**, RNF03 |
 | `administracion.html` | **Administración**: cuentas, matriz de permisos **del rol** con excepciones documentadas, y bitácora que registra también los intentos denegados | **RNF01, RNF02**, RNF03 |
 | `canalizaciones.html` | **Canalizaciones**: registro de la serie consecutiva con firma, acuse y cancelación, y redacción por plantilla con vista previa en vivo | **RF11**, RNF01, RNF02, RNF03 |
