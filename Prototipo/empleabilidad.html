@@ -725,19 +725,19 @@
 
   function requisitos(p) {
     var r = [];
-    r.push({ t:"CURP", et:"Obligatorio", est: p.curp ? "si" : "no",
+    r.push({ t:"CURP", et:"Obligatorio", est: p.curp ? "si" : "no", bloq: true,
       n: p.curp ? "Registrada y vigente en el expediente único."
                 : "No registrada. Sin CURP no puede formalizarse la contratación ni tramitarse el NSS." });
 
     if (p.nac === "MEX") {
-      r.push({ t:"Documento que autoriza trabajar", et:"No aplica", est:"na",
+      r.push({ t:"Documento que autoriza trabajar", et:"No aplica", est:"na", bloq: true,
         n:"Persona mexicana: no requiere documento migratorio." });
     } else if (!p.estancia) {
-      r.push({ t:"Documento que autoriza trabajar", et:"Obligatorio", est:"no",
+      r.push({ t:"Documento que autoriza trabajar", et:"Obligatorio", est:"no", bloq: true,
         n:"Sin documento vigente. Puede postularse y entrevistarse, pero la contratación no puede formalizarse." });
     } else {
       var dv = dias(HOY, p.estancia.vig);
-      r.push({ t:"Documento que autoriza trabajar", et:"Obligatorio",
+      r.push({ t:"Documento que autoriza trabajar", et:"Obligatorio", bloq: true,
         est: dv <= 60 ? "pv" : "si",
         n: p.estancia.doc + " · vigente hasta el " + fecha(p.estancia.vig) +
            (dv <= 60 ? ". Vence " + dentro(dv) + ": debe renovarse antes de que concluya el seguimiento." : ".") });
@@ -745,15 +745,13 @@
 
     [["RFC", p.rfc, "rfc"], ["NSS", p.nss, "nss"]].forEach(function (par) {
       var c = par[1];
-      r.push({ t:par[0], et:"Opcional al inicio", ac:acompDe(p, par[2]),
+      r.push({ t:par[0], et:"Opcional al inicio", ac:acompDe(p, par[2]), bloq: false,
         est: c.est === "reg" ? "si" : "na",
         n: c.est === "reg" ? c.d
          : c.est === "tram" ? c.d
          : "Pendiente. Lo tramita el sector patronal una vez formalizada la contratación." });
     });
 
-    /* El acompañamiento del documento migratorio cuelga de su propio
-       requisito, no de una nota suelta al pie de la ficha. */
     var ae = acompDe(p, "estancia");
     if (ae) r.forEach(function (x) {
       if (x.t === "Documento que autoriza trabajar") x.ac = ae;
@@ -1025,22 +1023,20 @@
       (panel ? "" : '<div class="a-acc">' + btn + "</div>") + "</div>";
   }
 
-  /* Una sola cifra héroe: los días que lleva la colocación en pie. Es la
-     pregunta real del módulo, porque RF12 mide permanencia, no altas.    */
   function heroe(p) {
     var vg = vigente(p), si = sinInicio(p), ep = enProceso(p);
-    var num, lab, sub;
+    var num, lab, sub, banner = "";
     if (vg) {
       num = String(dias(vg.inicio, HOY));
       lab = "Días en el empleo actual";
-      /* El estado del próximo hito ya lo dice la barra de acción y la fila
-         del hito. Repetirlo aquí era la tercera vez en la misma pantalla,
-         así que la cifra se queda solo con lo que nadie más cuenta.       */
       sub = "Inició el <b>" + fecha(vg.inicio) + "</b> en " + esc(vg.emp) + ".";
     } else if (si) {
       num = "—";
       lab = "Sin fecha de inicio de labores";
       sub = "Contratación registrada el <b>" + fecha(si.fcon) + "</b> en " + esc(si.emp) + ".";
+      banner = '<div style="background:var(--rosa-050);border-left:3px solid var(--alerta);padding:10px;border-radius:var(--radio-s);margin-top:10px;font-size:12px;color:var(--gris);line-height:1.5">' +
+               ico("reloj") + ' <b>⏳ Acción requerida:</b> Registra la fecha de inicio para que comience el seguimiento de 15 y 30 días.' +
+               '</div>';
     } else {
       num = "—";
       lab = "Sin colocación vigente";
@@ -1051,7 +1047,7 @@
     return '<div class="hero">' +
       '<span class="h-lab">' + lab + "</span>" +
       '<div class="h-num' + (num === "—" ? " sin" : "") + '">' + num + "</div>" +
-      '<div class="h-sub">' + sub + "</div></div>";
+      '<div class="h-sub">' + sub + "</div>" + banner + "</div>";
   }
 
   /* La línea de hitos usa el componente .ruta del sistema de diseño: es
@@ -1146,20 +1142,44 @@
 
   function bloqueRequisitos(p) {
     var ic = { si:"check", no:"alerta", pv:"reloj", na:"info" };
-    return '<div class="tarjeta">' +
-      '<div class="tarjeta-enc"><h3>Requisitos para formalizar la contratación</h3></div>' +
-      requisitos(p).map(function (r) {
-        return '<div class="reqc ' + r.est + '">' + ico(ic[r.est]) +
-          '<span class="rq-tx"><span class="rq-t">' + esc(r.t) +
-          '<span class="rq-et">' + esc(r.et) + "</span>" +
-          (r.ac ? '<span class="rq-ac">' + ico("info") + "Acompañado</span>" : "") + "</span>" +
-          '<span class="rq-n">' + esc(r.n) + "</span>" +
-          (r.ac ? '<span class="rq-obs"><b>Acompañamiento desde el ' + fecha(r.ac.desde) + " · " +
-                  esc(r.ac.quien) + ".</b> " + esc(r.ac.nota) + "</span>" : "") +
-          "</span></div>";
-     }).join("") +
-      '<div class="tarjeta-pie">Ninguno impide postularse ni acudir a una entrevista: impiden <b>firmar</b>.' +
+    var reqs = requisitos(p);
+    var bloqueantes = reqs.filter(function (r) { return r.bloq; });
+    var tramita = reqs.filter(function (r) { return !r.bloq; });
+    var html = '<div class="tarjeta">' +
+      '<div class="tarjeta-enc"><h3>Requisitos para formalizar la contratación</h3></div>';
+
+    if (bloqueantes.length) {
+      html += '<div style="margin-bottom:12px"><span class="txt-min" style="color:var(--guinda-900);font-weight:700">🚫 BLOQUEAN LA CONTRATACIÓN</span></div>' +
+        bloqueantes.map(function (r) {
+          return '<div class="reqc ' + r.est + '">' + ico(ic[r.est]) +
+            '<span class="rq-tx"><span class="rq-t">' + esc(r.t) +
+            '<span class="rq-et">' + esc(r.et) + "</span>" +
+            (r.ac ? '<span class="rq-ac">' + ico("info") + "Acompañado</span>" : "") + "</span>" +
+            '<span class="rq-n">' + esc(r.n) + "</span>" +
+            (r.ac ? '<span class="rq-obs"><b>Acompañamiento desde el ' + fecha(r.ac.desde) + " · " +
+                    esc(r.ac.quien) + ".</b> " + esc(r.ac.nota) + "</span>" : "") +
+            "</span></div>";
+        }).join("");
+    }
+
+    if (tramita.length) {
+      html += '<div style="margin-top:16px;margin-bottom:12px"><span class="txt-min" style="color:var(--gris);font-weight:700">⏳ TRAMITA EL SECTOR PATRONAL</span></div>' +
+        tramita.map(function (r) {
+          return '<div class="reqc ' + r.est + '">' + ico(ic[r.est]) +
+            '<span class="rq-tx"><span class="rq-t">' + esc(r.t) +
+            '<span class="rq-et">' + esc(r.et) + "</span>" +
+            (r.ac ? '<span class="rq-ac">' + ico("info") + "Acompañado</span>" : "") + "</span>" +
+            '<span class="rq-n">' + esc(r.n) + "</span>" +
+            (r.ac ? '<span class="rq-obs"><b>Acompañamiento desde el ' + fecha(r.ac.desde) + " · " +
+                    esc(r.ac.quien) + ".</b> " + esc(r.ac.nota) + "</span>" : "") +
+            "</span></div>";
+        }).join("");
+    }
+
+    html += '<div class="tarjeta-pie">Los que bloquean impiden <b>firmar</b>. ' +
+      'Los que tramita el patrón se gestionan después, sin frenar la colocación.' +
       "</div></div>";
+    return html;
   }
 
   function rutaEmpleoBarra(p) {

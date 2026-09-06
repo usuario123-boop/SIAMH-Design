@@ -642,42 +642,35 @@
     }
 
     return '<div class="tarjeta">' +
-      '<div class="tarjeta-enc"><h3 class="sec-tit">Requisitos para acreditar</h3>' +
-        (d || bajo ? '<button class="btn btn-texto" type="button" id="verPend">Ver solo pendientes</button>' : "") +
+      '<div class="tarjeta-enc"><h3 class="sec-tit">Requisitos para Acreditar</h3></div>' +
+      '<div class="hero" style="margin-bottom:20px">' +
+        '<span class="h-lab">' + heroLab + "</span>" +
+        '<span class="h-num">' + r.listos + "</span>" +
+        '<span class="h-sub">' + heroSub + "</span>" +
       "</div>" +
-      '<div class="rejilla g-hero">' +
-        '<div class="hero" style="border:0;border-right:1px solid var(--linea-suave);border-radius:0;padding:0 20px 0 0">' +
-          '<span class="h-lab">' + heroLab + "</span>" +
-          '<span class="h-num">' + r.listos + "</span>" +
-          '<span class="h-sub">' + heroSub + "</span>" +
-        "</div>" +
-        "<div>" +
-          filaReq("Documentación completa", r.docs, r.n,
-            d ? plural(d, "persona sin CURP vigente o constancia COMAR",
-                          "personas sin CURP vigente o constancia COMAR") +
-                (g.estado === "concluido" ? " · el plazo venció el " + fecha(g.fin)
-                                          : " · plazo al " + fecha(g.fin))
-              : "Todas tienen CURP y, si son extranjeras, constancia COMAR",
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:14px">' +
+        '<div class="bloque-med">' +
+          '<h4>🎯 Cupo del grupo</h4>' +
+          filaReq("Inscritas", r.n, g.cupo, "", false, false) +
+        '</div>' +
+        '<div class="bloque-med">' +
+          '<h4>👥 Proporción mayoritaria extranjera</h4>' +
+          filaReq("Extranjeras", r.ext, r.n, "> 50% = " + Math.round(r.pct * 100) + "%", !r.cumple, false) +
+        '</div>' +
+        '<div class="bloque-med">' +
+          '<h4>📄 Documentación completa</h4>' +
+          filaReq("CURP + COMAR", r.docs, r.n,
+            d ? plural(d, "persona incompleta", "personas incompletas") : "Todas documentadas",
             !!d, false) +
-          filaReq("Asistencia mínima del 80%", r.asisOk, r.n,
-            sinIniciar
-              ? "Se contará sobre las " + g.sesiones + " sesiones: el mínimo son " +
-                Math.ceil(g.sesiones * MIN_ASIS) + " asistencias"
-              : (bajo
-                  ? (r.riesgo === 0
-                      ? plural(r.perdida, "persona no alcanzó", "personas no alcanzaron") +
-                        " el mínimo de " + Math.ceil(g.sesiones * MIN_ASIS) + " de " + g.sesiones + " sesiones"
-                      : plural(bajo, "persona por debajo del mínimo", "personas por debajo del mínimo") + ": " +
-                        r.riesgo + " aún " + (r.riesgo === 1 ? "puede" : "pueden") + " alcanzarlo" +
-                        (r.perdida ? ", " + r.perdida + " ya no" : ""))
-                  : "Todas superan las " + Math.ceil(g.sesiones * MIN_ASIS) + " de " + g.sesiones + " sesiones"),
-            !!r.perdida, sinIniciar) +
-          filaReq("Evaluación final", r.listos, r.n,
-            evalPend ? "La aplica ICATECH al concluir el curso; el SIAMH solo registra el resultado"
-                     : "Resultado capturado por ICATECH el " + fecha(g.fin),
-            false, evalPend) +
-        "</div>" +
-      "</div>" +
+        '</div>' +
+        '<div class="bloque-med">' +
+          '<h4>📊 Asistencia mínima</h4>' +
+          filaReq("80% de sesiones", r.asisOk, r.n,
+            sinIniciar ? "Mínimo " + Math.ceil(g.sesiones * MIN_ASIS) + " de " + g.sesiones
+                       : (bajo ? plural(bajo, "en riesgo", "en riesgo") : "Todas cumplen"),
+            !!bajo, sinIniciar) +
+        '</div>' +
+      '</div>' +
       '<div class="tarjeta-pie">La acreditación es competencia de ICATECH. El SIAMH verifica los requisitos y ' +
         "conserva el expediente de la persona; no emite la constancia de competencia.</div></div>";
   }
