@@ -231,11 +231,301 @@
     return c.neg.filter(function (x) { return !x.oficio; })[0] || null;
   }
 
+
+  /* ======================================================== Catálogos ====
+     Catálogos de captura compartidos por varias pantallas.
+
+     Viven aquí por la misma razón que las personas: el catálogo de países
+     estaba escrito cuatro veces —dos en el registro, una en el filtro de
+     expedientes y otra en empleabilidad— y ampliarlo copiando y pegando es
+     la forma más segura de que las cuatro copias dejen de coincidir. Una
+     pantalla que ofrece "Nicaragua" en el alta y no la ofrece en el filtro
+     es una persona que después no se puede volver a encontrar.
+
+     Regla técnica de la opción 'Otro' (Especificación de Mejoras §3): la
+     opción se emite con value="OTRO" y el texto que escribe la ventanilla
+     viaja en un campo complementario. La clave es estable aunque la
+     etiqueta cambie, que es lo que permite contar "Otro" en un informe sin
+     depender de cómo esté redactada la opción en pantalla.
+     ==================================================================== */
+
+  /* ---------------------------------------------------------- Países ----
+     Agrupados, y el primer grupo es el de mayor concurrencia en la frontera
+     sur: en ventanilla casi todas las altas salen de esas siete opciones, y
+     bajar cincuenta renglones para encontrar "Honduras" cuesta segundos en
+     cada captura contra una meta de cinco minutos (RNF04).               */
+  var PAISES = [
+    { g:"Mayor flujo en la frontera sur",
+      p:["Honduras", "Guatemala", "Venezuela", "Haití", "Cuba", "El Salvador", "Nicaragua"] },
+    { g:"América",
+      p:["Argentina", "Belice", "Bolivia", "Brasil", "Chile", "Colombia", "Costa Rica",
+         "Ecuador", "Estados Unidos", "México", "Panamá", "Paraguay", "Perú",
+         "República Dominicana", "Uruguay"] },
+    { g:"África",
+      p:["Angola", "Camerún", "Congo", "Eritrea", "Ghana", "Guinea", "Mauritania",
+         "Nigeria", "República Democrática del Congo", "Senegal", "Somalia", "Sudán"] },
+    { g:"Asia",
+      p:["Afganistán", "Bangladesh", "China", "India", "Irán", "Iraq", "Nepal",
+         "Pakistán", "Siria", "Uzbekistán", "Vietnam", "Yemen"] },
+    { g:"Europa",
+      p:["Georgia", "Rusia", "Turquía", "Ucrania"] }
+  ];
+
+  /* Lista plana, para filtros y comparaciones que no necesitan los grupos. */
+  function paisesPlanos() {
+    return PAISES.reduce(function (acc, g) { return acc.concat(g.p); }, []);
+  }
+
+  /* ----------------------------------------------------- Escolaridad ----
+     Un solo catálogo para Registro y Empleabilidad. Antes eran dos listas
+     incompatibles —cinco opciones sin truncas en el registro, nueve con
+     truncas en empleabilidad—, y entre dos catálogos que no coinciden no
+     puede haber autollenado: no hay a qué mapear "Secundaria".
+
+     La especificación pide "Educación trunca" explícita. Se implementa por
+     nivel y no como una opción suelta porque "trunca" sin decir de qué
+     nivel no sirve para lo que la propia especificación quiere después:
+     que Empleabilidad reciba la escolaridad precargada y la detalle.     */
+  var ESCOLARIDAD = [
+    "Sin instrucción formal",
+    "Primaria trunca", "Primaria concluida",
+    "Secundaria trunca", "Secundaria concluida",
+    "Bachillerato trunco", "Bachillerato concluido",
+    "Carrera técnica trunca", "Carrera técnica concluida",
+    "Licenciatura trunca", "Licenciatura concluida",
+    "Posgrado"
+  ];
+
+  /* ------------------------------------------------- Etnia y lengua -----
+     La lengua deja de ser un campo de texto libre: escrita a mano, el mismo
+     idioma entra como "creole", "criollo haitiano" y "kreyol", y después no
+     hay forma de contar cuántas personas necesitan intérprete de esa lengua
+     —que es justamente para lo que sirve el dato—.                       */
+  var ETNIAS = [
+    "No se autoadscribe",
+    "Maya ch'ortí", "Maya k'iche'", "Maya mam", "Maya q'eqchi'", "Maya kaqchikel",
+    "Tzeltal", "Tzotzil", "Ch'ol", "Tojolabal", "Zoque", "Mochó",
+    "Garífuna", "Lenca", "Xinca", "Miskito", "Náhuatl", "Afrodescendiente"
+  ];
+
+  var LENGUAS = [
+    "Español",
+    "K'iche'", "Mam", "Q'eqchi'", "Kaqchikel", "Ch'ortí",
+    "Tzeltal", "Tzotzil", "Ch'ol", "Tojolabal", "Zoque",
+    "Créole haitiano", "Garífuna", "Miskito",
+    "Francés", "Inglés", "Portugués",
+    "Árabe", "Bengalí", "Hindi", "Mandarín", "Ruso", "Urdu", "Wolof"
+  ];
+
+  /* ------------------------------------------- Motivos de la migración --
+     "Laboral" y "Motivos económicos" se parecen y son distintos: el primero
+     es quien sale con una oferta o un oficio que ejercer, el segundo quien
+     sale porque en origen no alcanza para vivir. La diferencia decide si el
+     caso entra por vinculación directa o por capacitación, así que se
+     capturan por separado aunque en el informe agregado terminen juntos. */
+  var MOTIVOS_MIGRACION = [
+    "Violencia",
+    "Motivos económicos",
+    "Laboral",
+    "Reunificación familiar",
+    "Desastre natural",
+    "Persecución política"
+  ];
+
+  /* ------------------------------------------------ Estatus migratorio --
+     Cada estatus carga su propia nota. Antes la nota vivía en un objeto
+     indexado por el texto literal de la opción, dentro de registro.html:
+     agregar una opción sin acordarse de ese objeto pintaba la palabra
+     "undefined" en la pantalla. Con la nota pegada al dato eso no puede
+     pasar, y es la razón por la que ambas cosas viajan juntas.           */
+  var ESTATUS_MIGRATORIO = [
+    { t:"Solicitante de refugio",
+      n:"Requiere Constancia de Trámite COMAR vigente para inscribirse a cursos de " +
+        "capacitación (RF13). La constancia se renueva cada 30 días." },
+    { t:"Refugiado / Residente",
+      n:"Adquiere los mismos derechos que una persona mexicana: sin restricción de " +
+        "movilidad estatal." },
+    { t:"Por razones humanitarias",
+      n:"La Tarjeta de Visitante por Razones Humanitarias autoriza a trabajar en el país " +
+        "y no restringe la movilidad estatal. Verifique su vigencia antes de formalizar " +
+        "una contratación: vencida, la colocación no puede firmarse." },
+    { t:"Con amparo",
+      n:"Una suspensión otorgada por un juez federal protege a la persona mientras esté " +
+        "vigente: no puede ser devuelta ni trasladada. Registre el número de expediente " +
+        "y el juzgado en las observaciones; sin ese dato el amparo no se puede acreditar " +
+        "ante otra autoridad." },
+    { t:"Naturalizado",
+      n:"Adquiere los mismos derechos que una persona mexicana: sin restricción de " +
+        "movilidad estatal." },
+    { t:"Sin trámite",
+      n:"Sin trámite iniciado: el sistema restringe alertas de movilidad y sugiere " +
+        "canalización a orientación jurídica." }
+  ];
+
+  function estatus(t) {
+    return ESTATUS_MIGRATORIO.filter(function (e) { return e.t === t; })[0] || null;
+  }
+
+  /* ------------------------------------------------ Sectores productivos */
+  var SECTORES = [
+    "Agroindustria", "Belleza y cuidado personal", "Comercio", "Construcción",
+    "Manufactura de alimentos", "Servicio al cliente",
+    "Servicios de hospedaje y alimentos", "Servicios de limpieza",
+    "Textil y confección", "Transporte y almacenaje"
+  ];
+
+  /* --------------------------------- Escolaridad del registro general ---
+     El alta de persona captura la escolaridad UNA vez; Empleabilidad la
+     hereda y la detalla. Por eso el nivel vive aquí y no dentro de
+     Empleabilidad: si Empleabilidad tuviera el suyo volvería a ser una
+     segunda captura del mismo hecho —justo lo que pide evitar el
+     requerimiento 2.1— y las dos capturas podrían discrepar sin que nadie
+     se entere.
+
+     `nivel` es siempre una opción de ESCOLARIDAD. Lo que NO es nivel —el
+     área, la institución, el año, el documento que lo acredita— es el
+     detalle que agrega Empleabilidad y va en campos aparte. Meterlo dentro
+     del nivel fue lo que produjo valores como "Técnico en soldadura
+     industrial" o "Licenciatura en Administración (trunca)", que no son
+     ningún nivel del catálogo: un <select> sin coincidencia cae en su
+     primera opción, así que esa persona aparecía en pantalla como "Sin
+     instrucción formal".
+
+     OJO con la numeración: estos expedientes son los de la Dirección de
+     Empleabilidad y Capacitación, y sus números coinciden con la cola de
+     los folios del expediente único sin ser la misma persona (el 0412 de
+     aquí es Yesenia Ramírez Coc; SIAMH-2026-TAP-0412 es Yolanda Esperanza
+     Martínez Cruz). Está anotado en §5.3 para unificarlo.               */
+  var ESC_REGISTRO = {
+    "0412": { nivel:"Secundaria concluida",       inst:"Instituto Nacional de Educación Básica · Quetzaltenango", anio:2015 },
+    "0429": { nivel:"Primaria concluida",         inst:"Escuela Rural Mixta El Progreso · Yoro", anio:2004 },
+    "0447": { nivel:"Bachillerato concluido",     inst:"Instituto Nacional Miguel Larreynaga · Managua", anio:2021 },
+    "0464": { nivel:"Carrera técnica concluida",  area:"Soldadura industrial",
+              inst:"Politécnico José Antonio Echeverría · La Habana", anio:2008 },
+    "0470": { nivel:"Licenciatura trunca",        area:"Administración",
+              inst:"Universidad del Zulia · Maracaibo", anio:2019 },
+    "0658": { nivel:"Secundaria concluida",       inst:"Instituto Oficial Primero de Mayo · San Pedro Sula", anio:2016 },
+    "0201": { nivel:"Secundaria concluida",       inst:"Escuela Secundaria Técnica 45 · Tapachula", anio:2006 },
+    "0435": { nivel:"Secundaria concluida",       inst:"Centro Escolar Distrito Italia · Tonacatepeque", anio:2012 }
+  };
+
+  /* Copia, no la referencia: quien lee el registro general no debe poder
+     modificarlo por descuido. Para corregirlo está escRegistroFija().   */
+  function escRegistro(exp) {
+    var x = ESC_REGISTRO[exp];
+    if (!x) return null;
+    return { nivel:x.nivel, area:x.area || "", inst:x.inst || "", anio:x.anio || null,
+             doc:x.doc || "Certificado o título" };
+  }
+
+  /* Corregir la escolaridad desde Empleabilidad corrige el expediente
+     único, no una copia local: si cada módulo guardara la suya, la
+     duplicidad que el requerimiento venía a eliminar volvería por la
+     puerta de atrás.                                                    */
+  function escRegistroFija(exp, datos) {
+    if (!ESC_REGISTRO[exp]) ESC_REGISTRO[exp] = {};
+    var d = ESC_REGISTRO[exp];
+    ["nivel", "area", "inst", "anio", "doc"].forEach(function (k) {
+      if (datos[k] !== undefined) d[k] = datos[k];
+    });
+    return escRegistro(exp);
+  }
+
+  /* Cómo se acredita el nivel. "En trámite de revalidación" no es un
+     adorno: es el estado que conecta con el módulo de Revalidación de
+     Estudios, y sin él la ventanilla vuelve a pedir un papel que ya está
+     en trámite.                                                         */
+  var DOC_ESCOLAR = [
+    "Certificado o título",
+    "Boletas o constancia parcial",
+    "En trámite de revalidación",
+    "Sin documento probatorio"
+  ];
+
+  /* ------------------------------------------------------------ LADA ----
+     Clave telefónica internacional. El orden repite el de PAISES —primero
+     el país donde se captura y los de mayor flujo— porque es un selector
+     que se toca en cada alta.
+
+     `d` son los dígitos del número NACIONAL, sin la clave. Sin ese dato la
+     validación solo puede decir "número inválido", que no le sirve a quien
+     está capturando; con él la pantalla dice **qué** falta: "faltan 2
+     dígitos para un número de Honduras". Un teléfono mal capturado no es un
+     error cosmético: es la persona a la que después no se le puede avisar
+     de su cita, y el módulo de Empleabilidad verifica a los 15 y 30 días
+     justamente por teléfono.                                             */
+  var LADA = [
+    { c:"+52",    p:"México", d:10 },
+    { c:"+504",   p:"Honduras", d:8 },
+    { c:"+502",   p:"Guatemala", d:8 },
+    { c:"+58",    p:"Venezuela", d:10 },
+    { c:"+509",   p:"Haití", d:8 },
+    { c:"+53",    p:"Cuba", d:8 },
+    { c:"+503",   p:"El Salvador", d:8 },
+    { c:"+505",   p:"Nicaragua", d:8 },
+    { c:"+54",    p:"Argentina", d:10 },
+    { c:"+501",   p:"Belice", d:7 },
+    { c:"+591",   p:"Bolivia", d:8 },
+    { c:"+55",    p:"Brasil", d:11 },
+    { c:"+56",    p:"Chile", d:9 },
+    { c:"+57",    p:"Colombia", d:10 },
+    { c:"+506",   p:"Costa Rica", d:8 },
+    { c:"+593",   p:"Ecuador", d:9 },
+    { c:"+1",     p:"Estados Unidos", d:10 },
+    { c:"+507",   p:"Panamá", d:8 },
+    { c:"+595",   p:"Paraguay", d:9 },
+    { c:"+51",    p:"Perú", d:9 },
+    { c:"+1809",  p:"República Dominicana", d:7 },
+    { c:"+598",   p:"Uruguay", d:8 },
+    { c:"+244",   p:"Angola", d:9 },
+    { c:"+237",   p:"Camerún", d:9 },
+    { c:"+242",   p:"Congo", d:9 },
+    { c:"+291",   p:"Eritrea", d:7 },
+    { c:"+233",   p:"Ghana", d:9 },
+    { c:"+224",   p:"Guinea", d:9 },
+    { c:"+222",   p:"Mauritania", d:8 },
+    { c:"+234",   p:"Nigeria", d:10 },
+    { c:"+243",   p:"República Democrática del Congo", d:9 },
+    { c:"+221",   p:"Senegal", d:9 },
+    { c:"+252",   p:"Somalia", d:8 },
+    { c:"+249",   p:"Sudán", d:9 },
+    { c:"+93",    p:"Afganistán", d:9 },
+    { c:"+880",   p:"Bangladesh", d:10 },
+    { c:"+86",    p:"China", d:11 },
+    { c:"+91",    p:"India", d:10 },
+    { c:"+98",    p:"Irán", d:10 },
+    { c:"+964",   p:"Iraq", d:10 },
+    { c:"+977",   p:"Nepal", d:10 },
+    { c:"+92",    p:"Pakistán", d:10 },
+    { c:"+963",   p:"Siria", d:9 },
+    { c:"+998",   p:"Uzbekistán", d:9 },
+    { c:"+84",    p:"Vietnam", d:9 },
+    { c:"+967",   p:"Yemen", d:9 },
+    { c:"+995",   p:"Georgia", d:9 },
+    { c:"+7",     p:"Rusia", d:10 },
+    { c:"+90",    p:"Turquía", d:10 },
+    { c:"+380",   p:"Ucrania", d:9 }
+  ];
+
+  /* Clave que corresponde a un país, para preseleccionar el selector de
+     LADA a partir de la nacionalidad ya capturada. */
+  function ladaDe(pais) {
+    var x = LADA.filter(function (l) { return l.p === pais; })[0];
+    return x ? x.c : "+52";
+  }
+
   global.DATOS = {
     HOY:HOY, dt:dt, fecha:fecha, hora:hora, fechaHora:fechaHora,
     horas:horas, dias:dias, horasTxt:horasTxt, edad:edad, plural:plural,
     YO:YO, DIRECTOR:DIRECTOR, PERS:PERS,
     persona:persona, activos:activos, corto:corto,
-    NIVELES:NIVELES, MOT_NEG:MOT_NEG, REVAL:REVAL, negAbierta:negAbierta
+    NIVELES:NIVELES, MOT_NEG:MOT_NEG, REVAL:REVAL, negAbierta:negAbierta,
+
+    /* Catálogos de captura compartidos */
+    PAISES:PAISES, paisesPlanos:paisesPlanos, ESCOLARIDAD:ESCOLARIDAD,
+    ETNIAS:ETNIAS, LENGUAS:LENGUAS, MOTIVOS_MIGRACION:MOTIVOS_MIGRACION,
+    ESTATUS_MIGRATORIO:ESTATUS_MIGRATORIO, estatus:estatus,
+    SECTORES:SECTORES, LADA:LADA, ladaDe:ladaDe,
+    escRegistro:escRegistro, escRegistroFija:escRegistroFija, DOC_ESCOLAR:DOC_ESCOLAR
   };
 })(window);

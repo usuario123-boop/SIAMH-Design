@@ -707,12 +707,249 @@
     }
   });
 
+  /* ------------------------------------------- Campos de catálogo -------
+     Regla técnica estándar de la opción 'Otro' (Especificación de Mejoras
+     §3), escrita una sola vez.
+
+     La regla toca hoy siete campos repartidos en tres archivos —etnia,
+     lengua, motivo de migración, estatus, sector, motivo de conclusión y
+     motivo de no contratación— y va a tocar más. Escrita siete veces a mano
+     son siete comportamientos que empiezan iguales y se separan en cuanto
+     alguien corrige uno solo: el que enfoca el campo y el que no, el que lo
+     exige y el que deja guardar "Otro" sin decir cuál.
+
+     El contrato es el que pide la especificación:
+       · la opción se emite con value="OTRO" —clave estable, independiente
+         de cómo esté redactada la etiqueta en pantalla—;
+       · al elegirla aparece un campo de texto adyacente y OBLIGATORIO;
+       · al dejar de elegirla el texto se limpia, para que no quede una
+         especificación huérfana contradiciendo al campo principal;
+       · `valorOtro()` devuelve {clave, otro}, que es exactamente la forma
+         en que la especificación pide persistirlo.
+
+     El marcado es declarativo: <select data-otro="idDelInput"> y el input
+     con data-campo-otro="<etiqueta del campo padre>". Así una pantalla que
+     se repinta por innerHTML —empleabilidad lo hace en cada clic— solo
+     vuelve a llamar a activarOtro() y no tiene que recordar qué campos
+     tenía cableados.                                                     */
+
+  /* Dibuja las opciones de un catálogo. Acepta las tres formas en que los
+     catálogos de simh-datos.js están escritos: lista de textos, lista de
+     objetos {t:…} y lista de grupos {g:…, p:[…]} para <optgroup>. Un solo
+     renderizador evita que cada pantalla invente el suyo.                */
+  function opciones(cat, sel, conOtro) {
+    function opt(t) {
+      return '<option value="' + esc(t) + '"' + (t === sel ? " selected" : "") +
+             ">" + esc(t) + "</option>";
+    }
+    var html = (cat || []).map(function (x) {
+      if (x && x.g) {
+        return '<optgroup label="' + esc(x.g) + '">' + x.p.map(opt).join("") + "</optgroup>";
+      }
+      return opt(typeof x === "string" ? x : x.t);
+    }).join("");
+
+    if (conOtro) {
+      html += '<option value="OTRO"' + (sel === "OTRO" ? " selected" : "") + ">" +
+              esc(typeof conOtro === "string" ? conOtro : "Otro (especificar)") + "</option>";
+    }
+    return html;
+  }
+
+  /* Cablea todos los <select data-otro> que haya bajo `raiz`. Idempotente:
+     volver a llamarla sobre lo ya cableado no duplica escuchas.          */
+  function activarOtro(raiz) {
+    var ambito = raiz || document;
+    if (!ambito.querySelectorAll) return;
+
+    Array.prototype.forEach.call(ambito.querySelectorAll("select[data-otro]"), function (sel) {
+      var libre = document.getElementById(sel.getAttribute("data-otro"));
+      if (!libre) return;
+
+      /* `enfoca` distingue el cambio hecho por la persona —donde llevar el
+         cursor al campo nuevo ahorra un clic— del primer pintado, donde
+         robar el foco movería la pantalla sin que nadie lo pidiera.      */
+      function sincroniza(enfoca) {
+        var activo = sel.value === "OTRO";
+        libre.classList.toggle("oculto", !activo);
+        libre.toggleAttribute("data-req", activo);
+        if (!activo) {
+          libre.value = "";
+          var campo = libre.closest ? libre.closest(".campo") : null;
+          if (campo) campo.classList.remove("error");
+          return;
+        }
+        if (enfoca) libre.focus();
+      }
+
+      if (!sel.getAttribute("data-otro-listo")) {
+        sel.addEventListener("change", function () { sincroniza(true); });
+        sel.setAttribute("data-otro-listo", "1");
+      }
+      sincroniza(false);
+    });
+  }
+
+  /* Lo que se persiste. La especificación lo pide así: clave 'OTRO' en el
+     campo principal y el texto en el complementario (etnia_otro, …).     */
+  function valorOtro(sel) {
+    sel = typeof sel === "string" ? document.querySelector(sel) : sel;
+    if (!sel) return null;
+    if (sel.value !== "OTRO") return { clave: sel.value, otro: "" };
+    var libre = document.getElementById(sel.getAttribute("data-otro") || "");
+    return { clave: "OTRO", otro: libre ? libre.value.trim() : "" };
+  }
+
+  /* Lo que se muestra: "Otra · Mopán" en un resumen o en un expediente. Un
+     renglón que solo dijera "Otra" obliga a volver al formulario para saber
+     qué se capturó.
+
+     El prefijo se toma de la etiqueta real de la opción y no de un "Otro"
+     fijo, porque el catálogo la redacta concordando con su campo —"Otra
+     (especificar)" en etnia y lengua, "Otro país (especificar)" en
+     nacionalidad— y un prefijo fijo desharía esa concordancia justo en el
+     renglón que se lee.                                                   */
+  function textoOtro(sel) {
+    sel = typeof sel === "string" ? document.querySelector(sel) : sel;
+    var v = valorOtro(sel);
+    if (!v) return "";
+    if (v.clave !== "OTRO") return v.clave;
+    var op = sel.options[sel.selectedIndex];
+    var etiqueta = op ? op.text.replace(/\s*\(especificar\)\s*$/i, "") : "Otro";
+    return v.otro ? etiqueta + " · " + v.otro : etiqueta + " (sin especificar)";
+  }
+
+  /* ------------------------------------------- Teléfono con LADA -------
+     Requerimiento 1.7: selector de clave internacional y validación del
+     número. El marcado es declarativo, igual que la regla de 'Otro':
+
+       <select id="telResLada"></select>
+       <input type="tel" data-lada="telResLada" data-pais="México">
+
+     `data-pais` solo fija la clave inicial; a partir de ahí manda lo que
+     elija la ventanilla.
+
+     Por qué esto no es cosmético: el teléfono es la única vía para avisar
+     de una cita y es como Empleabilidad verifica a los 15 y 30 días. Un
+     número con un dígito de menos no falla hoy, falla dentro de un mes y
+     sin dejar rastro de por qué. Por eso la validación no dice "número
+     inválido" sino CUÁNTOS dígitos faltan o sobran para el país elegido: un
+     mensaje que no dice qué corregir manda a la ventanilla a adivinar.
+
+     Lo que se guarda es E.164 (+50496123456), sin espacios. Lo que se
+     muestra va agrupado, que es como la gente lee y dicta un teléfono.   */
+
+  var TEL_GRUPOS = { 7:[3, 4], 8:[4, 4], 9:[3, 3, 3], 10:[3, 3, 4], 11:[2, 5, 4] };
+
+  function telAgrupa(digitos) {
+    var patron = TEL_GRUPOS[digitos.length], partes = [], i = 0;
+    if (!patron) {
+      /* Longitud inesperada: se agrupa de tres en tres para que al menos
+         se pueda leer, en vez de devolver una tira de dígitos. */
+      for (i = 0; i < digitos.length; i += 3) partes.push(digitos.slice(i, i + 3));
+      return partes.join(" ");
+    }
+    patron.forEach(function (n) { partes.push(digitos.substr(i, n)); i += n; });
+    return partes.join(" ");
+  }
+
+  function telLada(input) {
+    input = typeof input === "string" ? document.querySelector(input) : input;
+    if (!input) return null;
+    var sel = document.getElementById(input.getAttribute("data-lada") || "");
+    if (!sel) return null;
+    var datos = global.DATOS ? global.DATOS.LADA : [];
+    var x = datos.filter(function (l) { return l.c === sel.value; })[0];
+    return x || null;
+  }
+
+  /* Lo que se persiste y lo que hace falta para decidir si está bien. */
+  function valorTelefono(input) {
+    input = typeof input === "string" ? document.querySelector(input) : input;
+    if (!input) return null;
+    var lada = telLada(input);
+    var digitos = String(input.value || "").replace(/\D/g, "");
+    var esperados = lada ? lada.d : 0;
+    return {
+      lada: lada ? lada.c : "",
+      pais: lada ? lada.p : "",
+      digitos: digitos,
+      esperados: esperados,
+      nacional: telAgrupa(digitos),
+      e164: digitos ? (lada ? lada.c : "") + digitos : "",
+      vacio: !digitos,
+      valido: !!digitos && digitos.length === esperados
+    };
+  }
+
+  /* Para un resumen o un expediente: "+504 9612 3456". */
+  function textoTelefono(input) {
+    var v = valorTelefono(input);
+    if (!v || v.vacio) return "";
+    return v.lada + " " + v.nacional;
+  }
+
+  function telMensaje(v) {
+    if (v.vacio) return "";
+    if (v.valido) return "Se guarda como <b>" + v.e164 + "</b>.";
+    var faltan = v.esperados - v.digitos.length;
+    var cuantos = Math.abs(faltan) === 1 ? "1 dígito" : Math.abs(faltan) + " dígitos";
+    return "<b>" + (faltan > 0 ? "Faltan " : "Sobran ") + cuantos + "</b> para un número de " +
+           v.pais + ", que son " + v.esperados + " dígitos.";
+  }
+
+  /* Cablea los <input data-lada> que haya bajo `raiz`. Idempotente, como
+     activarOtro(), para pantallas que se repintan por innerHTML.        */
+  function activarTelefono(raiz) {
+    var ambito = raiz || document;
+    if (!ambito.querySelectorAll) return;
+    var datos = global.DATOS ? global.DATOS.LADA : [];
+
+    Array.prototype.forEach.call(ambito.querySelectorAll("input[data-lada]"), function (input) {
+      var sel = document.getElementById(input.getAttribute("data-lada"));
+      if (!sel) return;
+
+      if (!sel.getAttribute("data-lada-listo")) {
+        sel.innerHTML = datos.map(function (l) {
+          return '<option value="' + esc(l.c) + '">' + esc(l.c + " " + l.p) + "</option>";
+        }).join("");
+        sel.value = global.DATOS
+          ? global.DATOS.ladaDe(input.getAttribute("data-pais") || "México")
+          : "+52";
+        sel.setAttribute("data-lada-listo", "1");
+      }
+
+      var ayuda = document.getElementById(input.id + "Ayuda");
+
+      function revisa(formatear) {
+        var v = valorTelefono(input);
+        if (formatear && !v.vacio) input.value = v.nacional;
+        input.setAttribute("maxlength", String(v.esperados + 4));  /* + los espacios */
+        if (ayuda) ayuda.innerHTML = telMensaje(v);
+        var campo = input.closest ? input.closest(".campo") : null;
+        /* Un número a medio escribir no es un error todavía: solo se marca
+           cuando la persona ya salió del campo. */
+        if (campo && formatear) campo.classList.toggle("error", !v.vacio && !v.valido);
+      }
+
+      if (!input.getAttribute("data-lada-input-listo")) {
+        input.addEventListener("input", function () { revisa(false); });
+        input.addEventListener("blur",  function () { revisa(true); });
+        sel.addEventListener("change", function () { revisa(true); input.focus(); });
+        input.setAttribute("data-lada-input-listo", "1");
+      }
+      revisa(true);
+    });
+  }
+
   global.SIMH = global.SIAMH = {
     icono: icono, isotipo: isotipo, chrome: chrome,
     n: n, pct: pct, esc: esc,
     columnas: columnas, sparkline: sparkline, barrasH: barrasH, apilada: apilada,
     mapaBurbujas: mapaBurbujas, tablaDatos: tablaDatos, grafica: grafica, pestanas: pestanas,
     toast: toast, panelMaestro: panelMaestro, gestorCaso: gestorCaso,
+    opciones: opciones, activarOtro: activarOtro, valorOtro: valorOtro, textoOtro: textoOtro,
+    activarTelefono: activarTelefono, valorTelefono: valorTelefono, textoTelefono: textoTelefono,
     TINTA: TINTA, CAT: CAT
   };
 })(window);

@@ -327,10 +327,14 @@
 </main>
 
 <script src="assets/js/simh.js"></script>
+<script src="assets/js/simh-datos.js"></script>
 <script>
 (function () {
   "use strict";
   SIMH.chrome("empleo");
+  /* Catálogos compartidos: assets/js/simh-datos.js. Sectores y escolaridad
+     ya no se escriben aquí porque los comparte con el alta de persona. */
+  var D = window.DATOS;
   var ico = SIMH.icono, esc = SIMH.esc;
   var $  = function (s) { return document.querySelector(s); };
   var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
@@ -381,9 +385,11 @@
   var REPROG = 3;   /* cada intento sin contacto reprograma la verificación */
 
   /* ------------------------------------------------------- Catálogos ---- */
-  var SECTORES = ["Agroindustria", "Comercio", "Construcción", "Manufactura de alimentos",
-    "Servicios de hospedaje y alimentos", "Servicios de limpieza", "Textil y confección",
-    "Transporte y almacenaje"];
+  /* El documento de mejoras agregó "Servicio al cliente" y "Belleza y
+     cuidado personal". Viven en simh-datos.js, no aquí: el censo
+     empresarial y los informes cuentan por sector, y dos listas distintas
+     producirían dos totales distintos del mismo universo.                */
+  var SECTORES = D.SECTORES;
 
   var OFICIOS_CAT = [
     "Albañilería y acabados", "Carpintería y herrería", "Cocinero(a) / Panadería",
@@ -394,9 +400,41 @@
     "Hotelería y camarista", "Seguridad y vigilancia"
   ];
 
+  /* Requerimiento 2.2. El documento pide registrar por separado si la
+     persona cuenta hoy con un empleo y si quiere cambiarlo o buscar otro.
+     Había un solo campo, "Situación laboral actual", que mezclaba las dos
+     cosas: "Búsqueda activa de empleo" decía a la vez que no tiene trabajo
+     y que quiere uno, y dejaba sin registrar el caso que más importa para
+     RF12 —quien SÍ tiene empleo y aun así quiere cambiar—, porque en la
+     lista no existía. El "Sí" o el "No" va como primera palabra para que
+     la respuesta se lea sin abrir el selector.                          */
+  var EMPLEO_ACTUAL = [
+    "No · está sin empleo",
+    "No · nunca ha trabajado de manera formal",
+    "Sí · empleo formal con prestaciones",
+    "Sí · ocupación informal o jornalera",
+    "Sí · autoempleo u oficio propio"
+  ];
+
+  var ASPIRACION = [
+    "Busca su primer empleo",
+    "Busca empleo activamente",
+    "Quiere cambiar de empleo",
+    "Quiere un segundo empleo o ingreso complementario",
+    "Quiere capacitarse antes de buscar empleo",
+    "No busca empleo por ahora"
+  ];
+
+  function tieneEmpleo(dg) { return (dg.empleo || "").indexOf("Sí") === 0; }
+
   var MEDIOS = ["Llamada telefónica al patrón", "Llamada telefónica a la persona",
     "Visita al centro de trabajo", "Comparecencia en ventanilla"];
 
+  /* Motivos de catálogo. La opción 'Otro' que pide el documento de mejoras
+     no se agrega a estas listas: la añade SIMH.opciones() al dibujarlas,
+     con la clave OTRO y su campo de texto obligatorio, que es la regla
+     única del §3. Así el catálogo sigue siendo el catálogo y no lleva
+     dentro una opción que no es un motivo.                               */
   var MOT_FIN = ["Renuncia voluntaria", "Despido o rescisión de contrato", "Término del contrato",
     "Condiciones laborales o de pago", "Traslado a otro municipio o país",
     "Documento migratorio vencido", "Motivos de salud o familiares"];
@@ -413,12 +451,19 @@
 
   function getDiag(p) {
     if (!p.diag) {
+      var colocada = p.v.some(function (v) { return v.con === 1 && v.inicio && !v.fin; });
       p.diag = {
-        sit: p.v.some(function(v){ return v.con===1 && !v.fin; }) ? "empleado" : "busqueda",
+        /* Requerimiento 2.2: dos hechos distintos, dos campos. */
+        empleo: colocada ? "Sí · empleo formal con prestaciones" : "No · está sin empleo",
+        aspira: colocada ? "Quiere cambiar de empleo" : "Busca empleo activamente",
         oficios: [p.perfil.split(" y ")[0] || "General"],
         expAnios: parseInt(p.exp, 10) || 2,
         expDetalle: p.exp || "",
-        esc: p.esc || "Secundaria concluida",
+        /* Requerimiento 2.1: la escolaridad NO se vuelve a capturar aquí.
+           Se lee del registro general y este módulo solo la detalla.    */
+        escol: D.escRegistro(p.e) ||
+               { nivel:"Secundaria concluida", area:"", inst:"", anio:null,
+                 doc:"Certificado o título" },
         idiomaEsp: "Nativo / Fluido",
         habDigital: "Básico",
         turnos: p.disp || "Tiempo completo",
@@ -448,7 +493,7 @@
                 nota:"El SAT rechazó dos veces el comprobante de domicilio. Se acompaña la cita " +
                      "del 04/09 con carta de residencia expedida por la Secretaría." } ],
       nss:{ est:"reg",  d:"12 08 96 5411 3 · alta ante el IMSS el 30/07/2026" },
-      esc:"Secundaria concluida", perfil:"Auxiliar de panadería y pastelería",
+      perfil:"Auxiliar de panadería y pastelería",
       exp:"3 años en panadería (Quetzaltenango, Guatemala)",
       disp:"Tiempo completo · turno matutino",
       cursos:"Panadería básica · ICATECH Tapachula (en curso)",
@@ -468,7 +513,7 @@
       curp:1, estancia:{ doc:"Tarjeta de Visitante por Razones Humanitarias", vig:"2026-09-30" },
       rfc:{ est:"reg",  d:"BUAJ920415H41" },
       nss:{ est:"tram", d:"En trámite por el patrón desde el 18/08/2026" },
-      esc:"Primaria concluida", perfil:"Ayudante general de construcción",
+      perfil:"Ayudante general de construcción",
       exp:"8 años en albañilería y acabados", disp:"Tiempo completo",
       cursos:"Panadería básica · ICATECH Tapachula (en curso)",
       v:[
@@ -488,7 +533,7 @@
       e:"0447", n:"Yoselin Chávez Mendoza", nac:"NIC", edad:23, mun:"Huixtla",
       curp:1, estancia:{ doc:"Tarjeta de Visitante por Razones Humanitarias", vig:"2027-01-20" },
       rfc:{ est:"pend" }, nss:{ est:"pend" },
-      esc:"Bachillerato concluido", perfil:"Atención a clientes y caja",
+      perfil:"Atención a clientes y caja",
       exp:"2 años en tienda de abarrotes (Managua, Nicaragua)",
       disp:"Medio tiempo · turno vespertino", cursos:"Sin cursos registrados",
       v:[
@@ -502,12 +547,12 @@
       e:"0464", n:"Yordanis Pérez Lazo", nac:"CUB", edad:41, mun:"Tapachula",
       curp:1, estancia:{ doc:"Tarjeta de Residente Temporal", vig:"2028-05-02" },
       rfc:{ est:"pend" }, nss:{ est:"pend" },
-      esc:"Técnico en soldadura industrial", perfil:"Soldador y hojalatero",
+      perfil:"Soldador y hojalatero",
       exp:"14 años en taller mecánico (La Habana, Cuba)", disp:"Tiempo completo",
       cursos:"Sin cursos registrados",
       v:[
         { id:"V-0464-01", vac:"Soldador", emp:"Talleres Metálicos del Soconusco",
-          sector:"Textil y confección", munEmp:"Tapachula", resp:RESP,
+          sector:"Construcción", munEmp:"Tapachula", resp:RESP,
           post:"2026-08-11", ent:"2026-08-19", entRes:"fav", con:1, fcon:"2026-08-26",
           inicio:null, puesto:"Soldador de primera",
           fin:null, motFin:null, seg:{ "15":[], "30":[] } }
@@ -517,7 +562,7 @@
       e:"0470", n:"Génesis Andreína Rondón Silva", nac:"VEN", edad:29, mun:"Tapachula",
       curp:1, estancia:{ doc:"Tarjeta de Visitante por Razones Humanitarias", vig:"2027-06-08" },
       rfc:{ est:"reg", d:"ROSG970211M22" }, nss:{ est:"reg", d:"41 09 97 8823 0" },
-      esc:"Licenciatura en Administración (trunca)", perfil:"Auxiliar administrativa",
+      perfil:"Auxiliar administrativa",
       exp:"6 años en administración y facturación (Maracaibo, Venezuela)",
       disp:"Tiempo completo", cursos:"Sin cursos registrados",
       v:[
@@ -536,7 +581,7 @@
       e:"0658", n:"Suyapa del Carmen Lagos Munguía", nac:"HND", edad:26, mun:"Tapachula",
       curp:1, estancia:{ doc:"Tarjeta de Visitante por Razones Humanitarias", vig:"2027-02-11" },
       rfc:{ est:"reg", d:"LAMS000724MQ8" }, nss:{ est:"reg", d:"07 00 00 7712 4" },
-      esc:"Secundaria concluida", perfil:"Camarista y auxiliar de cocina",
+      perfil:"Camarista y auxiliar de cocina",
       exp:"4 años en hotelería y cocina (San Pedro Sula, Honduras)",
       disp:"Tiempo completo · rol de turnos", cursos:"Corte y confección · ICATECH (en conformación)",
       v:[
@@ -560,7 +605,7 @@
       curp:1, estancia:null,
       rfc:{ est:"reg", d:"ROPM900612JK3" },
       nss:{ est:"tram", d:"En trámite por el patrón desde el 24/08/2026" },
-      esc:"Secundaria concluida", perfil:"Cocinera",
+      perfil:"Cocinera",
       exp:"11 años en cocina de fonda y comedor industrial", disp:"Tiempo completo",
       cursos:"Panadería básica · ICATECH Tapachula (en curso)",
       v:[
@@ -578,7 +623,7 @@
                 nota:"Cita en el INM de Tapachula el 09/09 para la tarjeta por razones " +
                      "humanitarias. La Secretaría acompaña el trámite: no volver a pedirle el " +
                      "documento antes de esa fecha." } ],
-      esc:"Secundaria concluida", perfil:"Costurera industrial",
+      perfil:"Costurera industrial",
       exp:"5 años en maquila textil (San Salvador, El Salvador)", disp:"Tiempo completo",
       cursos:"Panadería básica · ICATECH Tapachula (en curso)",
       v:[
@@ -1210,6 +1255,46 @@
     '</div>';
   }
 
+  /* Las dos respuestas juntas dicen algo que por separado no dicen, y eso
+     se enuncia donde se capturan en vez de dejarlo deducir.             */
+  function conseLaboral(dg) {
+    var t = "";
+    if (tieneEmpleo(dg) && dg.aspira === "Quiere cambiar de empleo") {
+      t = "Tiene empleo y quiere cambiarlo: sigue en la cartera de vinculación. Registrar una " +
+          "vinculación nueva <b>no cierra</b> la colocación vigente; para eso va la verificación " +
+          "con resultado <b>Ya no labora</b>.";
+    } else if (tieneEmpleo(dg) && dg.aspira === "Quiere un segundo empleo o ingreso complementario") {
+      t = "Busca un ingreso complementario: las vacantes que se le propongan deben ser compatibles " +
+          "con el turno que ya cubre.";
+    } else if (!tieneEmpleo(dg) && dg.aspira === "No busca empleo por ahora") {
+      t = "Sin empleo y sin búsqueda activa: <b>no entra a la cartera de vinculación</b> hasta que " +
+          "la aspiración cambie. No es un caso cerrado, es un caso que hoy no se postula.";
+    } else if (dg.aspira === "Quiere capacitarse antes de buscar empleo") {
+      t = "La ruta empieza por capacitación, no por vinculación: se canaliza a Capacitación y la " +
+          "postulación espera a que concluya el curso.";
+    }
+    return t ? '<div class="conse tibia">' + ico("info") + t + "</div>" : "";
+  }
+
+  /* Un nivel sin documento que lo acredite no es un problema del módulo de
+     empleo, pero sí decide qué puede ofrecerse: por eso se dice aquí y se
+     dice dónde se resuelve.                                             */
+  function conseEscolar(dg) {
+    var d = dg.escol.doc;
+    if (d === "En trámite de revalidación") {
+      return '<div class="conse tibia">' + ico("info") +
+        "El nivel está <b>en trámite de revalidación</b>. No impide postularse ni entrevistarse; " +
+        "sí impide acreditar el nivel ante un patrón que lo exija. El caso se sigue en " +
+        '<a href="revalidacion.html">Revalidación de Estudios</a>.</div>';
+    }
+    if (d === "Sin documento probatorio") {
+      return '<div class="conse tibia">' + ico("alerta") +
+        "Sin documento probatorio. Para las vacantes que exigen comprobar el nivel, conviene abrir " +
+        'el trámite en <a href="revalidacion.html">Revalidación de Estudios</a> antes de postular.</div>';
+    }
+    return "";
+  }
+
   function bloqueDiagnostico(p) {
     var dg = getDiag(p);
     var oficiosSel = dg.oficios || [];
@@ -1234,25 +1319,58 @@
       '<form id="formDiag" onsubmit="return false" style="margin-top:14px">' +
         '<div class="fila">' +
           '<div class="campo" style="flex:1">' +
-            '<label for="dgSit">Situación laboral actual <span class="req">*</span></label>' +
-            '<select id="dgSit">' +
-              '<option value="busqueda"' + (dg.sit === "busqueda" ? " selected" : "") + '>Búsqueda activa de empleo</option>' +
-              '<option value="desempleado"' + (dg.sit === "desempleado" ? " selected" : "") + '>Desempleado(a)</option>' +
-              '<option value="informal"' + (dg.sit === "informal" ? " selected" : "") + '>Ocupación informal o jornalero</option>' +
-              '<option value="autoempleo"' + (dg.sit === "autoempleo" ? " selected" : "") + '>Autoempleo / Oficio propio</option>' +
-              '<option value="empleado"' + (dg.sit === "empleado" ? " selected" : "") + '>Empleado(a) actualmente</option>' +
-            '</select>' +
+            '<label for="dgEmpleo">¿Cuenta actualmente con un empleo o ingreso? <span class="req">*</span></label>' +
+            '<select id="dgEmpleo">' + SIMH.opciones(EMPLEO_ACTUAL, dg.empleo) + '</select>' +
           '</div>' +
           '<div class="campo" style="flex:1">' +
-            '<label for="dgEsc">Escolaridad alcanzada <span class="req">*</span></label>' +
-            '<select id="dgEsc">' +
-              ['Primaria concluida', 'Primaria trunca', 'Secundaria concluida', 'Secundaria trunca',
-               'Bachillerato concluido', 'Técnico / Carrera técnica', 'Licenciatura (trunca)', 'Licenciatura (concluida)', 'Sin instrucción formal'].map(function(e){
-                return '<option value="' + esc(e) + '"' + (dg.esc === e ? ' selected' : '') + '>' + esc(e) + '</option>';
-              }).join("") +
-            '</select>' +
+            '<label for="dgAspira">Aspiración laboral declarada <span class="req">*</span></label>' +
+            '<select id="dgAspira">' + SIMH.opciones(ASPIRACION, dg.aspira) + '</select>' +
           '</div>' +
         '</div>' +
+        '<div id="dgConse">' + conseLaboral(dg) + '</div>' +
+
+        /* Requerimiento 2.1. El nivel llega del alta y aquí solo se
+           detalla: el registro general es más general y este es más
+           detallado, que es como lo enuncia el documento. Corregir el
+           nivel aquí corrige el expediente único, no una copia local:
+           si cada módulo guardara la suya, la duplicidad que el
+           requerimiento venía a eliminar volvería por la puerta de
+           atrás.                                                        */
+        '<fieldset class="fieldset">' +
+          '<legend>Escolaridad</legend>' +
+          '<div class="fila">' +
+            '<div class="campo" style="flex:1;margin-bottom:0">' +
+              '<label for="dgEsc">Nivel alcanzado <span class="req">*</span></label>' +
+              '<select id="dgEsc">' + SIMH.opciones(D.ESCOLARIDAD, dg.escol.nivel) + '</select>' +
+              '<div class="ayuda">' + (D.escRegistro(p.e)
+                ? "Tomado del registro general del expediente. Corregirlo aquí corrige el expediente único."
+                : "Sin escolaridad en el registro general: lo que se capture aquí queda como el dato del expediente.") +
+              '</div>' +
+            '</div>' +
+            '<div class="campo" style="flex:1;margin-bottom:0">' +
+              '<label for="dgEscArea">Área o especialidad <span class="opc">(si aplica)</span></label>' +
+              '<input type="text" id="dgEscArea" value="' + esc(dg.escol.area || "") + '" ' +
+                'placeholder="Ej. Soldadura industrial, Administración">' +
+            '</div>' +
+          '</div>' +
+          '<div class="fila-3" style="margin-top:12px">' +
+            '<div class="campo" style="margin-bottom:0">' +
+              '<label for="dgEscInst">Institución educativa</label>' +
+              '<input type="text" id="dgEscInst" value="' + esc(dg.escol.inst || "") + '" ' +
+                'placeholder="Nombre y ciudad">' +
+            '</div>' +
+            '<div class="campo" style="margin-bottom:0">' +
+              '<label for="dgEscAnio">Año de conclusión o último cursado</label>' +
+              '<input type="number" id="dgEscAnio" min="1950" max="2026" ' +
+                'value="' + (dg.escol.anio || "") + '" placeholder="Ej. 2015">' +
+            '</div>' +
+            '<div class="campo" style="margin-bottom:0">' +
+              '<label for="dgEscDoc">Documento que lo acredita</label>' +
+              '<select id="dgEscDoc">' + SIMH.opciones(D.DOC_ESCOLAR, dg.escol.doc) + '</select>' +
+            '</div>' +
+          '</div>' +
+          '<div id="dgEscConse">' + conseEscolar(dg) + '</div>' +
+        '</fieldset>' +
 
         '<div class="campo">' +
           '<label>Oficios y competencias técnicas declaradas <span class="req">*</span> <small class="txt-min">(Selección múltiple)</small></label>' +
@@ -1337,8 +1455,11 @@
 
   function bloquePerfil(p) {
     var dg = getDiag(p);
+    var nivel = dg.escol.nivel + (dg.escol.area ? " · " + dg.escol.area : "");
     var datos = [
-      ["Escolaridad", dg.esc || p.esc],
+      ["Situación laboral", dg.empleo],
+      ["Aspiración laboral", dg.aspira],
+      ["Escolaridad", nivel + (dg.escol.anio ? " (" + dg.escol.anio + ")" : "")],
       ["Experiencia declarada", dg.expDetalle || p.exp],
       ["Perfil de vinculación", p.perfil],
       ["Disponibilidad", dg.turnos || p.disp],
@@ -1472,10 +1593,13 @@
   }
 
   /* ----------------------------------------------------------- Paneles -- */
-  function selOpts(lista, sel) {
-    return '<option value="">Selecciona…</option>' + lista.map(function (o) {
-      return '<option value="' + esc(o) + '"' + (o === sel ? " selected" : "") + ">" + esc(o) + "</option>";
-    }).join("");
+  /* Las opciones salen de SIMH.opciones() para que la regla de 'Otro' —la
+     clave OTRO y su campo de texto— se comporte igual aquí que en el alta.
+     El "Selecciona…" inicial se conserva: obliga a elegir, en vez de dejar
+     preseleccionado el primer motivo del catálogo y guardarlo sin que
+     nadie lo haya dicho.                                                 */
+  function selOpts(lista, sel, otro) {
+    return '<option value="">Selecciona…</option>' + SIMH.opciones(lista, sel, otro);
   }
 
   function panelNueva(p) {
@@ -1517,7 +1641,8 @@
       "</div>" +
       '<div class="fila-3">' +
         '<div class="campo"><label for="nvSec">Sector productivo <span class="req">*</span></label>' +
-          '<select id="nvSec">' + selOpts(SECTORES) + "</select>" +
+          '<select id="nvSec" data-otro="nvSecOtro">' + selOpts(SECTORES, null, "Otro (especificar)") + "</select>" +
+          '<input type="text" id="nvSecOtro" class="campo-otro oculto" placeholder="Especifique el sector productivo">' +
           '<span class="msg-error">Elige el sector.</span></div>' +
         '<div class="campo"><label for="nvMun">Municipio del centro de trabajo</label>' +
           '<input type="text" id="nvMun" value="' + esc(p.mun) + '"></div>' +
@@ -1592,7 +1717,8 @@
       "</div>" +
       (res === "nolabora"
         ? '<div class="campo"><label for="vfMotivo">Motivo de la conclusión <span class="req">*</span></label>' +
-          '<select id="vfMotivo">' + selOpts(MOT_FIN) + "</select>" +
+          '<select id="vfMotivo" data-otro="vfMotivoOtro">' + selOpts(MOT_FIN, null, "Otro (especificar)") + "</select>" +
+          '<input type="text" id="vfMotivoOtro" class="campo-otro oculto" placeholder="Especifique el motivo de la conclusión">' +
           '<span class="msg-error">El motivo es obligatorio: es el dato que explica por qué no se sostienen las colocaciones.</span></div>'
         : "") +
       '<div class="campo"><label for="vfNota">Observación <span class="opc">(opcional)</span></label>' +
@@ -1639,7 +1765,8 @@
         : "") +
       (res === "nofav"
         ? '<div class="campo"><label for="reMot">Motivo de no contratación <span class="req">*</span></label>' +
-          '<select id="reMot">' + selOpts(MOT_NOCON) + "</select>" +
+          '<select id="reMot" data-otro="reMotOtro">' + selOpts(MOT_NOCON, null, "Otro (especificar)") + "</select>" +
+          '<input type="text" id="reMotOtro" class="campo-otro oculto" placeholder="Especifique el motivo">' +
           '<span class="msg-error">El motivo es obligatorio.</span></div>'
         : "") +
       '<div class="flex gap-8">' +
@@ -1706,7 +1833,8 @@
           '<input type="date" id="ciFec" value="' + HOY + '">' +
           '<span class="msg-error">Captura la fecha.</span></div>' +
         '<div class="campo"><label for="ciMot">Motivo <span class="req">*</span></label>' +
-          '<select id="ciMot">' + selOpts(MOT_FIN) + "</select>" +
+          '<select id="ciMot" data-otro="ciMotOtro">' + selOpts(MOT_FIN, null, "Otro (especificar)") + "</select>" +
+          '<input type="text" id="ciMotOtro" class="campo-otro oculto" placeholder="Especifique el motivo">' +
           '<span class="msg-error">El motivo es obligatorio.</span></div>' +
       "</div>" +
       '<div class="flex gap-8">' +
@@ -1813,6 +1941,10 @@
       '<div role="tabpanel" id="panel-' + pest + '" aria-labelledby="tab-' + pest + '" tabindex="0">' +
         cuerpoPestana(p) +
       "</div>";
+    /* El detalle se repinta entero por innerHTML en cada clic, así que los
+       campos de 'Otro' se vuelven a cablear aquí. activarOtro() es
+       idempotente: no duplica escuchas sobre lo ya cableado.             */
+    SIMH.activarOtro($("#detalle"));
     eventosDetalle();
   }
 
@@ -1839,6 +1971,13 @@
       var el = document.getElementById(id);
       if (!el) return;
       var vacio = !el.value;
+      /* Si el catálogo se resolvió con 'Otro', lo que falta es la
+         especificación: sin ella queda guardado un motivo que no dice
+         nada, que es justo lo que el catálogo venía a evitar.            */
+      if (!vacio && el.value === "OTRO") {
+        var libre = document.getElementById(el.getAttribute("data-otro") || "");
+        if (libre && !libre.value.trim()) { el = libre; vacio = true; }
+      }
       el.closest(".campo").classList.toggle("error", vacio);
       if (vacio && !falta) falta = el;
     });
@@ -1899,6 +2038,21 @@
       };
     }
 
+    /* Las consecuencias se recalculan al vuelo: enunciarlas después de
+       guardar llegaría tarde para quien todavía está decidiendo.        */
+    ["#dgEmpleo", "#dgAspira", "#dgEscDoc"].forEach(function (q) {
+      var el = $(q);
+      if (!el) return;
+      el.addEventListener("change", function () {
+        var d = getDiag(p), caja;
+        d.empleo = $("#dgEmpleo").value;
+        d.aspira = $("#dgAspira").value;
+        d.escol.doc = $("#dgEscDoc").value;
+        caja = $("#dgConse");     if (caja) caja.innerHTML = conseLaboral(d);
+        caja = $("#dgEscConse");  if (caja) caja.innerHTML = conseEscolar(d);
+      });
+    });
+
     /* Guardar diagnóstico laboral */
     var bgd = $("#btnGuardarDiag");
     if (bgd) {
@@ -1912,8 +2066,16 @@
           return;
         }
         var dg = getDiag(p);
-        dg.sit = $("#dgSit").value;
-        dg.esc = $("#dgEsc").value;
+        dg.empleo = $("#dgEmpleo").value;
+        dg.aspira = $("#dgAspira").value;
+        /* Se corrige el registro general, no una copia de este módulo. */
+        dg.escol = D.escRegistroFija(p.e, {
+          nivel: $("#dgEsc").value,
+          area:  $("#dgEscArea").value.trim(),
+          inst:  $("#dgEscInst").value.trim(),
+          anio:  parseInt($("#dgEscAnio").value, 10) || null,
+          doc:   $("#dgEscDoc").value
+        });
         dg.oficios = ofs;
         dg.expAnios = parseInt($("#dgExpAnios").value, 10) || 0;
         dg.expDetalle = $("#dgExpDet").value.trim();
@@ -1926,7 +2088,6 @@
         dg.cursoDeseado = $("#dgCapCurso") ? $("#dgCapCurso").value.trim() : "";
 
         // Sincronizar campos principales de la persona
-        p.esc = dg.esc;
         p.perfil = ofs.slice(0, 2).join(" y ");
         p.exp = dg.expDetalle || (dg.expAnios + " años en " + ofs[0]);
         p.disp = dg.turnos;
@@ -1994,7 +2155,7 @@
         id:"V-" + p.e + "-" + (p.v.length + 1),
         vac:$("#nvVac").value,
         emp:$("#nvEmp").value,
-        sector:$("#nvSec").value,
+        sector:SIMH.textoOtro($("#nvSec")),
         munEmp:$("#nvMun").value,
         resp:$("#nvResp").value,
         post:$("#nvFec").value,
@@ -2020,7 +2181,7 @@
         f:$("#vfFecha").value, medio:$("#vfMedio").value, res:res, por:RESP,
         nota:$("#vfNota").value || ""
       });
-      if (res === "nolabora") { vg.fin = $("#vfFecha").value; vg.motFin = $("#vfMotivo").value; }
+      if (res === "nolabora") { vg.fin = $("#vfFecha").value; vg.motFin = SIMH.textoOtro($("#vfMotivo")); }
       cierra("Verificación de " + pHito + " días: " + RES_TXT[res]);
     };
 
@@ -2033,7 +2194,7 @@
         if ($("#rePuesto").value) pVinc.puesto = $("#rePuesto").value;
         cierra("Contratación registrada en " + pVinc.emp);
       } else {
-        pVinc.entRes = "nofav"; pVinc.con = 0; pVinc.motNoCon = $("#reMot").value;
+        pVinc.entRes = "nofav"; pVinc.con = 0; pVinc.motNoCon = SIMH.textoOtro($("#reMot"));
         cierra("Vinculación no contratada en " + pVinc.emp);
       }
     };
@@ -2056,7 +2217,7 @@
     var oc = $("#okCierre");
     if (oc) oc.onclick = function () {
       if (!valida(["ciFec", "ciMot"])) return;
-      pVinc.fin = $("#ciFec").value; pVinc.motFin = $("#ciMot").value;
+      pVinc.fin = $("#ciFec").value; pVinc.motFin = SIMH.textoOtro($("#ciMot"));
       cierra("Vinculación cerrada: " + pVinc.motFin);
     };
 

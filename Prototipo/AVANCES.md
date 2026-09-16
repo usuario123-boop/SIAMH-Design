@@ -982,6 +982,135 @@ corrige, se reemite con motivo.
 `oficios.html` dejó de existir; `familiar.html` y `empleabilidad.html` apuntan ahora al módulo que
 corresponde.
 
+### 4.22 Lo que pidió la Dirección el 15/09/2026 · catálogos y regla de 'Otro'
+
+`SIAMH_Especificacion_de_Mejoras_y_Requerimientos.docx` trae 21 requerimientos en cinco módulos más
+una regla técnica transversal. **Esta entrada cubre el primer bloque**; el resto está en §5.4 con su
+orden de trabajo.
+
+**La regla de 'Otro' es lo primero porque es la que decide la calidad del resto.** El documento la
+enuncia en su §3: al elegir 'Otro' aparece un campo de texto obligatorio, y en la base se guarda la
+clave `OTRO` con el texto en un campo complementario. Hoy toca siete campos en tres archivos y va a
+tocar más. Escrita siete veces a mano son siete comportamientos que empiezan iguales y se separan en
+cuanto alguien corrige uno solo: el que enfoca el campo y el que no, el que lo exige y el que deja
+guardar "Otro" sin decir cuál. Se escribió **una vez**, en `SIMH.activarOtro()`, con marcado
+declarativo (`<select data-otro="idDelInput">`) para que una pantalla que se repinta por `innerHTML`
+—Empleabilidad lo hace en cada clic— solo vuelva a llamarla, y es idempotente por eso mismo.
+`valorOtro()` devuelve `{clave, otro}`, que es exactamente la forma que pide el documento, y
+`textoOtro()` da el renglón que se lee: **"Otra · Mopán" y no "Otra" a secas**, porque un resumen que
+solo dijera "Otra" obliga a volver al formulario para saber qué se capturó. El prefijo sale de la
+etiqueta real de la opción, no de un "Otro" fijo, para no deshacer la concordancia de género que el
+catálogo ya cuida.
+
+**Los catálogos bajaron a `simh-datos.js`.** El de países estaba escrito **cuatro veces** —dos solo
+en el alta, nacionalidad y país de origen, más el filtro de Expedientes y Empleabilidad— y el
+requerimiento era ampliarlo. Ampliar cuatro copias a mano es garantizar que dejen de coincidir, y la
+consecuencia no es cosmética: el alta ya ofrecía nacionalidades que el filtro de Expedientes no
+tenía, así que **una persona registrada como nicaragüense quedaba imposible de encontrar por
+nacionalidad**, que es la única vía cuando no se recuerda el folio. Ahora son 50 países agrupados por
+región, con los siete de mayor flujo en la frontera sur al principio: en ventanilla casi todas las
+altas salen de esos siete y bajar cincuenta renglones para encontrar "Honduras" cuesta segundos
+contra una meta de cinco minutos (RNF04).
+
+**La nota de cada estatus migratorio viaja pegada al dato, y eso corrigió un error latente.** La nota
+vivía en un objeto indexado por el texto literal de la opción, dentro de `registro.html`: agregar un
+estatus sin acordarse de ese objeto pintaba la palabra **`undefined`** en la pantalla. Con las dos
+opciones que pide el documento —*Por razones humanitarias* y *Con amparo*— habría ocurrido de
+inmediato. Ahora la nota es un campo del catálogo y el aviso se deriva de él.
+
+**Escolaridad: un solo catálogo, con la trunca explícita.** Eran dos listas incompatibles —cinco
+opciones sin truncas en el alta, nueve con truncas en Empleabilidad— y **entre dos catálogos que no
+coinciden no puede haber autollenado**: no hay a qué mapear "Secundaria". El documento pide una
+opción "Educación trunca"; se implementó **por nivel** (`Secundaria trunca`, `Licenciatura trunca`, …)
+y no como una opción suelta, porque "trunca" sin decir de qué nivel no sirve para lo que el propio
+documento quiere después: que Empleabilidad reciba la escolaridad precargada y la detalle. Esto deja
+el requerimiento 2.1 (autollenado) listo para conectarse.
+
+**La lengua dejó de ser un campo de texto libre.** Escrita a mano, el mismo idioma entra como
+"creole", "criollo haitiano" y "kreyol", y después no hay forma de contar cuántas personas necesitan
+intérprete de esa lengua, que es justamente para lo que sirve el dato. Ahora es catálogo con su
+opción 'Otra'.
+
+De paso: el sector de la vinculación `V-0464-01` decía *Textil y confección* para un **soldador en un
+taller metálico**. Corregido a *Construcción*. Es el tipo de dato que se nota en la demostración.
+
+**Bloque 2 · la escolaridad se captura una vez (requerimientos 2.1 y 2.2).** El documento lo enuncia
+como jerarquía, no como copia: *"en el de registro general es más general, aquí en empleabilidad es
+más detallado"*. Por eso el **nivel** bajó a `simh-datos.js` (`ESC_REGISTRO`) y Empleabilidad lo
+**lee**; lo que agrega este módulo es el detalle que el alta no necesita —área o especialidad,
+institución, año y documento que lo acredita—. Si Empleabilidad guardara su propio nivel volvería a
+ser una segunda captura del mismo hecho, que es justo lo que el requerimiento venía a eliminar, y las
+dos capturas podrían discrepar sin que nadie se entere. Corregir el nivel desde Empleabilidad corrige
+el expediente único (`escRegistroFija`), y la pantalla lo dice donde se captura.
+
+**Y eso destapó un error que el bloque 1 había dejado activo.** Tres personas tenían como escolaridad
+valores que no son ningún nivel del catálogo —`"Técnico en soldadura industrial"`,
+`"Licenciatura en Administración (trunca)"`, `"Bachillerato concluido"`—. Un `<select>` cuyo valor no
+coincide con ninguna opción **cae en la primera de la lista**, así que Yordanis Pérez Lazo, técnico en
+soldadura con catorce años de oficio, aparecía en pantalla como **"Sin instrucción formal"**. La cura
+no es agregar esos textos al catálogo: es separar lo que es **nivel** de lo que es **especialidad**,
+que son dos campos distintos y ahora se capturan por separado.
+
+**Situación laboral y aspiración, separadas (2.2).** Había un solo campo —"Situación laboral
+actual"— que mezclaba dos hechos: *"Búsqueda activa de empleo"* decía a la vez que la persona no
+tiene trabajo y que quiere uno. Con eso **el caso que más importa para RF12 no se podía registrar**:
+quien SÍ tiene empleo y aun así quiere cambiar, que es la mitad de la cartera. Ahora son dos campos
+—*¿Cuenta actualmente con un empleo o ingreso?* y *Aspiración laboral declarada*— y el "Sí" o el "No"
+va como primera palabra de cada opción, para que la respuesta se lea sin abrir el selector. Las dos
+respuestas juntas dicen algo que por separado no dicen, así que la pantalla lo enuncia donde se
+capturan y no después de guardar: tener empleo y querer cambiarlo mantiene a la persona en la
+cartera; no tener empleo y no buscarlo la saca de ella sin cerrar el caso; querer capacitarse antes
+cambia la ruta de vinculación a Capacitación.
+
+**Bloque 3 · los dos contactos y el teléfono (requerimientos 1.6 y 1.7).** Separar el contacto de
+origen del de residencia no es reordenar campos: son dos cosas que sirven para cosas distintas. Al de
+residencia se le llama para una cita de la semana que entra; al de origen se le busca cuando hay que
+localizar a la familia de un NNA o acreditar un vínculo, a veces meses después. Mezclados en un solo
+"teléfono principal", lo que se perdía siempre era el segundo.
+
+**La relación del contacto en origen NO usa el catálogo de parentesco del grupo familiar.** Ese es
+solo directo por RF05 —línea recta, hermanos y cónyuge— porque ahí decide si un NNA queda acompañado
+o separado. Aquí no decide nada de eso: es a quién llamar en origen, y muy a menudo es una tía o una
+vecina. Restringirlo obligaría a dejar el campo vacío o a escribir un parentesco falso, que es peor
+que no tenerlo.
+
+**El teléfono es un componente, no un campo** (`SIMH.activarTelefono`), con el mismo marcado
+declarativo de la regla de 'Otro'. Cada país declara en el catálogo **cuántos dígitos** tiene su
+número nacional, y de ahí sale lo que de verdad cambia la captura: la pantalla no dice "número
+inválido" sino **cuántos dígitos faltan o sobran para el país elegido**. Un mensaje que no dice qué
+corregir manda a la ventanilla a adivinar. Y no es cosmético: el teléfono es la única vía para avisar
+de una cita y es como Empleabilidad verifica a los 15 y 30 días, así que un número con un dígito de
+menos no falla hoy —falla dentro de un mes, sin dejar rastro de por qué—. Se guarda en E.164
+(`+50496123456`) y se muestra agrupado, que es como la gente lee y dicta un teléfono. La clave del
+contacto en origen **sigue al país de origen** ya capturado en el paso 3, y deja de seguirlo en
+cuanto la ventanilla la elige a mano, porque entonces sabe algo que el sistema no.
+
+**Se saldó la deuda que el propio análisis había señalado.** `nuevaAlta()` limpiaba los campos con
+`querySelector('[data-campo="Teléfono"]')`, y este bloque acababa de renombrar ese campo al
+separarlo en dos: el selector habría devuelto `null` y el teléfono de la persona anterior se habría
+heredado al siguiente expediente **en silencio**. Ahora se limpia con una función que deja
+constancia en consola cuando un campo no existe, en vez de fallar sin ruido.
+
+**Dos desbordes de layout, atrapados en la captura y no en el código.** La clave y el número son dos
+controles dentro de un mismo campo y no caben en una columna de tercio: el número quedaba recortado a
+`962 118`. Ambos teléfonos pasaron a fila de dos columnas. Y la etiqueta "Municipio de residencia en
+Chiapas" envolvía a dos renglones y descuadraba su columna contra las otras dos; se quedó en
+"Municipio de residencia", porque todo el sistema es Chiapas. Es la tercera vez que esta clase de
+error aparece y la captura obligatoria es lo que lo encuentra.
+
+De paso, el resumen del paso 6 mostraba de cada `<select>` su `value` interno y no lo que la persona
+había leído: la precisión de la fecha se resumía como **"dia"** y como **"aprox"**, que no es el
+texto de ninguna opción de la pantalla. Ahora resume la etiqueta.
+
+**Verificación.** Además de las dos comprobaciones obligatorias (sintaxis de los `<script>` embebidos
+de las quince páginas y captura de pantalla de cada pantalla tocada), hay un banco de **40 pruebas
+sobre el DOM real**: la regla de 'Otro' completa —opciones dibujadas, clave `OTRO`, aparición y
+obligatoriedad del campo, limpieza al cambiar de opción, idempotencia de `activarOtro()`—; el
+registro compartido de escolaridad, incluida la comprobación de que **todo nivel del registro general
+existe en el catálogo**, que es la que habría atrapado el error de Yordanis; y el teléfono completo
+—agrupación, E.164, mensajes de "faltan/sobran N dígitos", revaluación al cambiar de país,
+normalización de lo que se escriba a mano y el vacío como caso válido—. Las 40 pasan.
+
 ### 4.8 Correcciones técnicas ya aplicadas
 
 - Barras horizontales sin relleno (`span` inline sin `display:block`).
@@ -1044,6 +1173,20 @@ Lo que sigue no son pantallas nuevas sino pasadas de revisión sobre lo construi
 | Media | Enlazar el registro de oficios desde Salud, Empleabilidad y el detalle de expediente | Hoy el enlace existe solo desde el Expediente Familiar; el oficio se emite en un módulo y se sigue en otro |
 | Media | Unificar el nombre del sistema (SIMH / SIAMH) antes de presentar | §5.3 |
 
+### 5.4 Resto del documento de mejoras del 15/09/2026
+
+Los bloques 1 y 2 están aplicados (§4.22). Lo que sigue, en orden, porque cada paso destraba al
+siguiente:
+
+| Orden | Requerimiento | Notas |
+|---|---|---|
+| ~~2~~ | ~~Autollenado de escolaridad y campos de situación laboral (2.1, 2.2)~~ | **Aplicado.** Ver §4.22, bloque 2 |
+| ~~3~~ | ~~Contacto de origen / de residencia separados y selector de LADA (1.6, 1.7)~~ | **Aplicado.** Ver §4.22, bloque 3 |
+| 4 | Separar Capacitación de Empleabilidad (3.1) y regla de examen / 3 asistencias (3.2) | En el menú ya son dos módulos desde §4.21. Lo que queda es el acoplamiento real: la barra de ruta de Empleabilidad pinta "Capacitación ICATECH" como su paso 2 y al guardar el diagnóstico **escribe** `p.cursos = "… ICATECH (en conformación)"`. Debe quedar como canalización, no como escritura directa |
+| 5 | Solicitud de Empleo: formulario complementario, generación y previsualización (2.3–2.5) y carga de documentos desde el módulo (2.6) | Es el bloque más grande. El patrón ya existe dos veces: `constancias.html` dibuja en milímetros y `revalidacion.html` sincroniza el oficio en vivo. No inventar un tercero |
+| 6 | Aviso de Privacidad automatizado (4.1) y depuración del historial telefónico (4.2) | Ver §5.3: la depuración choca con una regla vigente del proyecto |
+| 7 | Captura multimedia y previsualización de foto al pasar el cursor (5.1, 5.2) | Arrastrar y soltar y captura desde el celular funcionan en `file://`. **La cámara web no**: `getUserMedia` exige contexto seguro y el prototipo se abre con `file://`. El componente se escribe con degradación automática (`isSecureContext`) y la cámara enciende sola si algún día se sirve por `localhost`. **Decisión de la Dirección: queda solo declarada por ahora** |
+
 ### 5.2 Dependencias externas
 
 - **Isotipo en vector.** El usuario ya entregó la identidad en PNG y está aplicada en el login y el
@@ -1081,6 +1224,31 @@ Lo que sigue no son pantallas nuevas sino pasadas de revisión sobre lo construi
   18 exactos no hay intervalo, y ahí la regla podría ser más protectora.
 - Si el paso de verificación de duplicados debe ser bloqueante (no permitir alta si hay coincidencia)
   o solo informativo, como está hoy.
+- **El documento del 15/09/2026 pide quitar las tachaduras del historial telefónico, y eso contradice
+  una regla vigente del proyecto.** RF03 y las reglas de dominio dicen que los teléfonos anteriores se
+  conservan **tachados con su vigencia**; el requerimiento 4.2 pide mostrar solo el vigente. Se leyó
+  como un cambio **de presentación, no de datos**: el expediente muestra únicamente el número activo y
+  los anteriores bajan a un plegable "Ver historial de contacto". Así se cumple lo pedido sin borrar
+  nada (RNF03). Confirmar que esa lectura es la correcta antes de aplicarlo.
+- **Regla de acreditación por asistencias (requerimiento 3.2).** Hoy rige el 80 % de asistencia
+  (`MIN_ASIS = 0.8`), que sobre 12–16 sesiones son 10–13 asistencias; el documento pide un mínimo de
+  **3 asistencias cuando la persona no presenta el examen**. Las dos reglas no pueden aplicarse juntas
+  sin decidir cuál manda. Se asume que son **rutas alternas**: con examen rige el 80 %, sin examen
+  bastan 3 asistencias. Requiere además incorporar el concepto de **examen** al modelo de grupo, que
+  hoy no existe.
+- **Dos poblaciones distintas comparten los mismos números de expediente.** Capacitación y
+  Empleabilidad trabajan sobre personas numeradas `0412`, `0429`, `0435`…, y los folios del expediente
+  único terminan en esos mismos cuatro dígitos sin ser la misma persona: el **0412 de Empleabilidad es
+  Yesenia Ramírez Coc** y **`SIAMH-2026-TAP-0412` es Yolanda Esperanza Martínez Cruz**. Las dos
+  poblaciones nunca se cruzan hoy en pantalla, así que no se ve; en cuanto un módulo enlace al otro
+  por folio —y el requerimiento 2.6 lo va a pedir, al cargar documentos desde Empleabilidad— se
+  abrirá el expediente equivocado. Hay que unificar la numeración antes de ese paso. Es exactamente el
+  error que §7.5 advierte que se nota en la demostración.
+- **Alcance de "separar Capacitación de Empleabilidad" (requerimiento 3.1).** En el menú ya son dos
+  módulos independientes desde §4.21. Si lo que la Dirección vio es la barra de ruta de Empleabilidad,
+  el cambio es visual; si es que Empleabilidad **crea grupos ICATECH** al guardar el diagnóstico, hay
+  que convertir esa escritura en una canalización. Se asume lo segundo, que es lo que de verdad acopla
+  los dos módulos.
 
 ---
 
@@ -1106,6 +1274,8 @@ Lo que sigue no son pantallas nuevas sino pasadas de revisión sobre lo construi
 | 15 | 28/08/2026 | `oficios.html`, `index.html`, `registro.html`, `familiar.html`, `capacitacion.html`, `empleabilidad.html`, `administracion.html`, `login.html`, `assets/css/simh.css`, `assets/js/simh.js` | Aplicar el documento de mejoras de la Dirección (`DOCUMENTO DE MEJORAS DE SIAMH.docx`), agregar las pestañas nuevas y poder desplazar o cerrar el menú para mejorar la experiencia de uso. | **Aplicado** | Ver 4.19 y 4.20. **UX:** el menú lateral se contrae a un riel de 66 px que devuelve 178 px al contenido y conserva el sitio de cada entrada, con etiqueta flotante al pasar el ratón y **también al enfocar con el teclado**, y la preferencia se recuerda; por debajo de 900 px el mismo botón sigue abriendo el cajón. **Pestañas nuevas:** el módulo pasó a llamarse *Canalizaciones y Documentos* y ahora tiene cuatro pestañas, con *Revalidación de estudios* y *Documentación e identidad*. Correcciones de fondo: la **educación básica no se revalida** —se inscribe—, así que la pestaña registra la **negativa de atención** en vez de pedir requisitos que no existen; la matriz de documentación separa los faltantes que **detienen un trámite** de los que no, porque el comprobante de domicilio es el que más falta y no impide nada; la constancia de la COMAR lleva su **número de registro**. El **folio del municipio** convive con la serie del SIMH sin romperla. En el alta, las **fechas admiten precisión** (mes, año o edad declarada) y cuando el intervalo cruza los 18 rige la **presunción de minoría de edad**. El catálogo de parentesco quedó **solo directo**, que es lo que explica por qué un NNA está separado. El **panel filtra de verdad por municipio** y «Todos» es la suma de los seis, no una fila más. Empleabilidad muestra la **marca de acompañamiento** en la cabecera; Capacitación filtra los cursos **por municipio**; la cuenta de acceso se ve y **no es un correo**; y el login subió de brillo concentrando el velo en la banda del texto. |
 
 | 16 | 28/08/2026 | `canalizaciones.html`, `revalidacion.html`, `documentacion.html`, `constancias.html` (nuevos), `assets/js/simh-datos.js` (nuevo), `assets/js/simh.js`, `assets/css/simh.css`, `familiar.html`, `empleabilidad.html`, `administracion.html` | Las pestañas eran módulos independientes, como los otros. | **Aplicado** | Ver 4.21. «OTRA PESTAÑA» del documento de la Dirección quería decir otro **módulo**, no una pestaña dentro de una pantalla: `oficios.html` se separó en cuatro archivos con cuatro entradas de menú y tres iconos nuevos. El contenido de §4.20 se conserva entero. La corrección no es cosmética: en la matriz de permisos **una pestaña no se puede conceder ni negar**, así que la fila única pasó a cuatro y cada una dice algo distinto —Documentación no tiene *Crear* y Constancias no tiene *Editar*, porque una constancia emitida no se corrige, se reemite con motivo—. Para separarlos hizo falta un módulo de datos compartido (`simh-datos.js`) con el reloj, los permisos y el catálogo de personas: cuatro copias del mismo catálogo serían cuatro sitios donde una edad o un folio pueden dejar de coincidir. Lo que era cambiar de pestaña ahora es navegación que conserva el contexto: «Reclamar por oficio» llega al compositor con el hecho citado y el destinatario puesto. Cinco piezas de CSS subieron a `simh.css` §23. |
+
+| 17 | 15/09/2026 | `assets/js/simh-datos.js`, `assets/js/simh.js`, `assets/css/simh.css`, `registro.html`, `empleabilidad.html`, `expedientes.html` | Aplicar `SIAMH_Especificacion_de_Mejoras_y_Requerimientos.docx` (21 requerimientos en cinco módulos más la regla transversal de campos 'Otro'). | **Parcial** — bloques 1 a 3 de 7 aplicados | Ver 4.22 y 5.4. La **regla §3 de 'Otro' se escribió una sola vez** (`SIMH.activarOtro`, `valorOtro`, `textoOtro`, marcado declarativo `data-otro`, idempotente para pantallas que repintan por `innerHTML`), en vez de repetirla en los siete campos que la usan. Los **catálogos bajaron a `simh-datos.js`**: países (de 8 a 50, agrupados, con los de mayor flujo al frente), escolaridad **única y con la trunca explícita por nivel** —requisito del autollenado a Empleabilidad—, etnias, lenguas (dejó de ser texto libre), motivos de migración con *Motivos económicos*, estatus con *Por razones humanitarias* y *Con amparo*, sectores con *Servicio al cliente* y *Belleza y cuidado personal*, y las claves LADA. Dos errores latentes corregidos: el aviso de estatus estaba indexado por el texto de la opción y **habría pintado `undefined`** con los estatus nuevos, y el filtro de nacionalidad de Expedientes no ofrecía países que el alta sí registraba, dejando esas personas **imposibles de encontrar**. Verificado con capturas y con un banco de **20 pruebas sobre el DOM real**, todas pasan. Lo que falta está en §5.4 con su orden; tres puntos abiertos quedaron en §5.3 (tachaduras del historial telefónico contra RF03, regla de 3 asistencias contra el 80 %, alcance de separar Capacitación). **Bloque 2 (2.1 y 2.2):** la escolaridad se captura **una sola vez** —el nivel vive en el registro general y Empleabilidad solo lo detalla (área, institución, año, documento que lo acredita); corregirlo desde Empleabilidad corrige el expediente único, no una copia—, y "Situación laboral actual" se separó en los dos campos que pide el documento, porque mezclados **no dejaban registrar a quien sí tiene empleo y quiere cambiarlo**, que es la mitad de la cartera de RF12. Al hacerlo se destapó que tres personas tenían escolaridades que no existen en el catálogo y que un `<select>` sin coincidencia hacía aparecer a un técnico en soldadura con catorce años de oficio como **"Sin instrucción formal"**; la cura fue separar nivel de especialidad. El banco de pruebas subió a **27**, incluida la que habría atrapado ese error. **Bloque 3 (1.6 y 1.7):** el contacto se separó en **residencia** y **país de origen**, con catálogo de relación propio —deliberadamente más amplio que el parentesco directo de RF05, porque a quien se llama en origen suele ser una tía o una vecina y restringirlo obligaría a escribir un parentesco falso—; y el teléfono pasó a ser **componente** (`SIMH.activarTelefono`) con clave internacional, formato, E.164 y una validación que dice **cuántos dígitos faltan o sobran para el país elegido** en vez de un genérico "número inválido". Se saldó de paso el riesgo que el análisis había señalado: `nuevaAlta()` limpiaba el teléfono por un selector que este mismo bloque acababa de renombrar, y habría heredado el número de la persona anterior al siguiente expediente en silencio. La captura obligatoria atrapó dos desbordes de layout —el número recortado a `962 118` y una etiqueta a dos renglones que descuadraba su columna—. Banco de pruebas en **40**. La **cámara web queda solo declarada** por decisión de la Dirección: `getUserMedia` no funciona con `file://`. |
 
 ---
 

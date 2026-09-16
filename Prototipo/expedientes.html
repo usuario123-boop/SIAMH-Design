@@ -66,8 +66,7 @@
       <select id="filEdad"><option value="">Todas</option><option>0 a 5</option><option>6 a 11</option><option>12 a 17</option>
         <option>18 a 29</option><option>30 a 44</option><option>45 a 59</option><option>60 y más</option></select>
       <span class="f-lab">Nacionalidad</span>
-      <select id="filNac"><option value="">Todas</option><option>Honduras</option><option>Haití</option><option>Venezuela</option>
-        <option>Guatemala</option><option>El Salvador</option><option>Cuba</option></select>
+      <select id="filNac"></select>
       <span class="f-lab">Vulnerabilidad</span>
       <select id="filVuln"><option value="">Todas</option><option>NNA no acompañado</option><option>Mujer embarazada</option>
         <option>Persona con discapacidad</option><option>Adulta mayor</option></select>
@@ -104,10 +103,18 @@
 </main>
 
 <script src="assets/js/simh.js"></script>
+<script src="assets/js/simh-datos.js"></script>
 <script>
 (function () {
   SIMH.chrome("expedientes");
   var ico = SIMH.icono;
+
+  /* El filtro usa el mismo catálogo de países que el alta. Cuando eran dos
+     listas, el alta ya ofrecía nacionalidades que este filtro no tenía: una
+     persona registrada como nicaragüense quedaba imposible de encontrar por
+     nacionalidad, que es la única vía cuando no se recuerda el folio.    */
+  document.getElementById("filNac").innerHTML =
+    '<option value="">Todas</option>' + SIMH.opciones(window.DATOS.PAISES);
   document.getElementById("btnXls").innerHTML    = ico("excel") + "Excel";
   document.getElementById("btnPdf").innerHTML    = ico("pdf") + "PDF";
   document.getElementById("btnNuevo").innerHTML  = ico("mas") + "Nuevo registro";

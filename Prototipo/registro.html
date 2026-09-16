@@ -143,15 +143,15 @@
 
         <div class="fila-3">
           <div class="campo"><label>Nacionalidad <span class="req">•</span></label>
-            <select data-req data-campo="Nacionalidad">
-              <option>Honduras</option><option>Haití</option><option>Venezuela</option><option>Guatemala</option>
-              <option>El Salvador</option><option>Cuba</option><option>México</option><option>Otra</option></select></div>
+            <select data-req data-campo="Nacionalidad" id="selNacionalidad" data-otro="nacionalidadOtro"></select>
+            <input type="text" id="nacionalidadOtro" class="campo-otro oculto" data-campo-otro="Nacionalidad"
+                   placeholder="Especifique el país"></div>
           <div class="campo"><label>Estado civil</label>
             <select data-campo="Estado civil"><option>Soltera</option><option>Casada</option><option>Unión libre</option>
               <option>Viuda</option><option>Divorciada</option></select></div>
           <div class="campo"><label>Escolaridad</label>
-            <select data-campo="Escolaridad"><option>Primaria concluida</option><option>Secundaria</option>
-              <option>Bachillerato</option><option>Licenciatura</option><option>Sin escolaridad</option></select></div>
+            <select data-campo="Escolaridad" id="selEscolaridad"></select>
+            <div class="ayuda">Empleabilidad parte de este dato y lo detalla.</div></div>
         </div>
 
         <details class="plegable">
@@ -159,9 +159,18 @@
           <div class="cuerpo">
             <div class="fila-3">
               <div class="campo"><label>Etnia o pueblo de pertenencia</label>
-                <select data-campo="Etnia"><option>No se autoadscribe</option><option>Maya ch'ortí</option>
-                  <option>Garífuna</option><option>Lenca</option><option>Otro</option></select></div>
-              <div class="campo"><label>Lengua que habla</label><input type="text" data-campo="Lengua" value="Español"></div>
+                <select data-campo="Etnia" id="selEtnia" data-otro="etniaOtro"></select>
+                <input type="text" id="etniaOtro" class="campo-otro oculto" data-campo-otro="Etnia"
+                       placeholder="Especifique la etnia o pueblo">
+                <span class="msg-error">Especifique la etnia o pueblo</span></div>
+              <!-- La lengua dejó de ser texto libre: escrita a mano, el mismo idioma entra
+                   como "creole", "criollo haitiano" y "kreyol", y después no hay forma de
+                   contar cuántas personas necesitan intérprete de esa lengua. -->
+              <div class="campo"><label>Lengua que habla</label>
+                <select data-campo="Lengua" id="selLengua" data-otro="lenguaOtro"></select>
+                <input type="text" id="lenguaOtro" class="campo-otro oculto" data-campo-otro="Lengua"
+                       placeholder="Especifique la lengua">
+                <span class="msg-error">Especifique la lengua</span></div>
               <div class="campo"><label>Grado de marginación</label>
                 <select data-campo="Grado de marginación"><option>Alto</option><option>Medio</option>
                   <option>Bajo</option><option>Muy alto</option></select></div>
@@ -190,11 +199,13 @@
 
         <div class="fila-3">
           <div class="campo"><label>País de origen <span class="req">•</span></label>
-            <select data-req data-campo="País de origen"><option>Honduras</option><option>Haití</option>
-              <option>Venezuela</option><option>Guatemala</option><option>El Salvador</option><option>Cuba</option></select></div>
+            <select data-req data-campo="País de origen" id="selPaisOrigen" data-otro="paisOrigenOtro"></select>
+            <input type="text" id="paisOrigenOtro" class="campo-otro oculto" data-campo-otro="País de origen"
+                   placeholder="Especifique el país de origen"></div>
           <div class="campo"><label>Motivo de la migración <span class="req">•</span></label>
-            <select data-req data-campo="Motivo de la migración"><option>Violencia</option><option>Laboral</option>
-              <option>Reunificación familiar</option><option>Desastre natural</option><option>Otro</option></select></div>
+            <select data-req data-campo="Motivo de la migración" id="selMotivo" data-otro="motivoOtro"></select>
+            <input type="text" id="motivoOtro" class="campo-otro oculto" data-campo-otro="Motivo de la migración"
+                   placeholder="Especifique el motivo"></div>
           <div class="campo"><label>Fecha de ingreso a México</label>
             <select id="precIng" data-campo="Precisión del ingreso" style="margin-bottom:6px">
               <option value="dia">Día exacto</option>
@@ -222,9 +233,7 @@
           <legend>Estatus migratorio oficial (RF09)</legend>
           <div class="fila-3">
             <div class="campo" style="margin-bottom:0"><label>Estatus <span class="req">•</span></label>
-              <select data-req data-campo="Estatus migratorio" id="selEstatus">
-                <option>Solicitante de refugio</option><option>Refugiado / Residente</option>
-                <option>Naturalizado</option><option>Sin trámite</option></select></div>
+              <select data-req data-campo="Estatus migratorio" id="selEstatus"></select></div>
             <div class="campo" style="margin-bottom:0">
               <label>Número de registro ante la COMAR</label>
               <input type="text" data-campo="Registro COMAR" placeholder="COMAR/TAP/2026/00000">
@@ -286,21 +295,69 @@
         <div class="grafica-enc"><h3>Paso 5 · Contacto y grupo familiar</h3></div>
         <div class="grafica-sub">Los medios de contacto anteriores nunca se borran: se conservan como historial (RF03).</div>
 
-        <div class="fila-3">
-          <div class="campo"><label>Teléfono principal</label><input type="tel" data-campo="Teléfono" value="962 118 4472"></div>
-          <div class="campo"><label>Tipo de medio</label>
-            <select data-campo="Tipo de medio"><option>Celular propio</option><option>Celular de familiar</option>
-              <option>Albergue</option><option>Red social</option></select></div>
-          <div class="campo"><label>Correo electrónico</label><input type="text" data-campo="Correo" placeholder="opcional"></div>
-        </div>
+        <!-- Requerimiento 1.6. Separar los dos contactos no es reordenar
+             campos: son dos cosas que sirven para cosas distintas. Al de
+             residencia se le llama para una cita de la semana que entra;
+             al de origen se le busca cuando hay que localizar a la familia
+             de un NNA o acreditar un vínculo, a veces meses después.
+             Mezclados en un solo "teléfono principal", lo que se perdía
+             siempre era el segundo. -->
+        <fieldset class="fieldset">
+          <legend>Contacto en el lugar de residencia actual</legend>
+          <div class="fila-3">
+            <div class="campo" style="margin-bottom:0">
+              <label>Municipio de residencia <span class="req">•</span></label>
+              <select data-req data-campo="Municipio de residencia"><option>Tapachula</option><option>Suchiate</option>
+                <option>Frontera Comalapa</option><option>Motozintla</option><option>Tuxtla Gutiérrez</option></select></div>
+            <div class="campo" style="margin-bottom:0"><label>Domicilio actual o albergue</label>
+              <input type="text" data-campo="Domicilio" value="Albergue Belén, Tapachula"></div>
+            <div class="campo" style="margin-bottom:0"><label>Correo electrónico</label>
+              <input type="text" data-campo="Correo" placeholder="opcional"></div>
+          </div>
+          <!-- El teléfono NO cabe en una columna de tercio: son dos
+               controles —clave y número— dentro de un solo campo, y ahí el
+               número quedaba recortado a "962 118". Va en fila de dos. -->
+          <div class="fila" style="margin-top:12px">
+            <div class="campo" style="margin-bottom:0"><label>Teléfono</label>
+              <div class="tel-grupo">
+                <select class="tel-lada" id="telResLada"
+                        aria-label="Clave internacional del teléfono en residencia"></select>
+                <input class="tel-num" type="tel" id="telRes" data-lada="telResLada" data-pais="México"
+                       data-campo="Teléfono en residencia" inputmode="tel" value="962 118 4472">
+              </div>
+              <div class="ayuda" id="telResAyuda"></div></div>
+            <div class="campo" style="margin-bottom:0"><label>Tipo de medio</label>
+              <select data-campo="Tipo de medio"><option>Celular propio</option><option>Celular de familiar</option>
+                <option>Albergue</option><option>Red social</option></select></div>
+          </div>
+        </fieldset>
 
-        <div class="fila">
-          <div class="campo"><label>Municipio de residencia en Chiapas <span class="req">•</span></label>
-            <select data-req data-campo="Municipio de residencia"><option>Tapachula</option><option>Suchiate</option>
-              <option>Frontera Comalapa</option><option>Motozintla</option><option>Tuxtla Gutiérrez</option></select></div>
-          <div class="campo"><label>Domicilio actual o albergue</label>
-            <input type="text" data-campo="Domicilio" value="Albergue Belén, Tapachula"></div>
-        </div>
+        <fieldset class="fieldset">
+          <legend>Contacto en el país de origen</legend>
+          <p class="txt-min" style="margin-top:0">A quien se recurre para localizar a la familia o
+            acreditar un vínculo. Puede ser cualquier persona: aquí no rige la restricción de
+            parentesco directo del grupo familiar (RF05).</p>
+          <div class="fila">
+            <div class="campo" style="margin-bottom:0"><label>Persona de contacto</label>
+              <input type="text" data-campo="Contacto en origen" placeholder="Nombre y apellidos"></div>
+            <div class="campo" style="margin-bottom:0"><label>Relación con la persona</label>
+              <select data-campo="Relación del contacto en origen" id="selRelOrig" data-otro="relOrigOtro"></select>
+              <input type="text" id="relOrigOtro" class="campo-otro oculto"
+                     data-campo-otro="Relación del contacto en origen"
+                     placeholder="Especifique la relación"></div>
+          </div>
+          <!-- Mismo motivo que arriba: clave y número no caben en un tercio. -->
+          <div class="fila" style="margin-top:12px">
+            <div class="campo" style="margin-bottom:0"><label>Teléfono</label>
+              <div class="tel-grupo">
+                <select class="tel-lada" id="telOrigLada"
+                        aria-label="Clave internacional del teléfono en el país de origen"></select>
+                <input class="tel-num" type="tel" id="telOrig" data-lada="telOrigLada" data-pais="Honduras"
+                       data-campo="Teléfono en país de origen" inputmode="tel">
+              </div>
+              <div class="ayuda" id="telOrigAyuda"></div></div>
+          </div>
+        </fieldset>
 
         <fieldset class="fieldset">
           <legend>Grupo familiar (RF05)</legend>
@@ -455,10 +512,63 @@
 </main>
 
 <script src="assets/js/simh.js"></script>
+<script src="assets/js/simh-datos.js"></script>
 <script>
 (function () {
   SIMH.chrome("registro");
   var ico = SIMH.icono, $ = function (s) { return document.querySelector(s); };
+  var D = window.DATOS;
+
+  /* ------------------------------------------ Catálogos de captura ------
+     Los catálogos viven en simh-datos.js y no dentro de este HTML. El de
+     países estaba escrito dos veces solo en esta pantalla —nacionalidad y
+     país de origen— y otras dos en Expedientes y Empleabilidad: ampliarlo
+     copiando y pegando era garantizar que las cuatro copias dejaran de
+     coincidir, y una persona registrada como nicaragüense que el filtro de
+     Expedientes no ofrece es una persona que no se puede volver a
+     encontrar.
+
+     La opción 'Otro' y su campo de texto no se cablean aquí: los resuelve
+     SIMH.activarOtro() con la regla única del documento de mejoras (§3). */
+  $("#selNacionalidad").innerHTML = SIMH.opciones(D.PAISES, "Honduras", "Otro país (especificar)");
+  $("#selPaisOrigen").innerHTML   = SIMH.opciones(D.PAISES, "Honduras", "Otro país (especificar)");
+  $("#selEscolaridad").innerHTML  = SIMH.opciones(D.ESCOLARIDAD, "Secundaria concluida");
+  $("#selEtnia").innerHTML        = SIMH.opciones(D.ETNIAS, "No se autoadscribe", "Otra (especificar)");
+  $("#selLengua").innerHTML       = SIMH.opciones(D.LENGUAS, "Español", "Otra (especificar)");
+  $("#selMotivo").innerHTML       = SIMH.opciones(D.MOTIVOS_MIGRACION, "Violencia", "Otro (especificar)");
+  $("#selEstatus").innerHTML      = SIMH.opciones(D.ESTATUS_MIGRATORIO, "Solicitante de refugio");
+
+  /* Relación del contacto en el país de origen. NO es el catálogo de
+     parentesco del grupo familiar: ese es solo directo por RF05 —línea
+     recta, hermanos y cónyuge— porque ahí decide si un NNA queda
+     acompañado o separado. Aquí no decide nada de eso; es a quién llamar
+     en origen, y muy a menudo es una tía o una vecina. Restringirlo
+     obligaría a dejar el campo vacío o a escribir un parentesco falso, que
+     es peor que no tenerlo.                                              */
+  var REL_ORIGEN = ["Madre", "Padre", "Hija o hijo", "Hermana o hermano",
+    "Cónyuge o pareja", "Abuela o abuelo", "Tía o tío", "Prima o primo",
+    "Amistad", "Vecina o vecino"];
+  $("#selRelOrig").innerHTML = SIMH.opciones(REL_ORIGEN, "Madre", "Otra (especificar)");
+
+  SIMH.activarOtro(document);
+  SIMH.activarTelefono(document);
+
+  /* La clave del contacto en origen sigue al país de origen que ya se
+     capturó en el paso 3: pedirla otra vez es volver a capturar un dato
+     que el expediente ya tiene. Deja de seguirlo en cuanto la ventanilla
+     elige una clave a mano, porque entonces sabe algo que el sistema no
+     —la familia puede haberse quedado en un tercer país—.                */
+  function ladaOrigenSigueAlPais() {
+    var sel = $("#telOrigLada");
+    if (!sel || sel.getAttribute("data-tocado")) return;
+    sel.value = D.ladaDe($("#selPaisOrigen").value);
+    SIMH.activarTelefono(document);
+  }
+  $("#telOrigLada").addEventListener("change", function () {
+    this.setAttribute("data-tocado", "1");
+  });
+  $("#selPaisOrigen").addEventListener("change", ladaOrigenSigueAlPais);
+  ladaOrigenSigueAlPais();
 
   /* ------------------------------------------------- Iconos estáticos --- */
   $("#icoErr").innerHTML   = ico("alerta");
@@ -516,7 +626,14 @@
     panel.querySelectorAll("[data-req]").forEach(function (el) {
       var vacio = !String(el.value || "").trim();
       el.closest(".campo").classList.toggle("error", vacio);
-      if (vacio) faltan.push(el.getAttribute("data-campo") || "campo obligatorio");
+      if (!vacio) return;
+      /* El campo de 'Otro' no lleva data-campo —si lo llevara aparecería
+         como un renglón suelto en el resumen del paso 6—, así que su nombre
+         en la lista de faltantes se arma con el del campo al que
+         pertenece.                                                        */
+      var otro = el.getAttribute("data-campo-otro");
+      faltan.push(el.getAttribute("data-campo") ||
+        (otro ? "Especificación de " + otro.toLowerCase() : "campo obligatorio"));
     });
     if (paso === 6 && !$("#chkConsentimiento").checked) faltan.push("Aceptación del aviso de privacidad");
     var caja = $("#resumenErrores");
@@ -733,15 +850,14 @@
   $("#ladoNombre").textContent = "Yolanda Esperanza Martínez";
 
   /* ------------------------------------- Paso 3 · estatus y ruta -------- */
+  /* La nota de cada estatus viaja pegada al dato, en simh-datos.js. Antes
+     vivía en un objeto indexado por el texto literal de la opción, y
+     agregar un estatus sin acordarse de ese objeto pintaba la palabra
+     "undefined" en la pantalla: con las dos opciones nuevas que pide el
+     documento de mejoras habría ocurrido de inmediato.                   */
   function avisoEstatus() {
-    var v = $("#selEstatus").value, c = $("#avisoEstatus");
-    var txt = {
-      "Solicitante de refugio":"Requiere Constancia de Trámite COMAR vigente para inscribirse a cursos de capacitación (RF13).",
-      "Refugiado / Residente":"Adquiere los mismos derechos que una persona mexicana: sin restricción de movilidad estatal.",
-      "Naturalizado":"Adquiere los mismos derechos que una persona mexicana: sin restricción de movilidad estatal.",
-      "Sin trámite":"Sin trámite iniciado: el sistema restringe alertas de movilidad y sugiere canalización a orientación jurídica."
-    }[v];
-    c.innerHTML = ico("info") + "<span>" + txt + "</span>";
+    var e = D.estatus($("#selEstatus").value);
+    $("#avisoEstatus").innerHTML = ico("info") + "<span>" + SIMH.esc(e ? e.n : "") + "</span>";
   }
   $("#selEstatus").addEventListener("change", avisoEstatus);
   avisoEstatus();
@@ -827,7 +943,20 @@
         .filter(function (el) { return !ocultoDentro(el, panel); })  /* omite bloques no aplicables, no el panel */
         .map(function (el) {
           var v = String(el.value || "").trim();
-          if (/^\d{4}-\d{2}-\d{2}$/.test(v)) { var d = v.split("-"); v = d[2] + "/" + d[1] + "/" + d[0]; }
+          /* "Otra · Mopán" y no "Otra" a secas: un renglón que solo dijera
+             "Otra" obliga a volver al formulario para saber qué se
+             capturó.                                                      */
+          if (el.hasAttribute("data-otro")) v = SIMH.textoOtro(el);
+          /* El número sin su clave no es un teléfono: en el resumen va
+             completo, que es lo que después se marca. */
+          else if (el.hasAttribute("data-lada")) v = SIMH.textoTelefono(el);
+          /* De un <select> se resume lo que la persona LEYÓ, no el value
+             interno: la precisión de la fecha se resumía como "dia" y como
+             "aprox", que no es lo que dice ninguna opción en pantalla. */
+          else if (el.tagName === "SELECT" && el.selectedIndex >= 0) {
+            v = el.options[el.selectedIndex].text;
+          }
+          else if (/^\d{4}-\d{2}-\d{2}$/.test(v)) { var d = v.split("-"); v = d[2] + "/" + d[1] + "/" + d[0]; }
           return '<div class="resumen-dato"><span class="r-lab">' + el.getAttribute("data-campo") + "</span>" +
             (v ? '<span class="r-val">' + SIMH.esc(v) + "</span>" : '<span class="r-vacio">Sin capturar</span>') + "</div>";
         }).join("");
@@ -905,23 +1034,32 @@
      modo "acompanante": conserva los datos de movilidad y residencia del caso
      anterior y vincula a la persona al mismo grupo familiar, que es como
      llegan las familias a la ventanilla.                                    */
+  /* Limpiar por selector es frágil: si un campo cambia de nombre —y el
+     documento de mejoras acaba de renombrar el teléfono al separarlo en
+     dos— querySelector devuelve null, el `.value = ""` revienta o no hace
+     nada, y el dato de la persona anterior se hereda al siguiente
+     expediente. Aquí eso deja constancia en consola en vez de pasar
+     inadvertido.                                                         */
+  function limpiar(campo) {
+    var el = document.querySelector('[data-campo="' + campo + '"]');
+    if (!el) { console.warn("nuevaAlta: no existe el campo “" + campo + "”"); return; }
+    el.value = "";
+  }
+
   function nuevaAlta(modo) {
     var acomp = modo === "acompanante";
     var folioPrevio = folioActual;
 
     /* Identidad: siempre se limpia, nunca se hereda */
-    ["Nombre(s)", "Primer apellido", "Segundo apellido"].forEach(function (c) {
-      document.querySelector('[data-campo="' + c + '"]').value = "";
-    });
+    ["Nombre(s)", "Primer apellido", "Segundo apellido",
+     "Correo", "Registro COMAR", "Fecha COMAR"].forEach(limpiar);
     $("#fNac").value = "";
-    document.querySelector('[data-campo="Correo"]').value = "";
-    document.querySelector('[data-campo="Registro COMAR"]').value = "";
-    document.querySelector('[data-campo="Fecha COMAR"]').value = "";
     if (!acomp) {
-      document.querySelector('[data-campo="Teléfono"]').value = "";
-      document.querySelector('[data-campo="Domicilio"]').value = "";
+      ["Teléfono en residencia", "Domicilio",
+       "Contacto en origen", "Teléfono en país de origen"].forEach(limpiar);
       paises = [];
     }
+    SIMH.activarTelefono(document);
 
     /* Documentos y fotografía se reinician siempre */
     docs = [];
