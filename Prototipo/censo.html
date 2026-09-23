@@ -242,6 +242,14 @@
 (function () {
   "use strict";
   SIMH.chrome("censo");
+
+  /* Modo sin datos de prueba (Administración › Datos de prueba). */
+  if (SIMH.sinDatos()) {
+    SIMH.vacioModulo({ ico:"censo", titulo:"No hay registros del censo empresarial",
+      texto:"Los registros llegan desde las brigadas de campo al sincronizar el dispositivo.",
+      accion:"" });
+    return;
+  }
   var ico = SIMH.icono, esc = SIMH.esc;
   var $ = function (s) { return document.querySelector(s); };
   var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };

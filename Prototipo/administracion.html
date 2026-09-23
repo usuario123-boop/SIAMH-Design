@@ -92,8 +92,8 @@
   /* El candado del aislamiento no se tiñe de guinda como el que pide oficio:
      no es un permiso que se pueda pedir, es un muro entre direcciones. La
      diferencia además está escrita en la propia fila, no solo en el tono.  */
-  .cel.aislado{background:var(--arena-050);border-color:var(--linea)}
-  .cel.aislado svg{stroke:var(--gris)}
+  .cel.aislado,.cel.sede{background:var(--arena-050);border-color:var(--linea)}
+  .cel.aislado svg,.cel.sede svg{stroke:var(--gris)}
   .cel.na{color:var(--gris-claro);font-size:14px;line-height:1}
 
   .leyenda{display:flex;gap:16px;flex-wrap:wrap;padding:12px 14px;border-top:1px solid var(--linea);
@@ -279,19 +279,19 @@
      3. Usuarios. Datos a mano, como en el resto del prototipo.
      ================================================================== */
   var USR = [
-    { usu:"jorge.pineda", id:"u1", n:"Mtro. Jorge Pineda Ovalle", cargo:"Subsecretario de Movilidad Humana",
+    { usu:"jorge.pineda", sede:"tuxtla", id:"u1", n:"Mtro. Jorge Pineda Ovalle", cargo:"Subsecretario de Movilidad Humana",
       rol:"super", dir:null, area:"Secretaría de la Frontera Sur", mun:"Tuxtla Gutiérrez",
       est:"activo", acc:"2026-08-27 08:14", exc:[] },
 
-    { usu:"adriana.molina", id:"u2", n:"Lic. Adriana Molina Sántiz", cargo:"Directora de Capacitación y Empleo",
+    { usu:"adriana.molina", sede:"sfs", id:"u2", n:"Lic. Adriana Molina Sántiz", cargo:"Directora de Capacitación y Empleo",
       rol:"director", dir:"empleo", area:DIRS.empleo, mun:"Tapachula",
       est:"activo", acc:"2026-08-27 10:52", exc:[] },
 
-    { usu:"luis.ramirez", id:"u3", n:"Dr. Luis A. Ramírez Toledo", cargo:"Director de Atención y Salud",
+    { usu:"luis.ramirez", sede:"sfs", id:"u3", n:"Dr. Luis A. Ramírez Toledo", cargo:"Director de Atención y Salud",
       rol:"director", dir:"atencion", area:DIRS.atencion, mun:"Tapachula",
       est:"activo", acc:"2026-08-27 09:31", exc:[] },
 
-    { usu:"maria.gomez", id:"u4", n:"María Gómez Pérez", cargo:"Capturista de ventanilla",
+    { usu:"maria.gomez", sede:"vent_tap", id:"u4", n:"María Gómez Pérez", cargo:"Capturista de ventanilla",
       rol:"capturista", dir:"atencion", area:"Ventanilla municipal", mun:"Tapachula",
       est:"activo", acc:"2026-08-27 11:09",
       /* La excepción es la forma correcta de conceder algo a una persona:
@@ -299,15 +299,15 @@
       exc:[{ m:"expedientes", a:"editar", oficio:"SFS/0943/2026", hasta:"2026-09-30",
              motivo:"Corrección de CURP capturadas con error en el piloto de agosto." }] },
 
-    { usu:"ruben.castellanos", id:"u5", n:"Ing. Rubén Castellanos Díaz", cargo:"Brigadista de censo empresarial",
+    { usu:"ruben.castellanos", sede:"vent_suc", id:"u5", n:"Ing. Rubén Castellanos Díaz", cargo:"Brigadista de censo empresarial",
       rol:"capturista", dir:"empleo", area:DIRS.empleo, mun:"Suchiate",
       est:"activo", acc:"2026-08-27 07:45", exc:[] },
 
-    { usu:"elena.vazquez", id:"u6", n:"C.P. Elena Vázquez Moreno", cargo:"Analista de información",
+    { usu:"elena.vazquez", sede:"tuxtla", id:"u6", n:"C.P. Elena Vázquez Moreno", cargo:"Analista de información",
       rol:"consulta", dir:null, area:"Subsecretaría · Unidad de Planeación", mun:"Tuxtla Gutiérrez",
       est:"activo", acc:"2026-08-26 17:20", exc:[] },
 
-    { usu:"sofia.marquez", id:"u7", n:"Sofía Márquez Ruiz", cargo:"Capturista de ventanilla",
+    { usu:"sofia.marquez", sede:"vent_hui", id:"u7", n:"Sofía Márquez Ruiz", cargo:"Capturista de ventanilla",
       rol:"capturista", dir:"atencion", area:"Ventanilla municipal", mun:"Huixtla",
       est:"suspendido", acc:"2026-08-11 13:02",
       susp:{ f:"2026-08-12", oficio:"SFS/0874/2026",
@@ -330,6 +330,9 @@
   function permiso(u, m, a) {
     if (m.acc.indexOf(a) < 0) return "na";
     if (m.dir && u.dir !== m.dir && u.rol !== "super") return "aislado";
+    /* Regla de sede (22/09/2026): la escribe `SIMH.accesoSede`, no esta
+       pantalla, para que menú, módulo y matriz digan lo mismo. */
+    if (!SIMH.accesoSede(m.id, u)) return "sede";
 
     var e = u.exc.filter(function (x) { return x.m === m.id && x.a === a; })[0];
     if (e) return "exc";
@@ -417,7 +420,7 @@
      6. Estado de la pantalla
      ================================================================== */
   var qs   = new URLSearchParams(location.search);
-  var pest = qs.get("tab") === "bitacora" ? "bitacora" : "usuarios";
+  var pest = qs.get("tab") === "bitacora" ? "bitacora" : qs.get("tab") === "datos" ? "datos" : "usuarios";
   var sel  = qs.get("u") || null;      /* usuario seleccionado */
   var fRol = "todos", fEst = "todos", buscaU = "";
   var bMod = "todos", bAcc = "todos", buscaB = "";
@@ -433,7 +436,8 @@
      ================================================================== */
   var PESTS = [
     { id:"usuarios", t:"Usuarios y permisos" },
-    { id:"bitacora", t:"Bitácora de auditoría" }
+    { id:"bitacora", t:"Bitácora de auditoría" },
+    { id:"datos",    t:"Datos de prueba" }
   ];
 
   function pintaPestanas() {
@@ -536,7 +540,8 @@
     si:      { i:"check",   t:"Concedido" },
     oficio:  { i:"candado", t:"Requiere oficio" },
     exc:     { i:"llave",   t:"Excepción vigente" },
-    aislado: { i:"candado", t:"Sin acceso: otra dirección" }
+    aislado: { i:"candado", t:"Sin acceso: otra dirección" },
+    sede:    { i:"candado", t:"Sin acceso: sede no habilitada" }
   };
 
   function celda(est) {
@@ -552,10 +557,14 @@
 
     var filas = MODULOS.map(function (m) {
       var ais = aislado(u, m);
-      return '<tr class="' + (ais ? "aislado" : "") + '">' +
+      var sedeNo = !SIMH.accesoSede(m.id, u);
+      var sedes = SIMH.sedesDe(m.id);
+      return '<tr class="' + (ais || sedeNo ? "aislado" : "") + '">' +
         '<td><span class="m-nom">' + esc(m.t) + "</span>" +
         '<span class="m-dir">' +
           (ais ? ico("candado") + " Sin acceso · " + esc(DIRS[m.dir])
+               : sedeNo ? ico("candado") + " Solo en " + sedes.map(esc).join(" y ")
+               : sedes.length ? "Restringido por sede · habilitado para esta cuenta"
                : (m.dir ? esc(DIRS[m.dir]) : "Módulo transversal")) +
         "</span></td>" +
         ACCIONES.map(function (a) {
@@ -579,7 +588,8 @@
         "<div>" +
           '<h2 class="sec-tit" id="tPerm" tabindex="-1">Permisos de ' + esc(u.n) + "</h2>" +
           '<div style="font-size:12.5px;color:var(--gris);margin-top:4px;line-height:1.5">' +
-            "Vienen del rol <b>" + R.t + "</b>" + (u.dir ? " · " + esc(DIRS[u.dir]) : "") + ". " +
+            "Vienen del rol <b>" + R.t + "</b>" + (u.dir ? " · " + esc(DIRS[u.dir]) : "") +
+            " · sede <b>" + esc(SIMH.SEDES[u.sede].t) + "</b>. " +
             "Para cambiarlos se cambia el rol; lo que se concede a esta persona en particular es una " +
             "excepción con oficio." +
           "</div>" +
@@ -613,6 +623,7 @@
         '<span>' + celda("oficio") + "Requiere oficio y autorización del Director de Área</span>" +
         '<span>' + celda("exc") + "Excepción documentada</span>" +
         '<span>' + celda("aislado") + "Sin acceso: módulo de otra dirección</span>" +
+        '<span>' + celda("sede") + "Sin acceso: módulo no habilitado en su sede</span>" +
         '<span>' + celda("no") + "No concedido</span>" +
         '<span>' + celda("na") + "No aplica a ese módulo</span>" +
       "</div>" +
@@ -731,13 +742,55 @@
   }
 
   /* ======================================================================
+     9 bis. Pestaña: datos de prueba (requerimiento 4.1, 22/09/2026)
+     --------------------------------------------------------------------
+     Limpiar y poblar afectan a TODAS las pantallas y a todas las cuentas,
+     así que es un acto de quien administra (Superadmin), no una casilla de
+     la matriz. Las cuentas de usuario no son datos de prueba: se conservan.
+     ================================================================== */
+  function vistaDatos() {
+    var vacio = SIMH.sinDatos();
+    var yo = SIMH.sesion();
+    var puede = yo.rol === "super";
+    var accion = puede
+      ? (vacio
+          ? '<button class="btn btn-primario" type="button" id="btnPoblar">' + ico("check") + "Poblar datos de prueba</button>"
+          : '<button class="btn btn-peligro" type="button" id="btnLimpiar">' + ico("alerta") + "Limpiar datos de prueba</button>")
+      : "";
+    return '<div class="tarjeta mt-16">' +
+      '<div class="accion ' + (vacio ? "tibia" : "ok") + '">' + ico(vacio ? "info" : "check") +
+        '<div class="a-tx"><span class="a-t">' +
+          (vacio ? "El sistema está sin datos de prueba" : "El sistema muestra datos de prueba") + "</span>" +
+          '<span class="a-n">' +
+          (vacio ? "Los módulos se ven vacíos, como el primer día de operación. Así se recorre el flujo desde el " +
+                   "registro de la primera persona sin que los casos ficticios estorben."
+                 : "Los módulos muestran los casos ficticios de la demostración (personas, grupos, oficios, " +
+                   "censos). Limpiarlos deja cada módulo en su estado vacío; poblarlos los devuelve.") +
+          (puede ? "" : " <b>Solo quien administra el sistema (Superadmin) puede limpiar o poblar los datos</b>, " +
+                        "porque el cambio afecta a todas las pantallas y a todas las cuentas.") +
+          "</span></div>" +
+        (accion ? '<div class="a-acc">' + accion + "</div>" : "") + "</div>" +
+      '<div class="resumen-lista" style="margin-top:16px">' +
+        '<div class="resumen-dato"><span class="r-lab">Qué se limpia</span><span class="r-val">Personas, expedientes, ' +
+          "grupos familiares, carteras de Salud y Empleabilidad, grupos de Capacitación, censos, oficios, casos " +
+          "educativos, documentación y constancias. También los oficios y folios generados durante las pruebas.</span></div>" +
+        '<div class="resumen-dato"><span class="r-lab">Qué se conserva</span><span class="r-val">Las cuentas de usuario, ' +
+          "sus roles y permisos, los catálogos (países, escolaridad, sectores…) y la bitácora de auditoría.</span></div>" +
+        '<div class="resumen-dato"><span class="r-lab">Datos reales de producción</span><span class="r-val">' +
+          "<b>Pendiente.</b> La carga masiva de información real depende de que la Dirección la entregue; " +
+          "la plantilla de empleabilidad recibida el 22/09/2026 (<i>BASE_REGISTRO DE SOLICITANTES DE TRABAJO.xlsx</i>) " +
+          "viene sin registros.</span></div>" +
+      "</div></div>";
+  }
+
+  /* ======================================================================
      10. Pintado y eventos
      ================================================================== */
   function pinta() {
     pintaPestanas();
     $("#panel").innerHTML =
       '<div role="tabpanel" aria-labelledby="tab-' + pest + '" tabindex="0">' +
-      (pest === "usuarios" ? vistaUsuarios() : vistaBitacora()) + "</div>";
+      (pest === "usuarios" ? vistaUsuarios() : pest === "datos" ? vistaDatos() : vistaBitacora()) + "</div>";
     eventos();
   }
 
@@ -753,6 +806,18 @@
   }
 
   function eventos() {
+    var bl = $("#btnLimpiar");
+    if (bl) bl.onclick = function () {
+      if (!window.confirm("¿Limpiar los datos de prueba? Todos los módulos quedarán vacíos para todas las " +
+          "cuentas. Se puede revertir con «Poblar datos de prueba».")) return;
+      SIMH.datosPrueba(false);
+      location.href = "administracion.html?tab=datos";
+    };
+    var bp = $("#btnPoblar");
+    if (bp) bp.onclick = function () {
+      SIMH.datosPrueba(true);
+      location.href = "administracion.html?tab=datos";
+    };
     $$("[data-tab]").forEach(function (b) {
       b.onclick = function () {
         pest = this.getAttribute("data-tab");

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Capacitación · Grupos ICATECH · SIAMH</title>
+<title>Capacitación · Grupos de capacitación · SIAMH</title>
 <link rel="icon" href="assets/img/simh-isotipo-96.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -75,19 +75,19 @@
   .bm-mal{color:var(--critico)} .bm-mal svg{stroke:var(--critico)}
 
   /* ---------- Requisitos para acreditar -------------------------------- */
-  .req{display:flex;align-items:center;gap:13px;padding:12px 0;border-bottom:1px solid var(--linea-suave)}
-  .req:first-child{padding-top:0}
-  .req:last-child{border-bottom:0;padding-bottom:0}
-  .req .r-txt{flex:1;min-width:0}
-  .req .r-t{display:block;font-size:13.5px;font-weight:700;color:var(--tinta);line-height:1.3}
-  .req .r-n{display:block;font-size:11.5px;color:var(--gris);margin-top:3px;line-height:1.4}
-  .req .r-n.mal{color:var(--guinda-900);font-weight:700}
-  .req .r-cif{display:block;font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;flex:none;
+  .req-fila{display:flex;align-items:center;gap:13px;padding:12px 0;border-bottom:1px solid var(--linea-suave)}
+  .req-fila:first-child{padding-top:0}
+  .req-fila:last-child{border-bottom:0;padding-bottom:0}
+  .req-fila .r-txt{flex:1;min-width:0}
+  .req-fila .r-t{display:block;font-size:13.5px;font-weight:700;color:var(--tinta);line-height:1.3}
+  .req-fila .r-n{display:block;font-size:11.5px;color:var(--gris);margin-top:3px;line-height:1.4}
+  .req-fila .r-n.mal{color:var(--guinda-900);font-weight:700}
+  .req-fila .r-cif{display:block;font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;flex:none;
     color:var(--tinta);text-align:right;min-width:56px;line-height:1.1}
-  .req .r-cif small{display:block;font-size:10.5px;font-weight:400;color:var(--gris-claro);letter-spacing:.03em;margin-top:2px}
-  .req .r-bar{display:block;width:100px;height:6px;border-radius:3px;background:var(--linea-suave);overflow:hidden;flex:none}
-  .req .r-bar > span{display:block;height:100%;background:var(--dato-3)}
-  .req .r-bar > span.pend{background:var(--arena)}
+  .req-fila .r-cif small{display:block;font-size:10.5px;font-weight:400;color:var(--gris-claro);letter-spacing:.03em;margin-top:2px}
+  .req-fila .r-bar{display:block;width:100px;height:6px;border-radius:3px;background:var(--linea-suave);overflow:hidden;flex:none}
+  .req-fila .r-bar > span{display:block;height:100%;background:var(--dato-3)}
+  .req-fila .r-bar > span.pend{background:var(--arena)}
 
   /* ---------- Tabla de participantes ----------------------------------- */
   .nac{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.06em;color:var(--gris);
@@ -148,6 +148,33 @@
   .panel-baja > h3{margin:0 0 3px;font-family:var(--f-texto);font-size:14.5px;font-weight:700;
     color:var(--guinda-900);text-transform:none;letter-spacing:0}
 
+  /* Temporadas, constancia enviada y simulador de oficios (22/09/2026) */
+  .t-temp td{vertical-align:middle;font-size:13px;word-break:break-word}
+  .t-temp th{white-space:normal}
+  .t-temp .num{text-align:right;font-variant-numeric:tabular-nums}
+  .t-sub{display:block;font-size:11.5px;color:var(--gris);margin-top:2px}
+  .t-part .p-env{display:block;font-size:11.5px;color:var(--jade-900);font-weight:600;margin-top:2px}
+  .t-part .p-env.no{color:var(--guinda-900)}
+  .msg-prev{white-space:pre-wrap;font-family:var(--f-texto);font-size:12.5px;line-height:1.5;color:var(--tinta);
+    background:var(--blanco);border:1px solid var(--linea-suave);border-radius:var(--radio-s);
+    padding:10px 12px;margin:10px 0 0;max-width:620px}
+  .grid-of{display:grid;grid-template-columns:1.1fr .9fr;gap:20px;align-items:start}
+  @media (max-width:1100px){.grid-of{grid-template-columns:1fr}}
+  .grid-of .oficio-hoja{font-size:10.5px}
+  .of-item{display:flex;align-items:center;gap:10px;padding:8px 16px;border-top:1px solid var(--linea-suave);flex-wrap:wrap}
+  .of-item.activo{background:var(--jade-050)}
+  .of-ver{display:flex;align-items:center;gap:12px;flex:1;min-width:260px;min-height:44px;background:none;border:0;
+    text-align:left;cursor:pointer;font-family:var(--f-texto);padding:0;color:var(--tinta)}
+  .of-fol{display:block;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;min-width:112px}
+  .of-asu{display:block;font-size:13px;font-weight:600;line-height:1.3}
+  .of-asu small{display:block;font-size:11.5px;font-weight:400;color:var(--gris);margin-top:2px}
+  .of-hoja{padding:0 16px 16px;background:var(--jade-050);max-width:none}
+  .of-hoja .oficio-hoja{max-width:560px;font-size:10.5px}
+
+  .lbl-fijo{display:block;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--gris);margin-bottom:6px}
+  .dato-fijo{display:flex;align-items:center;min-height:44px;font-size:14px;font-weight:700;color:var(--tinta)}
+
   .sec-tit{font-family:var(--f-texto);font-size:14.5px;font-weight:700;color:var(--tinta);
     text-transform:none;letter-spacing:0;margin:0}
 </style>
@@ -155,12 +182,12 @@
 <body>
 
 <main class="contenido">
-  <div class="migas"><a href="index.html">Inicio</a> › Capacitación · Grupos ICATECH</div>
+  <div class="migas"><a href="index.html">Inicio</a> › Capacitación · Grupos de capacitación</div>
 
   <div class="enc">
     <div class="enc-txt">
       <h1>Capacitación</h1>
-      <div class="enc-sub">Conformación de grupos ICATECH, asistencia y requisitos de acreditación (RF13)</div>
+      <div class="enc-sub">Conformación de grupos de capacitación, asistencia y requisitos de acreditación (RF13)</div>
     </div>
     <div class="enc-acc">
       <button class="btn btn-primario btn-s" type="button" id="btnNuevoGrupoTop"></button>
@@ -178,6 +205,14 @@
 (function () {
   "use strict";
   SIMH.chrome("capacita");
+
+  /* Modo sin datos de prueba (Administración › Datos de prueba). */
+  if (SIMH.sinDatos()) {
+    SIMH.vacioModulo({ ico:"capacita", titulo:"No hay grupos de capacitación",
+      texto:"Los grupos de capacitación se abren por temporada y se llenan con personas que ya tienen expediente.",
+      accion:'<a class="btn btn-primario btn-s" href="registro.html">' + SIMH.icono("registro") + 'Registrar persona</a>' });
+    return;
+  }
   var ico = SIMH.icono, esc = SIMH.esc;
   var $ = function (s) { return document.querySelector(s); };
   var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
@@ -186,7 +221,7 @@
 
   var bngt = $("#btnNuevoGrupoTop");
   if (bngt) {
-    bngt.innerHTML = ico("mas") + "Abrir nuevo grupo ICATECH";
+    bngt.innerHTML = ico("mas") + "Abrir nuevo grupo de capacitación";
     bngt.onclick = function () {
       panelNuevo = true; panelAdd = false; bajaDe = null;
       pintaDetalle();
@@ -197,7 +232,7 @@
 
   $("#avisoPermisos").innerHTML = ico("info") +
     "<span><strong>Qué hace este módulo y qué no</strong>La ventanilla <b>conforma el grupo y pasa lista</b>. " +
-    "La acreditación y la constancia de competencia las emite <b>ICATECH</b> al concluir el curso; el SIAMH " +
+    "La acreditación y la constancia de competencia las emite <b>la institución que imparte el curso</b> al concluir; el SIAMH " +
     "solo verifica que cada persona llegue en condiciones de acreditar (RNF02). " +
     "<b>No hay límite de cursos por persona</b>: haber cursado antes nunca impide inscribirse.</span>";
 
@@ -324,16 +359,84 @@
     }
   ];
 
+  /* ======================================================================
+     2 bis. Temporadas de apertura (22/09/2026)
+     ------------------------------------------------------------------
+     La Dirección pidió abrir grupos POR TEMPORADAS, con fechas de inicio,
+     periodo de registro y límite de atención. Una temporada es la ventana
+     que comparten todos sus grupos:
+       · reg[0]–reg[1] · periodo de registro: solo en él se inscribe;
+       · ini           · a partir de cuándo arrancan los cursos;
+       · lim           · límite de atención: ningún grupo de la temporada
+                         puede concluir después.
+     Un grupo cuya inscripción todavía no abre está PROGRAMADO: existe,
+     se ve y se puede preparar, pero no admite altas.
+     ================================================================== */
+  var TEMPORADAS = [
+    { id:"T-2026-1", t:"Primavera 2026",          reg:["2026-04-13","2026-05-08"], ini:"2026-05-04", lim:"2026-06-30" },
+    { id:"T-2026-2", t:"Verano 2026",             reg:["2026-06-22","2026-08-14"], ini:"2026-07-06", lim:"2026-09-25" },
+    { id:"T-2026-3", t:"Otoño 2026",              reg:["2026-08-17","2026-09-04"], ini:"2026-09-07", lim:"2026-11-27" },
+    { id:"T-2026-4", t:"Invierno 2026–2027",      reg:["2026-11-16","2026-12-04"], ini:"2027-01-11", lim:"2027-03-26" }
+  ];
+  var TEMP_DE = { "G-2026-003":"T-2026-1", "G-2026-014":"T-2026-2", "G-2026-018":"T-2026-2",
+                  "G-2026-021":"T-2026-3", "G-2026-022":"T-2026-3" };
+
+  /* Un grupo ya programado para la temporada de invierno: la inscripción
+     abre el 16/11/2026, así que hoy no admite altas. */
+  GRUPOS.push({
+    id:"G-2026-025", curso:"Electricidad básica", clave:"ICT-ELE-02",
+    sede:"ICATECH Tapachula", mun:"Tapachula", modalidad:"Presencial", aula:"Taller 2",
+    instructor:"Ing. Mauricio Gálvez Coutiño", temporada:"T-2026-4",
+    abre:"2026-11-16", cierre:"2026-12-04", inicio:"2027-01-11", fin:"2027-03-19",
+    sesiones:16, sesion:0, cupo:18, estado:"conformacion", p:[]
+  });
+
+  /* Sedes del grupo (22/09/2026): el módulo no está atado a ICATECH. Las
+     sedes conocidas van en el catálogo y cualquier otra se escribe con la
+     opción 'Otra sede', que es la regla única de los campos 'Otro'. El
+     municipio se lee de la sede cuando se conoce. */
+  var SEDES_CAP = [
+    { t:"Secretaría de la Frontera Sur · Tapachula", mun:"Tapachula" },
+    { t:"ICATECH Tapachula",       mun:"Tapachula" },
+    { t:"ICATECH Huixtla",         mun:"Huixtla" },
+    { t:"Unidad Móvil Suchiate",   mun:"Suchiate" },
+    { t:"Casa de la Cultura · Cacahoatán", mun:"Cacahoatán" }
+  ];
+
+  function temporada(id) {
+    return TEMPORADAS.filter(function (t) { return t.id === id; })[0] || null;
+  }
+  function estTemp(t) {
+    if (HOY < t.reg[0]) return "programada";
+    if (HOY <= t.reg[1]) return "registro";
+    if (HOY <= t.lim)    return "curso";
+    return "concluida";
+  }
+  var EST_TEMP = {
+    programada:{ t:"Programada",       c:"chip-neutro", i:"reloj" },
+    registro:  { t:"Registro abierto", c:"chip-jade",   i:"check" },
+    curso:     { t:"En atención",      c:"chip-neutro", i:"capacita" },
+    concluida: { t:"Concluida",        c:"chip-neutro", i:"check" }
+  };
+
+  GRUPOS.forEach(function (g) {
+    if (!g.temporada) g.temporada = TEMP_DE[g.id] || null;
+    var t = temporada(g.temporada);
+    if (!g.abre) g.abre = t ? t.reg[0] : g.cierre;
+    /* La inscripción aún no abre: el grupo está programado. */
+    if (g.estado === "conformacion" && HOY < g.abre) g.estado = "programado";
+  });
+
   /* Personas con expediente que hoy no están en ningún grupo abierto.      */
   var CANDIDATOS = [
-    {e:"0731", n:"Wilson Adalberto Cáceres Erazo",   nac:"HND", ext:1, curp:1, comar:1, prev:0},
-    {e:"0688", n:"Marleny Suchité Ramos",            nac:"GTM", ext:1, curp:1, comar:0, prev:1},
-    {e:"0719", n:"Osiris Alexander Bello Márquez",   nac:"VEN", ext:1, curp:1, comar:1, prev:0},
-    {e:"0698", n:"Ricardo Antonio Menjívar Cruz",    nac:"SLV", ext:1, curp:1, comar:1, prev:1},
+    {e:"0731", n:"Wilson Adalberto Cáceres Erazo",   nac:"HND", ext:1, curp:1, comar:1, prev:0, tel:"+52 962 118 4402", medio:"whatsapp"},
+    {e:"0688", n:"Marleny Suchité Ramos",            nac:"GTM", ext:1, curp:1, comar:0, prev:1, mail:"marleny.suchite@gmail.com", tel:"+52 962 205 7731", medio:"correo"},
+    {e:"0719", n:"Osiris Alexander Bello Márquez",   nac:"VEN", ext:1, curp:1, comar:1, prev:0, tel:"+52 962 311 0948", medio:"whatsapp"},
+    {e:"0698", n:"Ricardo Antonio Menjívar Cruz",    nac:"SLV", ext:1, curp:1, comar:1, prev:1, mail:"ricardo.menjivar@outlook.com", medio:"correo"},
     {e:"0744", n:"Jean Baptiste Moïse",              nac:"HTI", ext:1, curp:0, comar:1, prev:0},
-    {e:"0455", n:"Berta Alicia Trujillo Molina",     nac:"MEX", ext:0, curp:1, comar:0, prev:3},
-    {e:"0510", n:"Silvia Patricia Roblero Aguilar",  nac:"MEX", ext:0, curp:1, comar:0, prev:0},
-    {e:"0296", n:"Elizabeth Coutiño Marroquín",      nac:"MEX", ext:0, curp:1, comar:0, prev:1}
+    {e:"0455", n:"Berta Alicia Trujillo Molina",     nac:"MEX", ext:0, curp:1, comar:0, prev:3, tel:"+52 962 144 2086", medio:"whatsapp"},
+    {e:"0510", n:"Silvia Patricia Roblero Aguilar",  nac:"MEX", ext:0, curp:1, comar:0, prev:0, tel:"+52 962 187 6613", medio:"whatsapp"},
+    {e:"0296", n:"Elizabeth Coutiño Marroquín",      nac:"MEX", ext:0, curp:1, comar:0, prev:1, mail:"elicoutino@hotmail.com", tel:"+52 962 190 3354", medio:"whatsapp"}
   ];
 
   var PAIS = { GTM:"Guatemala", HND:"Honduras", SLV:"El Salvador", NIC:"Nicaragua",
@@ -353,6 +456,12 @@
   function fecha(iso) { var p = iso.split("-"); return p[2] + "/" + p[1] + "/" + p[0]; }
   function dias(desde, hasta) { return Math.round((new Date(hasta) - new Date(desde)) / 86400000); }
   function plural(n, uno, varios) { return n + " " + (n === 1 ? uno : varios); }
+  /* ISO + n días. El formulario de nuevo grupo la usaba sin que existiera:
+     abrir el panel lanzaba ReferenceError. */
+  function suma(iso, n) {
+    var p = iso.split("-"), d = new Date(+p[0], +p[1] - 1, +p[2] + n);
+    return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+  }
   function faltan(n) { return (n === 1 ? "falta " : "faltan "); }
   function quedan(n) { return (n === 1 ? "queda " : "quedan "); }
   function activos(g) { return g.p.filter(function (x) { return !x.baja; }); }
@@ -397,7 +506,7 @@
 
   /* Lo que exige acción del capturista, en orden de urgencia. */
   function pendiente(g) {
-    if (g.estado === "concluido") return null;
+    if (g.estado === "concluido" || g.estado === "programado") return null;
     var r = resumen(g), d = r.n - r.docs, dc = dias(HOY, g.cierre);
     if (!r.cumple) {
       return { peso:1, txt:"La proporción mayoritaria extranjera no se cumple: " + faltan(r.faltanExt) +
@@ -423,6 +532,7 @@
   }
 
   var EST = {
+    programado:  { t:"Programado",      c:"chip-neutro" },
     conformacion:{ t:"En conformación", c:"chip-neutro" },
     curso:       { t:"En curso",        c:"chip-jade" },
     porconcluir: { t:"Por concluir",    c:"chip-rosa" },
@@ -558,6 +668,8 @@
         ico(g.estado === "concluido" ? "check" : (lleno ? "alerta" : "check")) +
         "<span>" + (g.estado === "concluido"
           ? "Grupo cerrado: el cupo ya no se modifica"
+          : g.estado === "programado"
+          ? "Recibirá hasta " + plural(g.cupo, "alta", "altas") + " cuando abra la inscripción"
           : (lleno ? "Cupo lleno: no admite más altas"
                    : "Admite " + plural(r.libres, "alta más", "altas más"))) + "</span>" +
       "</div></div>";
@@ -565,6 +677,14 @@
 
   function bloqueProp(g, r) {
     var pct = Math.round(r.pct * 100);
+    /* Sin inscritas no hay proporción que incumplir: marcarla en rojo en un
+       grupo programado sería una alarma sin nada que hacer. */
+    if (!r.n) {
+      return '<div class="bloque-med">' +
+        "<h4>Proporción mayoritaria extranjera</h4>" +
+        '<div style="font-size:13px;color:var(--gris);margin:10px 0 4px;line-height:1.45">Todavía no hay personas inscritas.</div>' +
+        '<div class="bm-est bm-ok">' + ico("info") + "<span>Más del 50% deberán ser personas extranjeras; se verifica al cerrar la inscripción</span></div></div>";
+    }
     return '<div class="bloque-med">' +
       "<h4>Proporción mayoritaria extranjera</h4>" +
       '<div class="prop" role="img" aria-label="' + pct + ' por ciento de personas extranjeras; el mínimo es más del 50 por ciento">' +
@@ -591,8 +711,15 @@
     var t, s, mal = false, nota;
     if (g.estado === "concluido") {
       t = "Concluido el " + fecha(g.fin);
-      s = "Las constancias de competencia las emitió ICATECH";
+      s = "Las constancias de competencia las emitió la institución que impartió el curso";
       nota = "El grupo queda cerrado; su historial se conserva";
+    } else if (g.estado === "programado") {
+      var tp = temporada(g.temporada);
+      t = "Inscripción abre el " + fecha(g.abre);
+      s = "Faltan " + plural(dias(HOY, g.abre), "día", "días") + " · registro hasta el " + fecha(g.cierre) +
+          " · inicia el " + fecha(g.inicio);
+      nota = "Antes de que abra la inscripción no se admiten altas" +
+             (tp ? " · temporada " + tp.t : "");
     } else if (g.estado === "conformacion") {
       t = "Cierra inscripción el " + fecha(g.cierre);
       s = dc >= 0 ? (dc === 1 ? "Falta 1 día" : "Faltan " + dc + " días") + " · inicia el " + fecha(g.inicio)
@@ -615,7 +742,7 @@
 
   function filaReq(t, n, tot, nota, mal, pend) {
     var pctv = (pend || !tot) ? 0 : Math.round(n / tot * 100);
-    return '<div class="req">' +
+    return '<div class="req-fila">' +
       '<div class="r-txt"><span class="r-t">' + t + "</span>" +
         '<span class="r-n' + (mal ? " mal" : "") + '">' + nota + "</span></div>" +
       '<span class="r-bar"><span class="' + (pend ? "pend" : "") + '" style="width:' + pctv + '%"></span></span>' +
@@ -671,7 +798,7 @@
             !!bajo, sinIniciar) +
         '</div>' +
       '</div>' +
-      '<div class="tarjeta-pie">La acreditación es competencia de ICATECH. El SIAMH verifica los requisitos y ' +
+      '<div class="tarjeta-pie">La acreditación es competencia de la institución que imparte el curso. El SIAMH verifica los requisitos y ' +
         "conserva el expediente de la persona; no emite la constancia de competencia.</div></div>";
   }
 
@@ -721,8 +848,14 @@
       '<span><span class="p-nom"><a href="expediente-detalle.html">' + esc(x.n) + "</a>" +
         '<span class="nac" title="' + PAIS[x.nac] + '">' + x.nac + "</span></span>" +
       '<span class="p-folio">MH-2026-' + x.e +
-        (x.prev ? " · " + plural(x.prev, "curso previo", "cursos previos") : "") +
-      "</span></span></div>";
+        (x.prev ? " · " + plural(x.prev, "curso previo", "cursos previos") : "") + "</span>" +
+      (x.envios && x.envios.length
+        ? '<span class="p-env' + (x.envios[x.envios.length - 1].medio ? "" : " no") + '">' +
+          (x.envios[x.envios.length - 1].medio
+            ? "✓ Constancia enviada · " + x.envios[x.envios.length - 1].mt
+            : "✕ Constancia sin enviar: sin medio de contacto") + "</span>"
+        : "") +
+      "</span></div>";
   }
 
   function pasaFila(g, x) {
@@ -784,12 +917,16 @@
             : '<a class="btn btn-texto btn-s" href="empleabilidad.html?e=' + x.e + '&tab=vinc" title="Vincular a empleo en el módulo de Empleabilidad" style="color:var(--jade-900);font-weight:700;margin-right:8px">' +
                 ico("empleo") + 'Vincular a empleo</a>' +
               (g.estado === "concluido" ? ""
-                : '<button class="btn btn-texto btn-s" type="button" data-baja="' + x.e +
+                : '<button class="btn btn-texto btn-s" type="button" data-reenv="' + x.e + '" style="color:var(--gris)">' +
+                  (x.envios && x.envios.length ? "Reenviar constancia" : "Enviar constancia") + "</button>" +
+                  '<button class="btn btn-texto btn-s" type="button" data-baja="' + x.e +
                   '" style="color:var(--gris)">Registrar baja</button>')) +
         "</td></tr>";
     }).join("")
       : '<tr><td colspan="' + (modoLista ? 3 : 5) + '" style="text-align:center;padding:24px;color:var(--gris)">' +
-        "Ninguna persona coincide con el filtro.</td></tr>";
+        (g.p.length ? "Ninguna persona coincide con el filtro."
+         : g.estado === "programado" ? "Aún no hay inscritas: la inscripción abre el " + fecha(g.abre) + "."
+         : "Aún no hay personas inscritas en este grupo.") + "</td></tr>";
 
     return '<div class="tarjeta" style="padding:0">' +
       '<div style="padding:15px 16px 12px;border-bottom:1px solid var(--linea)">' +
@@ -798,18 +935,18 @@
             ? "Pase de lista · sesión " + (g.sesion + 1) + " de " + g.sesiones
             : "Participantes del grupo") + "</h3>" +
           '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
-            (g.estado === "concluido" || g.estado === "conformacion" ? ""
+            (g.estado === "concluido" || g.estado === "conformacion" || g.estado === "programado" ? ""
               : '<button class="btn btn-secundario btn-s" type="button" id="btnModo">' +
                 ico(modoLista ? "izq" : "check") +
                 (modoLista ? "Salir del pase de lista" : "Pasar lista de hoy") + "</button>") +
-            (g.estado === "concluido" || r.libres === 0 ? ""
+            (g.estado === "concluido" || g.estado === "programado" || r.libres === 0 ? ""
               : '<button class="btn btn-primario btn-s" type="button" id="btnAdd">' +
                 ico("mas") + "Agregar participante</button>") +
           "</div>" +
         "</div>" +
         (modoLista
           ? '<div style="font-size:12px;color:var(--gris);line-height:1.45">Marca la asistencia de hoy. ' +
-            "La sesión no se guarda hasta confirmarla abajo; una vez guardada, solo el instructor de ICATECH " +
+            "La sesión no se guarda hasta confirmarla abajo; una vez guardada, solo el instructor del curso " +
             "puede corregirla y la corrección queda en la bitácora.</div>"
           : '<div class="filtros-tabla" id="filFila" role="group" aria-label="Filtrar participantes">' +
             fils.map(function (f) {
@@ -912,12 +1049,39 @@
       "</div></div>";
   }
 
+  /* Temporada propuesta: la que tiene el registro abierto o, si no hay, la
+     siguiente programada. */
+  var ngTemp = (TEMPORADAS.filter(function (t) { return estTemp(t) === "registro"; })[0] ||
+                TEMPORADAS.filter(function (t) { return estTemp(t) === "programada"; })[0] ||
+                TEMPORADAS[TEMPORADAS.length - 1]).id;
+  function ngFechas() {
+    var t = temporada(ngTemp);
+    var abre = t.reg[0] < HOY ? HOY : t.reg[0];
+    var ini = t.ini < abre ? suma(abre, 7) : t.ini;
+    var fin = suma(ini, 45) > t.lim ? t.lim : suma(ini, 45);
+    return { abre:abre, cierre:t.reg[1], inicio:ini, fin:fin };
+  }
+
+  /* Reglas de fechas de un grupo contra su temporada. Devuelve el primer
+     problema en palabras, o null. */
+  function validaFechas(t, f) {
+    if (!f.abre || !f.cierre || !f.inicio || !f.fin) return "Captura las cuatro fechas del grupo.";
+    if (f.cierre < f.abre)  return "La inscripción no puede cerrar antes de abrir.";
+    if (f.fin <= f.inicio)  return "La conclusión debe ser posterior al inicio.";
+    if (f.abre < t.reg[0] || f.cierre > t.reg[1])
+      return "El registro debe caer dentro del periodo de la temporada " + t.t + " (" +
+             fecha(t.reg[0]) + " al " + fecha(t.reg[1]) + ").";
+    if (f.inicio < t.ini) return "Los cursos de la temporada " + t.t + " arrancan a partir del " + fecha(t.ini) + ".";
+    if (f.fin > t.lim)    return "El curso rebasa el límite de atención de la temporada (" + fecha(t.lim) + ").";
+    return null;
+  }
+
   function panelNuevoGrupo() {
     return '<div class="tarjeta" id="panelNuevoGrupo" style="margin-bottom:16px;border:1.5px solid var(--jade);background:var(--jade-020)">' +
       '<div class="tarjeta-enc">' +
         '<div>' +
-          '<h3 class="sec-tit" style="margin:0">Apertura de Nuevo Grupo Formativo ICATECH</h3>' +
-          '<span class="txt-min">RF13 · Registro de curso, sede, instructor y asignación de cupo (15 a 18 lugares)</span>' +
+          '<h3 class="sec-tit" style="margin:0">Apertura de nuevo grupo de capacitación</h3>' +
+          '<span class="txt-min">RF13 · Registro de curso, sede, instructor y cupo</span>' +
         '</div>' +
       '</div>' +
       '<form id="formNuevoGrupo" onsubmit="return false" style="margin-top:14px">' +
@@ -927,19 +1091,15 @@
             '<input type="text" id="ngCurso" placeholder="Ej. Soldadura industrial, Electricidad básica, Gastronomía">' +
           '</div>' +
           '<div class="campo" style="flex:1">' +
-            '<label for="ngClave">Clave oficial del curso</label>' +
-            '<input type="text" id="ngClave" value="ICT-' + Math.floor(100 + Math.random()*900) + '-26">' +
+            '<label for="ngClave">Clave del curso <span class="opc">(opcional)</span></label>' +
+            '<input type="text" id="ngClave" placeholder="Ej. CAP-SOL-01">' +
           '</div>' +
         '</div>' +
         '<div class="fila-3">' +
           '<div class="campo">' +
-            '<label for="ngSede">Sede / Plantel ICATECH <span class="req">*</span></label>' +
-            '<select id="ngSede">' +
-              '<option value="ICATECH Tapachula">ICATECH Tapachula</option>' +
-              '<option value="ICATECH Huixtla">ICATECH Huixtla</option>' +
-              '<option value="Unidad Móvil Suchiate">Unidad Móvil Suchiate</option>' +
-              '<option value="Cacahoatán">Cacahoatán</option>' +
-            '</select>' +
+            '<label for="ngSede">Sede <span class="req">*</span></label>' +
+            '<select id="ngSede" data-otro="ngSedeOtro">' + SIMH.opciones(SEDES_CAP, SEDES_CAP[0].t, "Otra sede (especificar)") + '</select>' +
+            '<input type="text" id="ngSedeOtro" class="oculto" placeholder="Escribe la sede" aria-label="Otra sede" style="margin-top:6px">' +
           '</div>' +
           '<div class="campo">' +
             '<label for="ngMod">Modalidad</label>' +
@@ -956,38 +1116,311 @@
         '</div>' +
         '<div class="fila">' +
           '<div class="campo" style="flex:1.5">' +
-            '<label for="ngInst">Instructor(a) acreditado de ICATECH <span class="req">*</span></label>' +
+            '<label for="ngInst">Instructor(a) <span class="req">*</span></label>' +
             '<input type="text" id="ngInst" placeholder="Nombre completo del instructor(a)">' +
           '</div>' +
           '<div class="campo" style="flex:1">' +
-            '<label for="ngCupo">Cupo máximo (Norma 15-18) <span class="req">*</span></label>' +
-            '<select id="ngCupo">' +
-              '<option value="18" selected>18 personas (Estándar)</option>' +
-              '<option value="16">16 personas</option>' +
-              '<option value="15">15 personas (Mínimo)</option>' +
-            '</select>' +
+            '<label for="ngCupo">Cupo máximo <span class="req">*</span></label>' +
+            '<input type="number" id="ngCupo" min="1" step="1" inputmode="numeric" value="18" placeholder="Número de lugares">' +
           '</div>' +
         '</div>' +
-        '<div class="fila-3">' +
+        /* Temporada: propone las fechas de su ventana; se pueden ajustar
+           dentro de ella, y el límite de atención no se puede rebasar. */
+        '<div class="fila">' +
+          '<div class="campo" style="flex:1.5">' +
+            '<label for="ngTemp">Temporada de apertura <span class="req">*</span></label>' +
+            '<select id="ngTemp">' +
+              TEMPORADAS.filter(function (t) { return estTemp(t) !== "concluida"; }).map(function (t) {
+                return '<option value="' + t.id + '"' + (t.id === ngTemp ? " selected" : "") + '>' +
+                  esc(t.t) + ' · registro ' + fecha(t.reg[0]) + '–' + fecha(t.reg[1]) + '</option>';
+              }).join("") +
+            '</select>' +
+          '</div>' +
+          '<div class="campo" style="flex:1">' +
+            '<span class="lbl-fijo">Límite de atención de la temporada</span>' +
+            '<span class="dato-fijo" id="ngLim">' + fecha(temporada(ngTemp).lim) + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="fila">' +
+          '<div class="campo">' +
+            '<label for="ngAbre">Abre la inscripción <span class="req">*</span></label>' +
+            '<input type="date" id="ngAbre" value="' + ngFechas().abre + '">' +
+          '</div>' +
+          '<div class="campo">' +
+            '<label for="ngCie">Cierra la inscripción <span class="req">*</span></label>' +
+            '<input type="date" id="ngCie" value="' + ngFechas().cierre + '">' +
+          '</div>' +
           '<div class="campo">' +
             '<label for="ngIni">Fecha de inicio <span class="req">*</span></label>' +
-            '<input type="date" id="ngIni" value="' + suma(HOY, 10) + '">' +
+            '<input type="date" id="ngIni" value="' + ngFechas().inicio + '">' +
           '</div>' +
           '<div class="campo">' +
             '<label for="ngFin">Fecha de conclusión <span class="req">*</span></label>' +
-            '<input type="date" id="ngFin" value="' + suma(HOY, 45) + '">' +
-          '</div>' +
-          '<div class="campo">' +
-            '<label for="ngCie">Límite de inscripción <span class="req">*</span></label>' +
-            '<input type="date" id="ngCie" value="' + suma(HOY, 7) + '">' +
+            '<input type="date" id="ngFin" value="' + ngFechas().fin + '">' +
           '</div>' +
         '</div>' +
+        '<div class="aviso aviso-guinda" id="ngError" hidden></div>' +
         '<div class="flex gap-8" style="justify-content:flex-end;margin-top:14px">' +
-          '<button class="btn btn-primario btn-s" type="button" id="btnGuardarGrupo">' + ico("guardar") + 'Crear Grupo ICATECH</button>' +
+          '<button class="btn btn-primario btn-s" type="button" id="btnGuardarGrupo">' + ico("guardar") + 'Crear grupo de capacitación</button>' +
           '<button class="btn btn-secundario btn-s" type="button" id="btnCancelaGrupo">Cancelar</button>' +
         '</div>' +
       '</form>' +
     '</div>';
+  }
+
+  /* ======================================================================
+     6 bis. Temporadas de apertura
+     ================================================================== */
+  var panelTemp = false;       /* formulario de nueva temporada abierto */
+  var tempAbierto = false;     /* plegable abierto */
+
+  function bloqueTemporadas() {
+    var activa = TEMPORADAS.filter(function (t) { return estTemp(t) === "registro"; })[0];
+    var filas = TEMPORADAS.map(function (t) {
+      var e = EST_TEMP[estTemp(t)];
+      var n = GRUPOS.filter(function (g) { return g.temporada === t.id; }).length;
+      return "<tr><td><b>" + esc(t.t) + '</b><span class="t-sub">' + t.id + "</span></td>" +
+        "<td>" + fecha(t.reg[0]) + " – " + fecha(t.reg[1]) + "</td>" +
+        "<td>" + fecha(t.ini) + "</td><td>" + fecha(t.lim) + "</td>" +
+        '<td class="num">' + n + "</td>" +
+        '<td><span class="chip ' + e.c + '">' + ico(e.i) + e.t + "</span></td></tr>";
+    }).join("");
+
+    var form = panelTemp
+      ? '<div class="panel-add" style="margin:14px 16px 16px">' +
+          "<h3>Programar una temporada</h3>" +
+          '<p style="font-size:12.5px;color:var(--gris);margin:0 0 11px;line-height:1.45">Los grupos que se abran ' +
+            "en esta temporada solo podrán inscribir dentro del periodo de registro y concluir antes del límite de atención.</p>" +
+          '<div class="fila">' +
+            '<div class="campo" style="flex:1.4"><label for="ntNom">Nombre <span class="req">*</span></label>' +
+              '<input type="text" id="ntNom" placeholder="Ej. Primavera 2027"></div>' +
+            '<div class="campo"><label for="ntRegI">Registro desde <span class="req">*</span></label><input type="date" id="ntRegI"></div>' +
+            '<div class="campo"><label for="ntRegF">Registro hasta <span class="req">*</span></label><input type="date" id="ntRegF"></div>' +
+            '<div class="campo"><label for="ntIni">Inicio de cursos <span class="req">*</span></label><input type="date" id="ntIni"></div>' +
+            '<div class="campo"><label for="ntLim">Límite de atención <span class="req">*</span></label><input type="date" id="ntLim"></div>' +
+          "</div>" +
+          '<div class="aviso aviso-guinda" id="ntError" hidden></div>' +
+          '<div style="display:flex;gap:8px;margin-top:4px">' +
+            '<button class="btn btn-primario btn-s" type="button" id="btnGuardaTemp">' + ico("guardar") + "Programar temporada</button>" +
+            '<button class="btn btn-secundario btn-s" type="button" id="btnCancTemp">Cancelar</button>' +
+          "</div></div>"
+      : "";
+
+    return '<details class="plegable" id="plegTemp"' + (tempAbierto ? " open" : "") + ">" +
+      "<summary>Temporadas de apertura · " +
+        (activa ? esc(activa.t) + " con registro abierto hasta el " + fecha(activa.reg[1])
+                : "ninguna con registro abierto hoy") + "</summary>" +
+      '<div class="cuerpo" style="padding:0">' +
+        '<div style="overflow-x:auto"><table class="tabla t-temp"><colgroup>' +
+          '<col style="width:24%"><col style="width:22%"><col style="width:14%"><col style="width:14%">' +
+          '<col style="width:8%"><col style="width:18%"></colgroup><thead><tr>' +
+          "<th>Temporada</th><th>Periodo de registro</th><th>Inicio de cursos</th><th>Límite de atención</th>" +
+          '<th class="num">Grupos</th><th>Estado</th></tr></thead><tbody>' + filas + "</tbody></table></div>" +
+        form +
+        (panelTemp ? "" : '<div class="tabla-pie"><span>Una temporada programada abre su registro sola en la fecha ' +
+          "indicada; sus grupos quedan como <b>Programado</b> hasta entonces.</span>" +
+          '<button class="btn btn-secundario btn-s" type="button" id="btnNuevaTemp">' + ico("mas") +
+          "Programar temporada</button></div>") +
+      "</div></details>";
+  }
+
+  /* ======================================================================
+     6 ter. Constancia de registro al curso (22/09/2026)
+     ------------------------------------------------------------------
+     Al inscribir, la constancia se envía SOLA al medio de contacto que dio
+     la persona (WhatsApp o correo). En el prototipo el envío se simula; los
+     enlaces de WhatsApp y correo permiten hacerlo a mano mientras no exista
+     la integración (WhatsApp Business / correo institucional).
+     ================================================================== */
+  var ultimoEnvio = null;      /* { g, e } del último envío, para el panel */
+  var consInsc = 120;          /* serie de constancias de inscripción */
+
+  function contacto(x) {
+    if (x.medio === "correo" && x.mail) return { medio:"correo", dest:x.mail, t:"correo electrónico" };
+    if (x.tel) return { medio:"whatsapp", dest:x.tel, t:"WhatsApp" };
+    if (x.mail) return { medio:"correo", dest:x.mail, t:"correo electrónico" };
+    return null;
+  }
+
+  function mensajeConstancia(g, x, env) {
+    return "SIAMH · Secretaría de la Frontera Sur\n" +
+      "Constancia de registro " + env.fol + "\n\n" +
+      "Hola, " + x.n + ". Quedaste registrada/o en el curso «" + g.curso + "» " +
+      "(grupo " + g.id + "), en " + g.sede + ", " + g.aula + ".\n" +
+      "Inicia el " + fecha(g.inicio) + " y concluye el " + fecha(g.fin) + ".\n\n" +
+      "Esta constancia no es un documento migratorio. Se verifica por folio y sello en la ventanilla.";
+  }
+
+  function enviarConstancia(g, x) {
+    var ct = contacto(x);
+    consInsc += 1;
+    var env = { fol:"CI-" + ("000" + consInsc).slice(-4) + "/2026", t:HOY,
+                medio: ct ? ct.medio : null, dest: ct ? ct.dest : null, mt: ct ? ct.t : null };
+    x.envios = (x.envios || []).concat(env);
+    ultimoEnvio = { g:g.id, e:x.e };
+    return env;
+  }
+
+  function panelEnvio(g) {
+    if (!ultimoEnvio || ultimoEnvio.g !== g.id) return "";
+    var x = g.p.filter(function (q) { return q.e === ultimoEnvio.e; })[0];
+    if (!x || !x.envios || !x.envios.length) return "";
+    var env = x.envios[x.envios.length - 1];
+    var msg = mensajeConstancia(g, x, env);
+    if (!env.medio) {
+      return '<div class="accion tibia" style="margin-bottom:16px">' + ico("alerta") +
+        '<div class="a-tx"><span class="a-t">Constancia ' + esc(env.fol) + " sin enviar: " + esc(x.n) +
+          " no dejó teléfono ni correo</span>" +
+          '<span class="a-n">Entrégasela impresa en la ventanilla, o captura un medio de contacto en su expediente y reenvíala.</span></div>' +
+        '<div class="a-acc"><button class="btn btn-secundario btn-s" type="button" id="btnImpCons">' + ico("pdf") +
+          "Imprimir constancia</button>" +
+          '<button class="btn btn-texto btn-s" type="button" id="btnCierraEnv">Cerrar</button></div></div>';
+    }
+    var enlace = env.medio === "whatsapp"
+      ? "https://wa.me/" + env.dest.replace(/\D/g, "") + "?text=" + encodeURIComponent(msg)
+      : "mailto:" + env.dest + "?subject=" + encodeURIComponent("Constancia de registro " + env.fol) +
+        "&body=" + encodeURIComponent(msg);
+    return '<div class="accion ok" style="margin-bottom:16px">' + ico("check") +
+      '<div class="a-tx"><span class="a-t">Constancia ' + esc(env.fol) + " enviada por " + esc(env.mt) +
+        " a " + esc(env.dest) + "</span>" +
+        '<span class="a-n">Se envió automáticamente al inscribir a ' + esc(x.n) + ". " +
+        "<i>Prototipo: el envío se simula; mientras no exista la integración, el enlace abre el mensaje listo para mandarlo a mano.</i></span>" +
+        '<pre class="msg-prev">' + esc(msg) + "</pre></div>" +
+      '<div class="a-acc"><a class="btn btn-secundario btn-s" target="_blank" rel="noopener" href="' + esc(enlace) + '">' +
+        (env.medio === "whatsapp" ? "Abrir en WhatsApp" : "Abrir en el correo") + "</a>" +
+        '<button class="btn btn-texto btn-s" type="button" id="btnCierraEnv">Cerrar</button></div></div>';
+  }
+
+  /* ======================================================================
+     6 quater. Simulador de oficios institucionales (22/09/2026)
+     ------------------------------------------------------------------
+     Recorre el ciclo real de un oficio sin salir del grupo: borrador con
+     referencia interna (BOR-####) → a firma → firma del Director de Área,
+     que es cuando se asigna el folio consecutivo de la serie del sistema
+     (`SIMH.folioOficio`) → emitido. Un emitido no se borra: se cancela y
+     conserva su folio (RNF03). La firma es SIMULADA: en el sistema real es
+     un acto del Director, no un botón de la ventanilla.
+     ================================================================== */
+  var compOf = null;           /* borrador en redacción */
+  var ofVer = null;            /* ref del oficio cuya hoja se muestra */
+
+  var TIPOS_OF = {
+    apertura: { t:"Solicitud de apertura de grupo",
+      dest:function (g) { return "Dirección del plantel " + g.sede; },
+      cargo:"Director(a) del plantel",
+      asunto:function (g) { return "Solicitud de apertura del grupo " + g.id + " · " + g.curso; },
+      cuerpo:function (g) {
+        var t = temporada(g.temporada);
+        return "Por este conducto solicito la apertura del curso «" + g.curso + "» (clave " + g.clave +
+          ") en modalidad " + g.modalidad.toLowerCase() + ", dentro de la temporada " + (t ? t.t : "vigente") +
+          ", con inscripción del " + fecha(g.abre) + " al " + fecha(g.cierre) + " e inicio el " + fecha(g.inicio) +
+          ", para un cupo de " + g.cupo + " personas, con mayoría de personas en contexto de movilidad."; } },
+    aula: { t:"Solicitud de espacio o aula",
+      dest:function (g) { return "Coordinación administrativa · " + g.sede; },
+      cargo:"Coordinador(a) administrativo(a)",
+      asunto:function (g) { return "Solicitud de espacio para el grupo " + g.id; },
+      cuerpo:function (g) {
+        return "Solicito se asigne el espacio «" + g.aula + "» para impartir el curso «" + g.curso +
+          "» del " + fecha(g.inicio) + " al " + fecha(g.fin) + ", en " + plural(g.sesiones, "sesión", "sesiones") +
+          ", a cargo de " + g.instructor + "."; } },
+    lista: { t:"Envío de lista de participantes para acreditación",
+      dest:function (g) { return "Control escolar · " + g.sede; },
+      cargo:"Jefe(a) de departamento",
+      asunto:function (g) { return "Lista de participantes del grupo " + g.id + " para acreditación"; },
+      cuerpo:function (g) {
+        var r = resumen(g);
+        return "Remito la lista de " + plural(r.n, "persona inscrita", "personas inscritas") + " en el curso «" +
+          g.curso + "», de las cuales " + plural(r.listos, "cumple", "cumplen") +
+          " hoy la documentación y el mínimo de asistencia, para el trámite de acreditación que corresponde a esa institución."; } },
+    libre: { t:"Oficio libre",
+      dest:function () { return ""; }, cargo:"",
+      asunto:function () { return ""; }, cuerpo:function () { return ""; } }
+  };
+
+  var EST_OF = {
+    borrador: { t:"Borrador",  c:"chip-neutro", i:"editar" },
+    firma:    { t:"En firma",  c:"chip-rosa",   i:"reloj" },
+    emitido:  { t:"Emitido",   c:"chip-jade",   i:"check" },
+    cancelado:{ t:"Cancelado", c:"chip-guinda", i:"alerta" }
+  };
+
+  function nuevoComp(g, tipo) {
+    var T = TIPOS_OF[tipo];
+    return { tipo:tipo, dest:T.dest(g), cargo:T.cargo, asunto:T.asunto(g), cuerpo:T.cuerpo(g) };
+  }
+
+  /* Membrete y composición del formato oficial (22/09/2026). */
+  function hojaOf(o) {
+    var sello = o.est === "borrador" ? '<div class="o-sello bor">' + ico("editar") + "Borrador " + esc(o.ref) + " · sin folio, no circula</div>"
+              : o.est === "firma"    ? '<div class="o-sello fir">' + ico("reloj") + "En firma · sin folio todavía</div>"
+              : o.est === "cancelado"? '<div class="o-sello can">' + ico("alerta") + "Cancelado · el folio " + esc(o.folio) + " queda consumido</div>"
+              : "";
+    return SIMH.hojaSFS({
+      sello: sello,
+      folio: o.folio ? esc(o.folio) : '<span class="o-pend">se asigna al firmar</span>',
+      fecha: SIMH.fechaLarga(o.firmado || HOY) + ".",
+      asunto: esc(o.asunto || "— asunto —"),
+      dest: (o.cargo ? esc(o.cargo) + "<br>" : "") + esc(o.dest || "— destinatario —"),
+      cuerpo: [esc(o.cuerpo || "— cuerpo del oficio —"), "Sin otro particular, reciba un cordial saludo."]
+    });
+  }
+
+  function bloqueOficios(g) {
+    var lista = g.oficios || [];
+    var filas = lista.length ? lista.slice().reverse().map(function (o) {
+      var e = EST_OF[o.est];
+      var acc = o.est === "borrador" ? '<button class="btn btn-secundario btn-s" type="button" data-of="firma" data-ref="' + o.ref + '">' + ico("der") + "Enviar a firma</button>"
+              : o.est === "firma"    ? '<button class="btn btn-primario btn-s" type="button" data-of="firmar" data-ref="' + o.ref + '">' + ico("check") + "Simular firma del Director</button>"
+              : o.est === "emitido"  ? '<button class="btn btn-texto btn-s" type="button" data-of="cancelar" data-ref="' + o.ref + '">Cancelar oficio</button>'
+              : "";
+      return '<div class="of-item' + (ofVer === o.ref ? " activo" : "") + '">' +
+        '<button type="button" class="of-ver" data-verof="' + o.ref + '" aria-expanded="' + (ofVer === o.ref) + '">' +
+          '<span class="of-fol">' + esc(o.folio || o.ref) + "</span>" +
+          '<span class="of-asu">' + esc(o.asunto) + "<small>" + esc(TIPOS_OF[o.tipo].t) + " · " + esc(o.dest) +
+            (o.cancel ? " · cancelado: " + esc(o.cancel) : "") + "</small></span></button>" +
+        '<span class="chip ' + e.c + '">' + ico(e.i) + e.t + "</span>" + acc + "</div>" +
+        (ofVer === o.ref ? '<div class="of-hoja">' + hojaOf(o) + "</div>" : "");
+    }).join("") : '<div class="vacio" style="padding:16px">' + ico("oficios") + "Este grupo no tiene oficios todavía.</div>";
+
+    var comp = "";
+    if (compOf) {
+      comp = '<div class="panel-add" style="margin:0 16px 16px">' +
+        "<h3>Redactar oficio</h3>" +
+        '<div class="grid-of">' +
+          "<div>" +
+            '<div class="campo"><label for="ofTipo">Tipo de oficio</label><select id="ofTipo">' +
+              Object.keys(TIPOS_OF).map(function (k) {
+                return '<option value="' + k + '"' + (compOf.tipo === k ? " selected" : "") + ">" + esc(TIPOS_OF[k].t) + "</option>";
+              }).join("") + "</select></div>" +
+            '<div class="fila">' +
+              '<div class="campo"><label for="ofDest">Destinatario <span class="req">*</span></label>' +
+                '<input type="text" id="ofDest" value="' + esc(compOf.dest) + '"></div>' +
+              '<div class="campo"><label for="ofCargo">Cargo</label>' +
+                '<input type="text" id="ofCargo" value="' + esc(compOf.cargo) + '"></div>' +
+            "</div>" +
+            '<div class="campo"><label for="ofAsu">Asunto <span class="req">*</span></label>' +
+              '<input type="text" id="ofAsu" value="' + esc(compOf.asunto) + '"></div>' +
+            '<div class="campo"><label for="ofCue">Cuerpo del oficio <span class="req">*</span></label>' +
+              '<textarea id="ofCue" rows="6">' + esc(compOf.cuerpo) + "</textarea></div>" +
+            '<div class="aviso aviso-guinda" id="ofError" hidden></div>' +
+            '<div style="display:flex;gap:8px">' +
+              '<button class="btn btn-primario btn-s" type="button" id="btnGuardaOf">' + ico("guardar") + "Guardar borrador</button>" +
+              '<button class="btn btn-secundario btn-s" type="button" id="btnCancOf">Cancelar</button>' +
+            "</div>" +
+          "</div>" +
+          '<div><div class="lbl-fijo">Vista previa · en vivo</div><div id="ofPrev">' +
+            hojaOf({ est:"borrador", ref:"BOR-····", dest:compOf.dest, cargo:compOf.cargo,
+                     asunto:compOf.asunto, cuerpo:compOf.cuerpo }) + "</div>" +
+            '<div class="oficio-cap">La referencia BOR se asigna al guardar; el folio, solo al firmar.</div></div>' +
+        "</div></div>";
+    }
+
+    return '<div class="tarjeta" style="padding:0;margin-top:16px">' +
+      '<div class="tarjeta-enc" style="padding:15px 16px 12px;margin:0">' +
+        '<div><h3 class="sec-tit">Oficios del grupo · simulador</h3>' +
+          '<span class="txt-min">Borrador → firma → folio. La firma se simula para poder recorrer el ciclo completo.</span></div>' +
+        (compOf ? "" : '<button class="btn btn-secundario btn-s" type="button" id="btnNuevoOf">' + ico("mas") + "Redactar oficio</button>") +
+      "</div>" + comp + '<div class="of-lista">' + filas + "</div></div>";
   }
 
   function acuse() {
@@ -1064,13 +1497,15 @@
       '<div class="tarjeta-pie">La lista para firma física se imprime con membrete, folio del grupo y espacio de ' +
         "sello. <strong>No lleva código QR</strong>: la validación es por folio y sello.</div></div>";
 
-    $("#detalle").innerHTML = banner + acuse() + alerta + cab +
+    $("#detalle").innerHTML = bloqueTemporadas() + banner + acuse() + panelEnvio(g) + alerta + cab +
       (panelNuevo ? panelNuevoGrupo() : "") +
       (panelAdd ? panelAgregar(g, r) : "") +
       '<div style="margin-bottom:16px">' + bloqueRequisitos(g, r) + "</div>" +
       tablaParticipantes(g, r) +
-      (bajaDe ? panelBaja(g) : "");
+      (bajaDe ? panelBaja(g) : "") +
+      bloqueOficios(g);
 
+    SIMH.paginar($("#detalle"));
     liga();
   }
 
@@ -1080,34 +1515,183 @@
   function liga() {
     var g = grupo();
 
+    /* ---------- Temporadas ---------- */
+    var pt = $("#plegTemp");
+    if (pt) pt.ontoggle = function () { tempAbierto = this.open; };
+    var bnt = $("#btnNuevaTemp");
+    if (bnt) bnt.onclick = function () { panelTemp = true; tempAbierto = true; pintaDetalle(); $("#ntNom").focus(); };
+    var bct = $("#btnCancTemp");
+    if (bct) bct.onclick = function () { panelTemp = false; pintaDetalle(); };
+    var bgt = $("#btnGuardaTemp");
+    if (bgt) bgt.onclick = function () {
+      var t = { t:$("#ntNom").value.trim(), reg:[$("#ntRegI").value, $("#ntRegF").value],
+                ini:$("#ntIni").value, lim:$("#ntLim").value };
+      var err = !t.t || !t.reg[0] || !t.reg[1] || !t.ini || !t.lim ? "Captura el nombre y las cuatro fechas."
+              : t.reg[1] < t.reg[0] ? "El registro no puede cerrar antes de abrir."
+              : t.ini < t.reg[0]    ? "Los cursos no pueden iniciar antes de que abra el registro."
+              : t.lim <= t.ini      ? "El límite de atención debe ser posterior al inicio de cursos."
+              : t.reg[1] > t.lim    ? "El registro no puede cerrar después del límite de atención."
+              : null;
+      if (err) {
+        var ne = $("#ntError");
+        ne.hidden = false;
+        ne.innerHTML = ico("alerta") + "<span><strong>Revisa la temporada</strong>" + esc(err) + "</span>";
+        return;
+      }
+      t.id = "T-" + t.ini.slice(0, 4) + "-" + (TEMPORADAS.length + 1);
+      TEMPORADAS.push(t);
+      TEMPORADAS.sort(function (a, b) { return a.reg[0] < b.reg[0] ? -1 : 1; });
+      panelTemp = false;
+      pintaDetalle();
+      if (SIMH.toast) SIMH.toast("Temporada " + t.t + " programada: el registro abre el " + fecha(t.reg[0]), "ok");
+    };
+
+    /* ---------- Constancia de registro ---------- */
+    var bce = $("#btnCierraEnv");
+    if (bce) bce.onclick = function () { ultimoEnvio = null; pintaDetalle(); };
+    var bic = $("#btnImpCons");
+    if (bic) bic.onclick = function () { window.print(); };
+    $$("[data-reenv]").forEach(function (b) {
+      b.onclick = function () {
+        var e = this.getAttribute("data-reenv");
+        var x = g.p.filter(function (q) { return q.e === e; })[0];
+        if (!x) return;
+        enviarConstancia(g, x);
+        pintaDetalle();
+        window.scrollTo({ top:0, behavior:"smooth" });
+      };
+    });
+
+    /* ---------- Simulador de oficios ---------- */
+    var bno = $("#btnNuevoOf");
+    if (bno) bno.onclick = function () { compOf = nuevoComp(g, "apertura"); pintaDetalle(); $("#ofDest").focus(); };
+    var bco = $("#btnCancOf");
+    if (bco) bco.onclick = function () { compOf = null; pintaDetalle(); };
+    var oti = $("#ofTipo");
+    if (oti) oti.onchange = function () { compOf = nuevoComp(g, this.value); pintaDetalle(); };
+    ["#ofDest", "#ofCargo", "#ofAsu", "#ofCue"].forEach(function (sel) {
+      var el = $(sel);
+      if (!el) return;
+      el.oninput = function () {
+        compOf.dest = $("#ofDest").value; compOf.cargo = $("#ofCargo").value;
+        compOf.asunto = $("#ofAsu").value; compOf.cuerpo = $("#ofCue").value;
+        $("#ofPrev").innerHTML = hojaOf({ est:"borrador", ref:"BOR-····", dest:compOf.dest, cargo:compOf.cargo,
+                                          asunto:compOf.asunto, cuerpo:compOf.cuerpo });
+        SIMH.paginar($("#ofPrev"));
+      };
+    });
+    var bgo = $("#btnGuardaOf");
+    if (bgo) bgo.onclick = function () {
+      if (!compOf.dest.trim() || !compOf.asunto.trim() || !compOf.cuerpo.trim()) {
+        var oe = $("#ofError");
+        oe.hidden = false;
+        oe.innerHTML = ico("alerta") + "<span><strong>Falta información</strong>El oficio necesita destinatario, asunto y cuerpo.</span>";
+        return;
+      }
+      var o = { ref:SIMH.refBorrador(), folio:null, est:"borrador", tipo:compOf.tipo,
+                dest:compOf.dest.trim(), cargo:compOf.cargo.trim(), asunto:compOf.asunto.trim(),
+                cuerpo:compOf.cuerpo.trim(), creado:HOY };
+      g.oficios = (g.oficios || []).concat(o);
+      compOf = null; ofVer = o.ref;
+      pintaDetalle();
+      if (SIMH.toast) SIMH.toast("Borrador " + o.ref + " guardado: todavía no tiene folio", "ok");
+    };
+    $$("[data-verof]").forEach(function (b) {
+      b.onclick = function () {
+        var r = this.getAttribute("data-verof");
+        ofVer = ofVer === r ? null : r;
+        pintaDetalle();
+      };
+    });
+    $$("[data-of]").forEach(function (b) {
+      b.onclick = function () {
+        var r = this.getAttribute("data-ref"), acc = this.getAttribute("data-of");
+        var o = (g.oficios || []).filter(function (q) { return q.ref === r; })[0];
+        if (!o) return;
+        if (acc === "firma") {
+          o.est = "firma";
+          if (SIMH.toast) SIMH.toast("Borrador " + o.ref + " enviado a firma del Director de Área", "info");
+        } else if (acc === "firmar") {
+          /* El folio nace aquí, no antes: la serie no deja huecos. */
+          o.folio = SIMH.folioOficio();
+          o.est = "emitido";
+          o.firmado = HOY;
+          try {
+            var ext = JSON.parse(localStorage.getItem("SIAMH_OFICIOS_EXTRA") || "[]");
+            ext.unshift({ id:"o_cap_" + o.ref, ref:o.ref, folio:o.folio, pl:"institucional", est:"emitido",
+              asunto:o.asunto, per:null, dest:{ inst:o.dest, cargo:o.cargo, mun:g.mun },
+              origen:"capacita", folioDep:"",
+              creado:{ por:SIMH.sesion().n, rol:SIMH.sesion().rolT, t:HOY + " 12:00" },
+              firmado:{ por:"Lic. Adriana Molina Sántiz", cargo:"Directora de Capacitación y Empleo", t:HOY + " 12:00" },
+              acusePlazo:suma(HOY, 10), datos:{ cuerpo:o.cuerpo } });
+            localStorage.setItem("SIAMH_OFICIOS_EXTRA", JSON.stringify(ext));
+          } catch (e) { /* sin persistencia: el oficio queda solo en esta pantalla */ }
+          if (SIMH.toast) SIMH.toast("Firmado: se asignó el folio " + o.folio, "ok");
+        } else if (acc === "cancelar") {
+          var m = prompt("Motivo de la cancelación (el folio " + o.folio + " queda consumido):");
+          if (!m || !m.trim()) return;
+          o.est = "cancelado";
+          o.cancel = m.trim();
+        }
+        ofVer = o.ref;
+        pintaDetalle();
+      };
+    });
+
     var bcng = $("#btnCancelaGrupo");
     if (bcng) bcng.onclick = function () { panelNuevo = false; pintaDetalle(); };
+
+    SIMH.activarOtro($("#panelNuevoGrupo"));
+    var ngt = $("#ngTemp");
+    if (ngt) ngt.onchange = function () {
+      ngTemp = this.value;
+      var f = ngFechas();
+      $("#ngAbre").value = f.abre; $("#ngCie").value = f.cierre;
+      $("#ngIni").value = f.inicio; $("#ngFin").value = f.fin;
+      $("#ngLim").textContent = fecha(temporada(ngTemp).lim);
+      $("#ngError").hidden = true;
+    };
 
     var bgng = $("#btnGuardarGrupo");
     if (bgng) bgng.onclick = function () {
       var curso = $("#ngCurso").value.trim();
       var inst = $("#ngInst").value.trim();
-      if (!curso || !inst) {
-        alert("Por favor captura el nombre del curso y del instructor.");
+      var vs = SIMH.valorOtro("#ngSede");
+      var sede = vs.clave === "OTRO" ? vs.otro : vs.clave;
+      var cupo = parseInt($("#ngCupo").value, 10);
+      if (!curso || !inst || !sede || !(cupo > 0)) {
+        alert("Captura el nombre del curso, la sede, el instructor y un cupo mayor que cero.");
+        return;
+      }
+      var sc = SEDES_CAP.filter(function (x) { return x.t === sede; })[0];
+      var t = temporada($("#ngTemp").value);
+      var f = { abre:$("#ngAbre").value, cierre:$("#ngCie").value, inicio:$("#ngIni").value, fin:$("#ngFin").value };
+      var err = validaFechas(t, f);
+      if (err) {
+        var ne = $("#ngError");
+        ne.hidden = false;
+        ne.innerHTML = ico("alerta") + "<span><strong>Revisa las fechas</strong>" + esc(err) + "</span>";
         return;
       }
       var nuevoId = "G-2026-0" + (GRUPOS.length + 20);
       var nuevoG = {
         id: nuevoId,
         curso: curso,
-        clave: $("#ngClave").value.trim(),
-        sede: $("#ngSede").value,
-        mun: $("#ngSede").value.indexOf("Huixtla") >= 0 ? "Huixtla" : ($("#ngSede").value.indexOf("Suchiate") >= 0 ? "Suchiate" : "Tapachula"),
+        clave: $("#ngClave").value.trim() || "—",
+        sede: sede,
+        mun: sc ? sc.mun : (SIMH.sesion().mun || "Tapachula"),
         modalidad: $("#ngMod").value,
         aula: $("#ngAula").value.trim() || "Taller principal",
         instructor: inst,
-        inicio: $("#ngIni").value,
-        fin: $("#ngFin").value,
-        cierre: $("#ngCie").value,
+        temporada: t.id,
+        abre: f.abre,
+        inicio: f.inicio,
+        fin: f.fin,
+        cierre: f.cierre,
         sesiones: 16,
         sesion: 0,
-        cupo: parseInt($("#ngCupo").value, 10) || 18,
-        estado: "conformacion",
+        cupo: cupo,
+        estado: HOY < f.abre ? "programado" : "conformacion",
         p: []
       };
       GRUPOS.unshift(nuevoG);
@@ -1117,7 +1701,9 @@
       pintaChips();
       pintaLista();
       pintaDetalle();
-      if (SIMH.toast) SIMH.toast("Grupo " + nuevoId + " abierto con éxito", "ok");
+      if (SIMH.toast) SIMH.toast(nuevoG.estado === "programado"
+        ? "Grupo " + nuevoId + " programado: la inscripción abre el " + fecha(f.abre)
+        : "Grupo " + nuevoId + " abierto con inscripción hasta el " + fecha(f.cierre), "ok");
     };
 
     var bm = $("#btnModo");
@@ -1147,8 +1733,12 @@
       var c = null;
       CANDIDATOS.forEach(function (x) { if (x.e === candSel) c = x; });
       if (!c) return;
-      g.p.push({ e:c.e, n:c.n, nac:c.nac, ext:c.ext, curp:c.curp, comar:c.comar, a:0, prev:c.prev });
+      var nx = { e:c.e, n:c.n, nac:c.nac, ext:c.ext, curp:c.curp, comar:c.comar, a:0, prev:c.prev,
+                 tel:c.tel, mail:c.mail, medio:c.medio };
+      g.p.push(nx);
       altas.push(c.n + " (MH-2026-" + c.e + ")");
+      /* La constancia de registro sale sola al medio que dio la persona. */
+      enviarConstancia(g, nx);
       candSel = null; panelAdd = false; buscaCand = "";
       pintaChips(); pintaLista(); pintaDetalle();
       window.scrollTo({ top:0, behavior:"smooth" });
@@ -1223,7 +1813,7 @@
   var gestor = SIMH.gestorCaso({
     items: GRUPOS,
     indiceInicial: Math.max(0, GRUPOS.findIndex(function(g){ return g.id === sel; })),
-    titulo: "Cartera de Grupos ICATECH",
+    titulo: "Cartera de grupos de capacitación",
     placeholder: "Buscar curso, sede o folio de grupo...",
     filtraItem: function(g, txt) {
       if (!txt) return true;

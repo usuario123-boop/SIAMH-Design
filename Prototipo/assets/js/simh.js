@@ -99,6 +99,373 @@
     return '<img class="marca-logo" src="assets/img/simh-isotipo.png" alt="Logo SIAMH" style="height:' + (alto || 38) + 'px;width:auto;flex:none;object-fit:contain">';
   }
 
+  /* ---------------------------------------------- Sesión y sede --------
+     Quién opera y DESDE DÓNDE. Hasta el 22/09/2026 la sesión estaba escrita
+     a mano en el chrome (María Gómez Pérez, Tapachula). La Dirección pidió
+     que la Revalidación de Estudios solo esté habilitada y visible para las
+     sedes de la Secretaría de la Frontera Sur y de Tuxtla, y para quien
+     administra: eso es una regla de SEDE, no de rol, y necesita saber desde
+     qué sede se entra.
+
+     La regla vive aquí una sola vez y la leen tres consumidores: el menú
+     lateral (no dibuja la entrada), la propia pantalla (enuncia la regla si
+     se llega por URL) y la matriz de Administración (la muestra por cuenta).
+
+     El prototipo trae cuatro cuentas de demostración para poder recorrer
+     los dos lados de la regla; el login elige la cuenta por su usuario y el
+     menú de cuenta permite cambiarla.                                     */
+  var SEDES = {
+    sfs:      { t:"Secretaría de la Frontera Sur · Tapachula" },
+    tuxtla:   { t:"Oficinas centrales · Tuxtla Gutiérrez" },
+    vent_tap: { t:"Ventanilla municipal · Tapachula" },
+    vent_suc: { t:"Ventanilla municipal · Suchiate" },
+    vent_hui: { t:"Ventanilla municipal · Huixtla" }
+  };
+
+  /* Módulo → sedes que lo tienen habilitado. Quien administra (rol super)
+     entra desde cualquier sede. Un módulo que no está aquí no se restringe
+     por sede. */
+  var MOD_SEDE = { revalida: ["sfs", "tuxtla"] };
+
+  var CUENTAS = [
+    { usu:"maria.gomez", n:"María Gómez Pérez", ini:"MG", rol:"capturista",
+      rolT:"Capturista Municipal", mun:"Tapachula", sede:"vent_tap" },
+    { usu:"luis.ramirez", n:"Dr. Luis A. Ramírez Toledo", ini:"LR", rol:"director",
+      rolT:"Director de Área", mun:"Tapachula", sede:"sfs" },
+    { usu:"jorge.pineda", n:"Mtro. Jorge Pineda Ovalle", ini:"JP", rol:"super",
+      rolT:"Superadmin", mun:"Tuxtla Gutiérrez", sede:"tuxtla" },
+    { usu:"ruben.castellanos", n:"Ing. Rubén Castellanos Díaz", ini:"RC", rol:"capturista",
+      rolT:"Capturista Municipal", mun:"Suchiate", sede:"vent_suc" }
+  ];
+  var LLAVE_SESION = "simh-sesion";
+
+  function sesion() {
+    /* Atajo de revisión: `?cuenta=luis.ramirez` entra con esa cuenta. */
+    var q = /[?&]cuenta=([a-z.]+)/.exec(location.search);
+    if (q) return iniciarSesion(q[1]);
+    var u = null;
+    try { u = localStorage.getItem(LLAVE_SESION); } catch (e) { /* sin persistencia */ }
+    return CUENTAS.filter(function (c) { return c.usu === u; })[0] || CUENTAS[0];
+  }
+  function iniciarSesion(usu) {
+    var c = CUENTAS.filter(function (x) { return x.usu === String(usu || "").trim().toLowerCase(); })[0];
+    try { localStorage.setItem(LLAVE_SESION, c ? c.usu : CUENTAS[0].usu); } catch (e) { /* idem */ }
+    return c || CUENTAS[0];
+  }
+
+  /* ¿La cuenta puede usar el módulo desde su sede? Sin cuenta, la de la
+     sesión. Acepta cualquier objeto con `rol` y `sede`, así la matriz de
+     Administración la aplica a sus propias filas de usuario. */
+  function accesoSede(modulo, cuenta) {
+    var c = cuenta || sesion();
+    var sedes = MOD_SEDE[modulo];
+    if (!sedes || c.rol === "super") return true;
+    return sedes.indexOf(c.sede) >= 0;
+  }
+  function sedesDe(modulo) {
+    return (MOD_SEDE[modulo] || []).map(function (k) { return SEDES[k].t; });
+  }
+
+  /* ------------------------------------------ Serie de folios compartida --
+     Revalidación y el simulador de oficios de Capacitación asignaban folio
+     cada uno con su propio contador y podían repetir `SFS/0951/2026`. La
+     serie es una sola: aquí se lleva el último folio y la última referencia
+     de borrador, persistidos para que dos pantallas no los repitan. Los
+     arranques son los últimos que existen en los datos del prototipo.    */
+  var SERIE = { folio: { llave:"simh-serie-folio", base:950 },
+                bor:   { llave:"simh-serie-bor",   base:40 } };
+  function siguiente(tipo) {
+    var sr = SERIE[tipo], n = sr.base;
+    try { n = Math.max(n, parseInt(localStorage.getItem(sr.llave), 10) || 0); } catch (e) { /* idem */ }
+    n += 1;
+    try { localStorage.setItem(sr.llave, String(n)); } catch (e) { sr.base = n; }
+    return ("000" + n).slice(-4);
+  }
+  function folioOficio() { return "SFS/" + siguiente("folio") + "/2026"; }
+  function refBorrador() { return "BOR-" + siguiente("bor"); }
+
+  /* ---------------------------------------- Datos de prueba (4.1) --------
+     La Dirección pidió un botón para LIMPIAR los datos de prueba y otro
+     para volver a POBLARLOS, y así recorrer el flujo sin los casos
+     ficticios. Cada pantalla lleva sus datos dentro, así que "limpiar" no
+     borra nada: marca el modo y cada módulo, al arrancar, pinta su estado
+     vacío en lugar de sus registros. "Poblar" devuelve el modo normal.
+     La carga de los datos reales de producción depende de que la Dirección
+     los entregue; el control ya queda donde se usará.                    */
+  var LLAVE_DATOS = "simh-datos-prueba";
+  function sinDatos() {
+    try { return localStorage.getItem(LLAVE_DATOS) === "vacio"; } catch (e) { return false; }
+  }
+  function datosPrueba(poblar) {
+    try {
+      if (poblar) localStorage.removeItem(LLAVE_DATOS);
+      else {
+        localStorage.setItem(LLAVE_DATOS, "vacio");
+        /* Lo generado sobre los datos de prueba se va con ellos. */
+        localStorage.removeItem("SIAMH_OFICIOS_EXTRA");
+        localStorage.removeItem("simh-serie-folio");
+        localStorage.removeItem("simh-serie-bor");
+        localStorage.removeItem("SIAMH_ALTAS_EMPLEO");
+      }
+    } catch (e) { /* sin persistencia */ }
+  }
+
+  /* Estado vacío de un módulo: conserva migas y encabezado, retira las
+     acciones que operan sobre registros y deja una sola salida útil.     */
+  function vacioModulo(o) {
+    var main = document.querySelector(".contenido");
+    if (!main) return;
+    var keep = [main.querySelector(".migas"), main.querySelector(".enc")].filter(Boolean);
+    var acc = main.querySelector(".enc-acc");
+    if (acc) acc.innerHTML = "";
+    Array.prototype.slice.call(main.children).forEach(function (el) {
+      if (keep.indexOf(el) < 0) el.remove();
+    });
+    var d = document.createElement("div");
+    d.className = "tarjeta vacio-modulo";
+    d.innerHTML = '<span class="vm-ico">' + icono(o.ico || "info") + "</span>" +
+      '<h2 class="vm-t">' + esc(o.titulo || "Sin registros todavía") + "</h2>" +
+      '<p class="vm-n">' + (o.texto || "") + " Los datos de prueba se limpiaron desde " +
+        "<b>Administración › Datos de prueba</b>, donde también se vuelven a poblar.</p>" +
+      '<div class="vm-acc">' + (o.accion || "") +
+        '<a class="btn btn-secundario btn-s" href="administracion.html?tab=datos">' + icono("admin") +
+        "Administrar datos de prueba</a></div>";
+    main.appendChild(d);
+  }
+
+  /* ------------------------------------ Hoja oficial con membrete -------
+     22/09/2026: la Dirección pidió que TODAS las vistas previas de
+     documentos sean exactamente como los formatos de «Recursos y
+     plantillas». Los cuatro .docx comparten el mismo membrete (escudo,
+     lema del año, Subsecretaría, marca de agua y pie con domicilio); aquí
+     se usa esa misma hoja, generada desde la plantilla en blanco, como
+     fondo de una página carta, y encima el texto con la composición del
+     formato: Arial 12, folio, lugar y fecha a la derecha, asunto en bloque
+     derecho, destinatario en negritas, cuerpo justificado, firma y C.c.p.
+
+     La letra se mide en `cqw` (ancho del contenedor): la hoja se ve igual
+     a 380 px que a tamaño carta, solo más chica. `paginar()` pasa a la
+     hoja siguiente los párrafos que no caben, como Word.                */
+  var MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
+               "septiembre", "octubre", "noviembre", "diciembre"];
+  function fechaLarga(iso) {
+    var p = String(iso || "").slice(0, 10).split("-");
+    if (p.length < 3) return "";
+    return (+p[2]) + " de " + MESES[+p[1] - 1] + " del " + p[0];
+  }
+
+  var FIRMA_SFS = { n:"Eduardo Antonio Castillejos Arguello", cargo:"Subsecretario de Movilidad Humana" };
+  var CCP_SFS = "C.c.p. <b>Dra. María Amalia G. Toriello Elorza.</b> Titular de la Secretaría de la " +
+    "Frontera Sur. Para su conocimiento. Edificio<br><b style=\"padding-left:3.2em\">Archivo/Minutario.</b>";
+
+  function hojaSFS(o) {
+    var enc = "";
+    if (o.encabezado) {
+      enc = o.encabezado;
+    } else {
+      enc = '<div class="hs-der">' +
+        (o.folio !== false ? '<b>Oficio No. ' + (o.folio || "_______") + "</b><br>" : "") +
+        (o.lugar || "Tapachula de Córdova y Ordoñez, Chiapas.") + "<br>" +
+        (o.fecha || "") + "</div>" +
+        (o.asunto ? '<div class="hs-asunto"><b>Asunto:</b> ' + o.asunto + "</div>" : "");
+    }
+    var cuerpo = (o.cuerpo || []).map(function (p) {
+      return /^<(div|table|ul|h\d)/.test(p) ? p : "<p>" + p + "</p>";
+    }).join("");
+    var firma = o.firma === false ? "" :
+      "<p>" + (o.atentamente || "Atentamente") + "</p>" +
+      '<div class="hs-firma"><b>' + (o.firma || FIRMA_SFS).n + "</b><br>" + (o.firma || FIRMA_SFS).cargo + "</div>";
+    var ccp = o.ccp === false ? "" : '<div class="hs-ccp">' + (o.ccp || CCP_SFS) + "</div>";
+
+    return '<div class="hoja-sfs" role="img" aria-label="Vista previa del documento" title="Clic para ver a tamaño carta">' +
+      (o.sello || "") +
+      '<div class="hs-pag"><div class="hs-cont">' +
+        enc +
+        (o.titulo ? '<div class="hs-titulo">' + o.titulo + "</div>" : "") +
+        (o.dest ? '<div class="hs-dest">' + o.dest +
+          (o.presente === false ? "" : "<br>P R E S E N T E.") + "</div>" : "") +
+        cuerpo + firma + ccp +
+      "</div></div></div>";
+  }
+
+  /* Reparte el contenido en hojas: mientras una hoja desborde, su último
+     bloque pasa al principio de la siguiente. Sin tamaño (hoja oculta) no
+     hace nada, para no mover bloques a ciegas. */
+  function paginar(raiz) {
+    var hojas = (raiz && raiz.querySelectorAll) ? raiz.querySelectorAll(".hoja-sfs") : [];
+    Array.prototype.forEach.call(hojas, function (h) {
+      var i = 0, guard = 0;
+      while (i < h.querySelectorAll(".hs-pag").length && guard++ < 400) {
+        var pag = h.querySelectorAll(".hs-pag")[i];
+        var c = pag.querySelector(".hs-cont");
+        if (!c.clientHeight) return;
+        if (c.scrollHeight > c.clientHeight + 1 && c.children.length > 1) {
+          var sig = h.querySelectorAll(".hs-pag")[i + 1];
+          if (!sig) {
+            sig = document.createElement("div");
+            sig.className = "hs-pag hs-sig";
+            sig.innerHTML = '<div class="hs-cont"></div>';
+            h.appendChild(sig);
+          }
+          var sc = sig.querySelector(".hs-cont");
+          sc.insertBefore(c.lastElementChild, sc.firstChild);
+        } else {
+          i++;
+        }
+      }
+    });
+  }
+
+  /* Clic en cualquier hoja: se abre a tamaño carta sobre la pantalla. */
+  document.addEventListener("click", function (e) {
+    var h = e.target.closest && e.target.closest(".hoja-sfs");
+    if (!h || h.closest(".hs-velo")) return;
+    var velo = document.createElement("div");
+    velo.className = "hs-velo";
+    velo.innerHTML = '<div class="hs-caja"><button type="button" class="btn btn-secundario btn-s hs-cerrar">Cerrar</button></div>';
+    var copia = h.cloneNode(true);
+    copia.removeAttribute("title");
+    velo.querySelector(".hs-caja").appendChild(copia);
+    document.body.appendChild(velo);
+    function cierra() { velo.remove(); document.removeEventListener("keydown", esc2); }
+    function esc2(ev) { if (ev.key === "Escape") cierra(); }
+    velo.addEventListener("click", function (ev) {
+      if (ev.target === velo || ev.target.classList.contains("hs-cerrar")) cierra();
+    });
+    document.addEventListener("keydown", esc2);
+    velo.querySelector(".hs-cerrar").focus();
+  });
+
+  /* Textos literales de los tres oficios de «Recursos y plantillas». Los
+     blancos (_____) de la plantilla se llenan con el dato del expediente,
+     marcado en la vista previa; si el dato falta, queda el blanco. */
+  function blanco(valor, largo) {
+    return valor ? '<span class="o-var">' + esc(valor) + "</span>"
+                 : new Array((largo || 20) + 1).join("_");
+  }
+  var PLANTILLAS_SFS = {
+    salud: function (d) {
+      var mun = (d.mun || "Tapachula").toUpperCase();
+      return {
+        asunto: "Solicitud de atención a personas<br>en contexto de movilidad",
+        dest: "A las personas titulares de los centros de salud<br>del municipio de " + esc(mun) + ", Chiapas",
+        cuerpo: [
+          "Por medio del presente, la <b>Subsecretaría de Movilidad Humana a través de la Secretaría de la Frontera Sur</b>, en el ámbito de sus atribuciones, se permite solicitar atentamente su colaboración para garantizar la atención médica de las <b>personas en contexto de movilidad humana</b> que acudan a ese Centro de Salud y requieran de los servicios correspondientes.",
+          "Lo anterior, con fundamento en los artículos <b>1º y 4º de la Constitución Política de los Estados Unidos Mexicanos</b>, relativos a la protección de los derechos humanos y al derecho a la protección de la salud; <b>1º y 2º de la Ley General de Salud,</b> así como en los artículos <b>9, 10, 12, 13, 23, 26, 27 y 42 de la Ley para la Atención y Protección a los Derechos de las Personas en Contexto de Movilidad Humana del Estado de Chiapas</b>, que establecen, entre otros aspectos, la obligación de garantizar sus derechos humanos, el acceso a los servicios de salud y la atención médica urgente, <b>sin importar su situación migratoria y bajo condiciones de igualdad y no discriminación</b>.",
+          "En virtud de lo anterior, se solicita que las personas en contexto de movilidad humana que requieran atención sean recibidas y atendidas conforme a los servicios, protocolos y capacidades institucionales correspondientes, procurando en todo momento un <b>trato digno, respetuoso y libre de discriminación</b>, independientemente de su nacionalidad, condición o situación migratoria. Asimismo, cuando la atención requerida exceda las capacidades de ese Centro de Salud, se agradecerá realizar la <b>canalización correspondiente a la unidad médica competente</b>, procurando evitar barreras administrativas que puedan obstaculizar el acceso efectivo al derecho a la salud, particularmente en casos de urgencia o cuando se trate de personas en situación de especial vulnerabilidad.",
+          "La presente solicitud tiene como finalidad fortalecer la <b>coordinación interinstitucional</b> y contribuir a la protección efectiva del derecho a la salud de las personas en contexto de movilidad humana que se encuentran o transitan por el municipio de " + esc(d.mun || "Tapachula") + ".",
+          "Agradeciendo de antemano su valiosa colaboración y disposición institucional, quedamos a disposición para establecer los mecanismos de coordinación que resulten necesarios.",
+          "Reciba un cordial saludo."
+        ]
+      };
+    },
+    nna: function (d) {
+      return {
+        asunto: "Solicitud de intervención y<br>protección de NNA no acompañado.",
+        dest: "Titular de la Procuraduría de Protección de Niñas, Niños, Adolescentes.",
+        cuerpo: [
+          "Por medio del presente, la <b>Subsecretaría de Movilidad Humana a través de la Secretaría de la Frontera Sur</b>, en el ámbito de sus atribuciones, solicita atentamente la intervención de esta Procuraduría para brindar <b>protección integral y atención especializada</b> a la persona adolescente " + blanco(d.nombre, 21) + ", de nacionalidad " + blanco(d.nacionalidad, 19) + ", quien se encuentra en contexto de movilidad humana y ha sido identificada como <b>NNA no acompañado.</b>",
+          "Lo anterior, con fundamento en los artículos <b>1º y 4º de la Constitución Política de los Estados Unidos Mexicanos</b>; <b>89, 90, 91, 92 y 93 de la Ley General de los Derechos de Niñas, Niños y Adolescentes</b>; así como <b>100, 101, 102 y 103 de la Ley de los Derechos de Niñas, Niños y Adolescentes del Estado de Chiapas</b>, disposiciones que establecen la obligación de las autoridades de adoptar medidas especiales de protección para niñas, niños y adolescentes en contexto de movilidad humana, privilegiando en todo momento el <b>interés superior de la niñez</b>, la protección integral de sus derechos y el acceso a la asistencia y representación que corresponda.",
+          "En virtud de lo anterior, se solicita respetuosamente que, en el ámbito de sus atribuciones, esa Procuraduría realice la valoración correspondiente y determine las medidas de protección necesarias, así como las acciones conducentes para la restitución y garantía de sus derechos, incluyendo, en su caso, la representación jurídica y el acompañamiento durante los procedimientos que correspondan. Asimismo, se agradecerá considerar las condiciones particulares de la persona adolescente, su opinión y necesidades específicas, procurando en todo momento que las medidas adoptadas sean acordes con su interés superior, dignidad, integridad y derecho a ser escuchada, así como con los principios de no discriminación y protección integral.",
+          "De igual manera, en caso de requerirse alojamiento, atención especializada, asistencia psicológica, médica, jurídica o cualquier otro servicio de protección, se solicita realizar las canalizaciones y gestiones correspondientes ante las instancias competentes, a fin de garantizar una atención integral y oportuna. La presente solicitud tiene como finalidad fortalecer la coordinación interinstitucional y contribuir a la protección efectiva de los derechos de la persona adolescente, en observancia del marco jurídico nacional y estatal aplicable en materia de niñez y movilidad humana.",
+          "Agradeciendo de antemano su atención y colaboración, quedamos a disposición para proporcionar la información y documentación necesaria para el seguimiento del caso.",
+          "Sin otro particular, reciba un cordial saludo."
+        ]
+      };
+    },
+    familia: function (d) {
+      return {
+        asunto: "Solicitud de atención y protección integral<br>a familia en contexto de movilidad humana.",
+        dest: "Titular de la Procuraduría de Protección de Niñas, Niños,<br>Adolescentes y la Familia<br>",
+        cuerpo: [
+          "Por medio del presente, la <b>Subsecretaría de Movilidad Humana de la Secretaría de la Frontera Sur</b>, en el ámbito de sus atribuciones, solicita atentamente la intervención de esa Procuraduría para brindar <b>atención, orientación y protección integral</b> a la familia de nombres " + blanco(d.nombres, 31) + ", quienes se encuentran en contexto de movilidad humana y actualmente requieren acompañamiento institucional para la identificación y atención de sus necesidades.",
+          "Lo anterior, con fundamento en los artículos <b>1º y 4º de la Constitución Política de los Estados Unidos Mexicanos</b>; así como en los artículos <b>9, 10, 12, 13, 23, 26 y 27 de la Ley para la Atención y Protección a los Derechos de las Personas en Contexto de Movilidad Humana del Estado de Chiapas</b>, y <b>15 fracción IV, 42, 100, 101 y 103 de la Ley de los Derechos de Niñas, Niños y Adolescentes del Estado de Chiapas</b>, particularmente aquellas relativas al interés superior de la niñez, derecho a vivir en familia, protección integral, igualdad y no discriminación.",
+          "En virtud de lo anterior, se solicita respetuosamente que, en el ámbito de sus atribuciones, esa Procuraduría <b>realice la valoración integral de la familia y determine las medidas de protección que, en su caso, resulten necesarias</b>, particularmente respecto de las niñas, niños o adolescentes que la integren, procurando en todo momento salvaguardar su interés superior, integridad, dignidad y derecho a vivir en familia. Asimismo, se solicita que, de considerarse necesario, se realicen las <b>gestiones y canalizaciones correspondientes</b> para facilitar el acceso a servicios de asistencia jurídica, psicológica, médica, social, alojamiento u otros que contribuyan a la protección y restitución de sus derechos.",
+          "Lo anterior, bajo los principios de <b>interés superior de la niñez, unidad familiar, igualdad, no discriminación, dignidad humana y protección integral</b>, con independencia de la nacionalidad o situación migratoria de las personas integrantes de la familia.",
+          "La presente solicitud tiene como finalidad fortalecer la coordinación interinstitucional y contribuir a garantizar una atención oportuna e integral a las personas en contexto de movilidad humana, particularmente cuando se encuentren en condiciones de vulnerabilidad.",
+          "Agradeciendo de antemano su atención y colaboración, esta Subsecretaría queda a disposición para proporcionar la información y documentación necesaria para el seguimiento y atención del caso.",
+          "Sin otro particular, reciba un cordial saludo."
+        ]
+      };
+    }
+  };
+  function plantillaSFS(id, datos) {
+    return PLANTILLAS_SFS[id] ? PLANTILLAS_SFS[id](datos || {}) : null;
+  }
+
+  /* ------------------------------------------------ ZIP sin compresión --
+     Un .xlsx es un ZIP de archivos XML. Para exportar sin bibliotecas ni
+     servidor basta el método STORE (sin comprimir): cabecera local,
+     directorio central y cierre, con su CRC-32. `archivos` es
+     { "ruta/dentro.xml": "texto" }; devuelve un Blob.                     */
+  var CRC_T = null;
+  function crc32(bytes) {
+    if (!CRC_T) {
+      CRC_T = [];
+      for (var n = 0; n < 256; n++) {
+        var c = n;
+        for (var k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+        CRC_T[n] = c >>> 0;
+      }
+    }
+    var crc = 0xFFFFFFFF;
+    for (var i = 0; i < bytes.length; i++) crc = CRC_T[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+  }
+  function zip(archivos, tipo) {
+    var enc = new TextEncoder(), partes = [], central = [], off = 0;
+    function u16(v) { return [v & 255, (v >>> 8) & 255]; }
+    function u32(v) { return [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255]; }
+    Object.keys(archivos).forEach(function (ruta) {
+      var nom = enc.encode(ruta), dat = enc.encode(archivos[ruta]), crc = crc32(dat);
+      var comun = [].concat(u16(20), u16(0x0800), u16(0), u16(0), u16(0x21),
+                            u32(crc), u32(dat.length), u32(dat.length), u16(nom.length), u16(0));
+      var loc = new Uint8Array([].concat(u32(0x04034b50), comun));
+      partes.push(loc, nom, dat);
+      central.push(new Uint8Array([].concat(u32(0x02014b50), u16(20), comun,
+        u16(0), u16(0), u16(0), u32(0), u32(off))), nom);
+      off += loc.length + nom.length + dat.length;
+    });
+    var tamCentral = central.reduce(function (a, b) { return a + b.length; }, 0);
+    var fin = new Uint8Array([].concat(u32(0x06054b50), u16(0), u16(0),
+      u16(Object.keys(archivos).length), u16(Object.keys(archivos).length),
+      u32(tamCentral), u32(off), u16(0)));
+    return new Blob(partes.concat(central, [fin]), { type: tipo || "application/zip" });
+  }
+  function descargar(blob, nombre) {
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = nombre;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+
+  /* ------------------------------------------ Imprimir o guardar PDF ----
+     Imprime SOLO el documento, a tamaño carta y sin márgenes del navegador:
+     el resto de la página se oculta mientras dura la impresión. En el
+     diálogo del navegador, «Guardar como PDF» produce el archivo.        */
+  function imprimir(html, titulo) {
+    var z = document.getElementById("zonaImpresion");
+    if (z) z.remove();
+    z = document.createElement("div");
+    z.id = "zonaImpresion";
+    z.innerHTML = html;
+    document.body.appendChild(z);
+    paginar(z);
+    var t0 = document.title;
+    if (titulo) document.title = titulo;
+    document.body.classList.add("imprimiendo");
+    function fin() {
+      document.body.classList.remove("imprimiendo");
+      document.title = t0;
+      z.remove();
+      window.removeEventListener("afterprint", fin);
+    }
+    window.addEventListener("afterprint", fin);
+    window.print();
+  }
+
   /* ------------------------------------------------ Chrome institucional -- */
   var MENU = [
     { g: "Operación" },
@@ -120,6 +487,7 @@
   ];
 
   function chrome(paginaActiva) {
+    var yo = sesion();
     var cont = document.createElement("div");
     cont.innerHTML =
       '<a href="#contenidoPrincipal" class="saltar-enlace">Saltar al contenido principal</a>' +
@@ -142,22 +510,31 @@
           '<input type="text" placeholder="Buscar por folio, CURP o nombre" aria-label="Búsqueda global">' +
         "</div>" +
         '<div class="topbar-der">' +
+          (sinDatos() ? '<a class="chip-modo" href="administracion.html?tab=datos" ' +
+            'title="Los datos de prueba están limpios">Sin datos de prueba</a>' : "") +
           '<button class="campana" aria-label="Notificaciones" style="color:#fff">' +
-            icono("campana") + '<span class="badge">7</span></button>' +
+            icono("campana") + (sinDatos() ? "" : '<span class="badge">7</span>') + '</button>' +
           '<div class="menu-cuenta">' +
             '<button class="usuario" id="btnCuenta" aria-haspopup="menu" aria-expanded="false" ' +
               'aria-controls="popCuenta">' +
-              '<span class="avatar">MG</span>' +
-              '<span class="u-txt"><span class="u-nombre">María Gómez Pérez</span><br>' +
-              '<span class="u-rol">Capturista Municipal · Tapachula</span></span>' +
+              '<span class="avatar">' + esc(yo.ini) + '</span>' +
+              '<span class="u-txt"><span class="u-nombre">' + esc(yo.n) + '</span><br>' +
+              '<span class="u-rol">' + esc(yo.rolT) + ' · ' + esc(yo.mun) + '</span></span>' +
               '<span class="u-caret">' + icono("caret") + "</span>" +
             "</button>" +
             '<div class="menu-pop" id="popCuenta" role="menu" aria-labelledby="btnCuenta" hidden>' +
-              '<div class="m-cab"><strong>María Gómez Pérez</strong>' +
-                "<span>Capturista Municipal · Tapachula</span></div>" +
+              '<div class="m-cab"><strong>' + esc(yo.n) + '</strong>' +
+                "<span>" + esc(yo.rolT) + " · " + esc(SEDES[yo.sede].t) + "</span></div>" +
               '<a role="menuitem" href="#">' + icono("persona") + "Mi perfil</a>" +
               '<a role="menuitem" href="#">' + icono("llave") + "Cambiar contraseña</a>" +
               '<a role="menuitem" href="#">' + icono("ayuda") + "Ayuda y soporte</a>" +
+              '<div class="m-sep"></div>' +
+              '<div class="m-grupo">Cambiar de cuenta · demostración</div>' +
+              CUENTAS.filter(function (c) { return c.usu !== yo.usu; }).map(function (c) {
+                return '<button type="button" role="menuitem" class="m-cuenta" data-cuenta="' + c.usu + '">' +
+                  '<span class="avatar">' + esc(c.ini) + '</span><span>' + esc(c.n) +
+                  '<small>' + esc(c.rolT) + ' · ' + esc(SEDES[c.sede].t) + '</small></span></button>';
+              }).join("") +
               '<div class="m-sep"></div>' +
               '<a role="menuitem" class="m-salir" href="login.html?salir=1">' +
                 icono("salir") + "Cerrar sesión</a>" +
@@ -170,9 +547,11 @@
       '<aside class="sidebar" id="navLateral"><nav>';
     MENU.forEach(function (m) {
       if (m.g) { nav += '<div class="nav-grupo">' + m.g + "</div>"; return; }
+      /* Un módulo restringido por sede no se dibuja fuera de ella. */
+      if (!accesoSede(m.id, yo)) return;
       nav += '<a class="nav-item' + (m.id === paginaActiva ? " activo" : "") + '" href="' + m.href + '">' +
         icono(m.ico) + "<span>" + m.txt + "</span>" +
-        (m.pill ? '<span class="pill">' + m.pill + "</span>" : "") + "</a>";
+        (m.pill && !sinDatos() ? '<span class="pill">' + m.pill + "</span>" : "") + "</a>";
     });
     nav += "</nav>" +
       '<div class="firma">HUMANISMO QUE TRANSFORMA<br>GOBIERNO DE CHIAPAS 2024–2030</div></aside>';
@@ -333,6 +712,12 @@
     btn.addEventListener("click", function (e) {
       e.stopPropagation();
       abrir(pop.hidden);
+    });
+    Array.prototype.forEach.call(pop.querySelectorAll("[data-cuenta]"), function (b) {
+      b.addEventListener("click", function () {
+        iniciarSesion(this.getAttribute("data-cuenta"));
+        location.reload();
+      });
     });
     document.addEventListener("click", function (e) {
       if (!pop.hidden && !pop.contains(e.target)) abrir(false);
@@ -618,7 +1003,10 @@
 
       if (!vis.length) {
         listaEl.innerHTML = '<div style="padding:24px 14px;text-align:center;color:var(--gris);font-size:13px">' +
-          'No se encontraron registros coincidentes.</div>';
+          'No se encontraron registros coincidentes.' +
+          /* Cada módulo puede ofrecer qué hacer cuando nadie coincide
+             (Empleabilidad: registrar a la persona y atenderla). */
+          (config.sinResultados ? config.sinResultados(filtroTexto) : "") + '</div>';
         return;
       }
 
@@ -948,6 +1336,12 @@
     columnas: columnas, sparkline: sparkline, barrasH: barrasH, apilada: apilada,
     mapaBurbujas: mapaBurbujas, tablaDatos: tablaDatos, grafica: grafica, pestanas: pestanas,
     toast: toast, panelMaestro: panelMaestro, gestorCaso: gestorCaso,
+    sesion: sesion, iniciarSesion: iniciarSesion, accesoSede: accesoSede, sedesDe: sedesDe,
+    sinDatos: sinDatos, datosPrueba: datosPrueba, vacioModulo: vacioModulo,
+    zip: zip, descargar: descargar, imprimir: imprimir,
+    hojaSFS: hojaSFS, paginar: paginar, fechaLarga: fechaLarga, plantillaSFS: plantillaSFS,
+    FIRMA_SFS: FIRMA_SFS,
+    SEDES: SEDES, CUENTAS: CUENTAS, folioOficio: folioOficio, refBorrador: refBorrador,
     opciones: opciones, activarOtro: activarOtro, valorOtro: valorOtro, textoOtro: textoOtro,
     activarTelefono: activarTelefono, valorTelefono: valorTelefono, textoTelefono: textoTelefono,
     TINTA: TINTA, CAT: CAT

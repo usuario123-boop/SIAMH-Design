@@ -191,6 +191,14 @@
 (function () {
   "use strict";
   SIMH.chrome("constancia");
+
+  /* Modo sin datos de prueba (Administración › Datos de prueba). */
+  if (SIMH.sinDatos()) {
+    SIMH.vacioModulo({ ico:"constancia", titulo:"No hay constancias emitidas",
+      texto:"La constancia de registro se emite a partir de un expediente activo.",
+      accion:'<a class="btn btn-primario btn-s" href="registro.html">' + SIMH.icono("registro") + 'Registrar persona</a>' });
+    return;
+  }
   var ico = SIMH.icono, esc = SIMH.esc;
   /* Reloj, permisos y catálogo de personas: assets/js/simh-datos.js, que
      comparten los cuatro módulos de documentos. */

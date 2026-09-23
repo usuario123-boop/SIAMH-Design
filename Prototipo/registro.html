@@ -51,6 +51,9 @@
     </div>
   </div>
 
+  <!-- Alta rápida iniciada desde Empleabilidad (22/09/2026) -->
+  <div class="accion tibia oculto" id="avisoRapida" style="margin-bottom:16px"></div>
+
   <!-- Confirmación persistente del alta anterior, para no perder el hilo -->
   <div class="aviso aviso-jade oculto" id="avisoGuardado"></div>
 
@@ -446,6 +449,11 @@
           Transparencia de la Secretaría.</p>
         </div>
 
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">
+          <button class="btn btn-secundario btn-s" type="button" id="btnAvisoPriv"></button>
+          <span class="txt-min">Formato oficial para que la persona lo firme; se imprime o se guarda como PDF.</span>
+        </div>
+
         <label class="check" style="margin-top:14px;font-weight:700">
           <input type="checkbox" id="chkConsentimiento">
           <span>La persona acepta el tratamiento de sus datos personales conforme al aviso de privacidad
@@ -580,6 +588,68 @@
   $("#avisoPriv").innerHTML = ico("candado") +
     "<span><strong>Aviso de privacidad</strong>Informe a la persona que sus datos serán tratados por la Secretaría " +
     "de la Frontera Sur. La aceptación explícita se registra en el paso 6, antes de guardar.</span>";
+  /* ------------------------------------------ Aviso de privacidad -------
+     22/09/2026: «FORMATO AVISO DE PRIVACIDAD.pdf» de Recursos y plantillas,
+     con el membrete oficial, para imprimir o guardar en PDF durante el alta.
+     La composición es la del formato; los renglones de firma quedan para
+     llenarse a mano y el nombre se toma de lo capturado en el paso 2.   */
+  function hojaAviso() {
+    function valor(campo) {
+      var el = document.querySelector('[data-campo="' + campo + '"]');
+      return el ? el.value.trim() : "";
+    }
+    var nombre = [valor("Nombre(s)"), valor("Primer apellido"), valor("Segundo apellido")].filter(Boolean).join(" ");
+    var hoy = (window.DATOS && DATOS.HOY) ? DATOS.HOY.slice(0, 10) : new Date().toISOString().slice(0, 10);
+    var linea = function (t, largo) {
+      return t ? '<span class="o-var">' + SIMH.esc(t) + "</span>" : new Array((largo || 67) + 1).join("_");
+    };
+    return SIMH.hojaSFS({
+      encabezado: '<div class="hs-der" style="margin:1.2em 0 3.2em">Tapachula de Córdova y Ordoñez, Chiapas</div>',
+      titulo: "AVISO DE PRIVACIDAD",
+      cuerpo: [
+        "La Secretaría de la Frontera Sur, a través de la <b>Subsecretaría de Movilidad Humana</b>, con domicilio en " +
+        "Blvd. Díaz Ordaz (17 calle Oriente), No. 11, Col. Cedros de Érika, Tapachula, Chiapas, es responsable del " +
+        "tratamiento de los datos personales que se recaben durante su registro en el Sistema Integral de Atención a la " +
+        "Movilidad Humana (SIAMH), cuyo propósito es integrar su expediente y brindarle atención, orientación y " +
+        "canalización a servicios de salud, capacitación y empleo, así como generar información estadística y de " +
+        "planeación institucional.",
+        "<b>Los datos personales proporcionados no serán difundidos, distribuidos ni transferidos a terceros sin su " +
+        "consentimiento</b>. La información recabada será utilizada únicamente para las acciones de atención, " +
+        "acompañamiento, capacitación y vinculación laboral, en beneficio de las personas en contexto de movilidad.",
+        "Para cualquier aclaración o información adicional relacionada con el manejo de sus datos, puede comunicarse al " +
+        "correo: movilidad.humana@sfs.chiapas.gob.mx o acudir directamente a las oficinas de la Secretaría de la " +
+        "Frontera Sur.",
+        '<div class="hs-campos"><b>Nombre de la persona:</b><br>' + linea(nombre) + "</div>",
+        '<div class="hs-campos"><b>Firma o huella:</b><br>' + linea("", 38) + "</div>",
+        '<div class="hs-campos"><b>Fecha:</b><br>' + linea(SIMH.fechaLarga(hoy), 38) + "</div>"
+      ],
+      firma: false,
+      ccp: false
+    });
+  }
+
+  $("#btnAvisoPriv").innerHTML = ico("pdf") + "Ver e imprimir aviso de privacidad";
+  $("#btnAvisoPriv").onclick = function () {
+    var velo = document.createElement("div");
+    velo.className = "hs-velo";
+    velo.setAttribute("role", "dialog");
+    velo.setAttribute("aria-modal", "true");
+    velo.setAttribute("aria-label", "Aviso de privacidad");
+    velo.innerHTML = '<div class="hs-caja"><div style="display:flex;gap:8px;justify-content:flex-end">' +
+      '<button type="button" class="btn btn-secundario btn-s" id="avCerrar">Cerrar</button>' +
+      '<button type="button" class="btn btn-primario btn-s" id="avImprimir">' + ico("pdf") + "Imprimir o guardar PDF</button></div>" +
+      hojaAviso() + "</div>";
+    document.body.appendChild(velo);
+    SIMH.paginar(velo);
+    function cierra() { velo.remove(); $("#btnAvisoPriv").focus(); document.removeEventListener("keydown", tecla); }
+    function tecla(e) { if (e.key === "Escape") cierra(); }
+    document.addEventListener("keydown", tecla);
+    velo.addEventListener("click", function (e) { if (e.target === velo) cierra(); });
+    $("#avCerrar").onclick = cierra;
+    $("#avImprimir").onclick = function () { SIMH.imprimir(hojaAviso(), "Aviso de privacidad"); };
+    $("#avImprimir").focus();
+  };
+
   $("#avisoTiempo").innerHTML = ico("reloj") +
     "<span><strong>Tiempo de captura: <span id='reloj'>00:00</span></strong>" +
     "Meta institucional: menos de 5 minutos por persona (RNF04).</span>";
@@ -592,6 +662,17 @@
     var r = document.getElementById("reloj"); if (r) r.textContent = m + ":" + s;
   }, 1000);
 
+  /* ------------------------------------ Alta rápida para Empleabilidad --
+     22/09/2026. Quien llega solo por empleo se registra primero, porque el
+     expediente es único: si Empleabilidad creara su propia ficha habría dos
+     versiones de la misma persona. Para que no sea un trámite aparte,
+     Empleabilidad abre el alta en modo rápido (?origen=empleo): se omite la
+     fotografía —el único paso sin campos obligatorios— y al guardar se
+     regresa a Empleabilidad con la persona seleccionada. Lo que no se
+     capture aquí lo pregunta después el cuestionario de Empleabilidad.  */
+  var QS = new URLSearchParams(location.search);
+  var RAPIDA = QS.get("origen") === "empleo";
+
   /* --------------------------------------------------- Definición pasos - */
   var PASOS = [
     { n:1, t:"Identificación" },
@@ -600,7 +681,13 @@
     { n:4, t:"Fotografía" },
     { n:5, t:"Contacto" },
     { n:6, t:"Revisión" }
-  ];
+  ].filter(function (p) { return !(RAPIDA && p.n === 4); });
+
+  /* Paso siguiente y anterior dentro de los pasos vigentes. */
+  function vecino(p, d) {
+    var ns = PASOS.map(function (x) { return x.n; }), i = ns.indexOf(p) + d;
+    return ns[Math.max(0, Math.min(ns.length - 1, i))];
+  }
   var actual = 1, maxVisitado = 1, fotoLista = false;
   var altasSesion = 0, folioActual = "";
   var FOTO_HTML = document.getElementById("cajaFoto").innerHTML;
@@ -667,9 +754,9 @@
   $("#btnSiguiente").addEventListener("click", function () {
     if (!validar(actual)) return;
     if (actual === 6) { guardar(); return; }
-    irA(actual + 1);
+    irA(vecino(actual, 1));
   });
-  $("#btnAtras").addEventListener("click", function () { irA(Math.max(1, actual - 1)); });
+  $("#btnAtras").addEventListener("click", function () { irA(vecino(actual, -1)); });
 
   /* Enter avanza: la captura de ventanilla es primero de teclado */
   document.addEventListener("keydown", function (e) {
@@ -984,9 +1071,35 @@
   });
 
   /* --------------------------------------------------------- Guardar ---- */
+  function campoReg(c) {
+    var el = document.querySelector('[data-campo="' + c + '"]');
+    if (!el) return "";
+    if (el.tagName === "SELECT" && el.value === "OTRO") return SIMH.textoOtro(el);
+    return String(el.value || "").trim();
+  }
+
   function guardar() {
     altasSesion++;
     folioActual = "SIAMH-2026-TAP-" + String(412 + altasSesion).padStart(4, "0");
+    var altaE = null;
+    if (RAPIDA) {
+      var e = window.DATOS.folioAltaEmpleo();
+      folioActual = "SIAMH-2026-" + (campoReg("Municipio de residencia") || "Tapachula").slice(0, 3).toUpperCase() + "-" + e;
+      var r = edadEntre($("#precNac").value);
+      var tel = document.querySelector('[data-campo="Teléfono en residencia"]');
+      altaE = {
+        e: e, folio: folioActual,
+        n: [campoReg("Nombre(s)"), campoReg("Primer apellido"), campoReg("Segundo apellido")].filter(Boolean).join(" "),
+        nac: campoReg("Nacionalidad"), sexo: campoReg("Sexo"),
+        fnac: $("#precNac").value === "dia" ? $("#fNac").value : "",
+        edad: r ? r.min : null, mun: campoReg("Municipio de residencia") || "Tapachula",
+        tel: tel ? (SIMH.textoTelefono(tel) || tel.value.trim()) : "", dom: campoReg("Domicilio"),
+        ingreso: $("#fIng") && $("#fIng").value && !$("#fIng").classList.contains("oculto") ? $("#fIng").value : "",
+        permanencia: campoReg("Permanencia estimada"), estatus: campoReg("Estatus migratorio"),
+        t: (window.DATOS && DATOS.HOY) || ""
+      };
+      window.DATOS.agregaAltaEmpleo(altaE);
+    }
 
     $("#zonaCaptura").classList.add("oculto");
     $("#pasos").classList.add("oculto");
@@ -1007,8 +1120,11 @@
 
     /* La acción más probable en ventanilla es atender a la siguiente persona
        de la fila: por eso es la acción primaria del cierre.                  */
-    $("#ctaExito").innerHTML =
-      '<button class="btn btn-primario btn-grande" type="button" id="btnOtroRegistro">' +
+    $("#ctaExito").innerHTML = (altaE
+      ? '<a class="btn btn-primario btn-grande" id="btnVolverEmpleo" href="empleabilidad.html?e=' + altaE.e + '&alta=1">' +
+          ico("empleo") + "Continuar en Empleabilidad</a>"
+      : "") +
+      '<button class="btn ' + (altaE ? "btn-secundario" : "btn-primario") + ' btn-grande" type="button" id="btnOtroRegistro">' +
         ico("mas") + "Registrar otra persona</button>" +
       '<button class="btn btn-secundario btn-grande" type="button" id="btnAcompanante">' +
         ico("familia") + "Registrar acompañante</button>" +
@@ -1118,6 +1234,28 @@
     irA(acomp ? 2 : 1);
     var primero = document.querySelector('.paso-panel[data-paso="' + actual + '"] input');
     if (primero) primero.focus();
+  }
+
+  if (RAPIDA) {
+    $("#avisoRapida").classList.remove("oculto");
+    $("#avisoRapida").innerHTML = ico("empleo") +
+      '<div class="a-tx"><span class="a-t">Alta rápida para Empleabilidad</span>' +
+      '<span class="a-n">La persona no tiene expediente. Se registra primero porque el expediente es único; ' +
+      "solo son obligatorios los campos marcados y se omite la fotografía. Al guardar regresas a Empleabilidad " +
+      "con la persona seleccionada, y lo que falte lo pregunta su cuestionario.</span></div>" +
+      '<div class="a-acc"><a class="btn btn-secundario btn-s" href="empleabilidad.html">Volver sin registrar</a></div>';
+    /* Es una persona nueva: nada del ejemplo precargado se hereda. */
+    ["Nombre(s)", "Primer apellido", "Segundo apellido", "Correo", "Registro COMAR", "Fecha COMAR",
+     "Teléfono en residencia", "Domicilio", "Contacto en origen", "Teléfono en país de origen"].forEach(limpiar);
+    $("#fNac").value = "";
+    var buscado = (QS.get("n") || "").trim().split(/\s+/).filter(Boolean);
+    if (buscado.length) {
+      var apN = buscado.length > 2 ? 2 : (buscado.length === 2 ? 1 : 0);
+      document.querySelector('[data-campo="Nombre(s)"]').value = buscado.slice(0, buscado.length - apN).join(" ");
+      if (apN) document.querySelector('[data-campo="Primer apellido"]').value = buscado[buscado.length - apN];
+      if (apN === 2) document.querySelector('[data-campo="Segundo apellido"]').value = buscado[buscado.length - 1];
+    }
+    $("#chkConsentimiento").checked = false;
   }
 
   /* Atajo para revisión: registro.html?paso=3 abre ese paso; ?paso=exito, el cierre */

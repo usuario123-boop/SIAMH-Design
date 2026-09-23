@@ -73,17 +73,8 @@
   .o-marca i{width:15px;height:10px;flex:none;background:var(--jade-020);
     border-bottom:1px dotted rgba(0,152,135,.65)}
 
-  /* Sello de estado en la cara de la hoja: un borrador que se ve idéntico a
-     un oficio firmado es una trampa. El documento dice si ya vale.       */
-  .o-sello{display:flex;align-items:center;gap:7px;padding:7px 14px;font-size:11px;
-    font-weight:700;line-height:1.4;border-bottom:1px solid var(--linea-suave)}
-  .o-sello svg{width:14px;height:14px;stroke-width:2;fill:none;flex:none}
-  .o-sello.bor{background:var(--arena-050);color:var(--gris)}
-  .o-sello.bor svg{stroke:var(--gris)}
-  .o-sello.fir{background:var(--rosa-050);color:#7d0140}
-  .o-sello.fir svg{stroke:var(--rosa)}
-  .o-sello.can{background:var(--guinda-050);color:var(--guinda-900)}
-  .o-sello.can svg{stroke:var(--guinda)}
+  /* El sello de estado de la hoja (.o-sello) subió a simh.css §22 el
+     22/09/2026: lo usan también Revalidación y Capacitación. */
 
   /* --- Plantillas --------------------------------------------------------- */
   .pl-lista{border:1px solid var(--linea);border-radius:var(--radio);overflow:hidden;
@@ -131,6 +122,14 @@
 (function () {
   "use strict";
   SIMH.chrome("canaliza");
+
+  /* Modo sin datos de prueba (Administración › Datos de prueba). */
+  if (SIMH.sinDatos()) {
+    SIMH.vacioModulo({ ico:"oficios", titulo:"No hay oficios registrados",
+      texto:"La serie de oficios empieza con el primer oficio que se firme.",
+      accion:"" });
+    return;
+  }
   var ico = SIMH.icono, esc = SIMH.esc;
   /* Reloj, permisos y catálogo de personas: assets/js/simh-datos.js, que
      comparten los cuatro módulos de documentos. Cuatro copias del mismo
@@ -230,6 +229,17 @@
       porque:"Lo dispara la clasificación de NNA dentro del grupo familiar. Capturarla otra vez " +
              "aquí permitiría emitir la notificación sin que el grupo la respalde, y el plazo de " +
              "24 horas se cuenta desde esa clasificación." },
+
+    /* Formato «Oficio a Procuraduria para atender a Familia» de Recursos y
+       plantillas (22/09/2026). Se redacta aquí: lo único que pide es el
+       nombre de las personas de la familia. */
+    { id:"familia", t:"Atención y protección integral a familia",
+      n:"Solicita a la Procuraduría la valoración y protección integral de una familia en " +
+        "contexto de movilidad.",
+      fund:"Arts. 1º y 4º constitucionales · Ley para la Atención y Protección a los Derechos de las " +
+           "Personas en Contexto de Movilidad Humana del Estado de Chiapas · Ley de NNA de Chiapas",
+      dest:"Procuraduría de Protección de Niñas, Niños, Adolescentes y la Familia",
+      origen:"oficios", aqui:true },
 
     { id:"vinculacion", t:"Oficio de vinculación laboral",
       n:"Presenta a la persona ante la unidad económica y formaliza la colocación.",
@@ -439,7 +449,7 @@
 
   function nuevoVacio() {
     return { pl:null, exp:"", campo:"", valor:"", prueba:"", motivo:"",
-             inst:"", cargo:"", asunto:"", cuerpo:"", folioDep:"", caso:"", destEdu:"" };
+             inst:"", cargo:"", asunto:"", cuerpo:"", folioDep:"", caso:"", destEdu:"", familia:"" };
   }
   var nuevo = nuevoVacio();
 
@@ -602,41 +612,42 @@
     return "";
   }
 
-  function hoja(o, clase) {
-    var pl = plantilla(o.pl);
-    var fol = o.folio
-      ? "Oficio " + o.folio
-      : o.ref + " · sin folio hasta la firma";
-    var fechaDoc = o.firmado ? fecha(o.firmado.t) : fecha(HOY);
+  /* 22/09/2026: la hoja es la del formato oficial (SIMH.hojaSFS). Las
+     plantillas que tienen formato en «Recursos y plantillas» —canalización
+     a salud, NNA no acompañado y atención a familia— usan su texto
+     literal; las demás conservan su cuerpo sobre el mismo membrete. */
+  function parrafos(html) {
+    var out = [], m, re = /<p>([\s\S]*?)<\/p>/g;
+    while ((m = re.exec(html))) out.push(m[1]);
+    return out;
+  }
 
-    return '<div class="oficio-hoja ' + (clase || "") + '">' +
-      selloHoja(o) +
-      '<div class="o-membrete">' +
-        '<span class="o-inst">Gobierno del Estado de Chiapas</span>' +
-        '<span class="o-inst">Secretaría de la Frontera Sur</span>' +
-        '<span class="o-inst" style="color:var(--gris-claro)">' +
-          (pl && pl.origen === "empleo" ? "Dirección de Capacitación y Empleo"
-                                        : "Dirección de Atención a Personas en Movilidad") +
-        "</span>" +
-        '<div class="cenefa-fina" style="margin-top:7px"></div>' +
-      "</div>" +
-      '<div class="o-cuerpo">' +
-        '<span class="o-folio">' + esc(fol) +
-          (o.folioDep ? "<br>Ref. dependencia " + esc(o.folioDep) : "") +
-          "<br>Tapachula, Chiapas, a " + fechaDoc + "</span>" +
-        '<span class="o-dest">' + esc(o.dest.inst) + "<br>" + esc(o.dest.cargo) +
-          "<br>P R E S E N T E</span>" +
-        (o.asunto ? "<p><b>Asunto:</b> " + esc(o.asunto) + "</p>" : "") +
-        cuerpoOficio(o) +
-        '<div class="o-firma"><span class="o-raya"></span>' +
-          (o.firmado ? esc(o.firmado.por) + "<br>" + esc(o.firmado.cargo)
-                     : "Pendiente de firma<br>" + esc(DIRECTOR.cargo)) +
-        "</div>" +
-      "</div>" +
-      '<div class="o-pie">Documento con datos personales. Su validación se realiza por folio y sello ' +
-        "ante la Secretaría de la Frontera Sur; no incluye código QR.</div>" +
-    "</div>" +
-    '<div class="o-marca"><i></i>Lo marcado se toma del expediente y no se escribe a mano.</div>';
+  function hoja(o, clase) {
+    var d = o.datos || {};
+    var tp = null;
+    if (o.pl === "canaliza") {
+      tp = SIMH.plantillaSFS("salud", { mun: (o.dest && o.dest.mun) || "Tapachula" });
+    } else if (o.pl === "nna") {
+      var pn = o.per ? persona(o.per) : null;
+      tp = SIMH.plantillaSFS("nna", {
+        nombre: (d.nna || []).map(function (x) { return x.n; }).join(" y "),
+        nacionalidad: pn ? pn.pais.toLowerCase() : "" });
+    } else if (o.pl === "familia") {
+      tp = SIMH.plantillaSFS("familia", { nombres: d.nombres });
+    }
+    var cuerpo = tp ? tp.cuerpo : parrafos(cuerpoOficio(o));
+    if (!tp && o.pl !== "institucional") cuerpo.push("Sin otro particular, reciba un cordial saludo.");
+
+    return '<div class="' + (clase || "") + '">' + SIMH.hojaSFS({
+        sello: selloHoja(o),
+        folio: o.folio ? esc(o.folio) : '<span class="o-pend">se asigna al firmar</span>',
+        fecha: SIMH.fechaLarga(o.firmado ? o.firmado.t : HOY) + ".",
+        asunto: tp ? tp.asunto : esc(o.asunto || ""),
+        dest: tp ? tp.dest : esc(o.dest.cargo) + "<br>" + esc(o.dest.inst),
+        cuerpo: cuerpo
+      }) + "</div>" +
+      '<div class="o-marca"><i></i>Lo marcado se toma del expediente y no se escribe a mano.' +
+        (o.folioDep ? " Ref. dependencia " + esc(o.folioDep) + "." : "") + "</div>";
   }
 
   /* ======================================================================
@@ -761,8 +772,9 @@
         : '<div class="vacio">' + ico("buscar") + "Ningún documento con estos filtros.</div>") +
       '<div class="tabla-pie" style="display:block">' +
         plural(vis.length, "documento", "documentos") + " de " + OFI.length + ". " +
-        "Exportar el registro corresponde al Director de Área: el perfil de " + esc(YO.rol) +
-        " consulta y captura, pero no exporta datos personales (RNF01)." +
+        (YO.puedeExportar ? ""
+          : "Exportar el registro corresponde al Director de Área: el perfil de " + esc(YO.rol) +
+            " consulta y captura, pero no exporta datos personales (RNF01).") +
       "</div></div>";
   }
 
@@ -1018,7 +1030,13 @@
   function oficioEnObra() {
     var d = {}, asunto = "", per = null, dest = null;
 
-    if (nuevo.pl === "modificacion") {
+    if (nuevo.pl === "familia") {
+      d = { nombres:nuevo.familia };
+      asunto = "Solicitud de atención y protección integral a familia en contexto de movilidad humana";
+      dest = { inst:"Procuraduría de Protección de Niñas, Niños, Adolescentes y la Familia",
+               cargo:"Titular", mun:"" };
+
+    } else if (nuevo.pl === "modificacion") {
       d = { exp:nuevo.exp, campo:campoDe(nuevo.campo) ? campoDe(nuevo.campo).t : "",
             actual:valorActual(),
             valor:nuevo.valor && campoDe(nuevo.campo) && campoDe(nuevo.campo).tipo === "date"
@@ -1039,9 +1057,9 @@
             pide: nuevo.motivo };
       per = c ? c.per : null;
       asunto = c
-        ? (NIVELES[c.nivel].revalida
-             ? "Trámite de revalidación rechazado por la autoridad educativa"
-             : "Inscripción de persona menor de edad negada por falta de documentos")
+        ? (c.nivel === "basica"
+             ? "Inscripción negada por la autoridad educativa"
+             : "Trámite de revalidación rechazado por la autoridad educativa")
         : "";
       dest = { inst: dd.inst || (na ? na.inst : "— plantel —"), cargo: dd.cargo, mun:"" };
 
@@ -1137,6 +1155,18 @@
           PIDE_EDU.map(function (m) {
             return "<option" + (nuevo.motivo === m ? " selected" : "") + ">" + esc(m) + "</option>";
           }).join("") + "</select></div>" +
+        campoFolioDep() +
+        barraNuevo();
+    }
+
+    if (pl.id === "familia") {
+      return '<div class="tarjeta">' +
+        '<div class="tarjeta-enc"><h3>' + esc(pl.t) + "</h3></div>" +
+        '<p style="font-size:12.5px;color:var(--gris);line-height:1.55;margin-bottom:14px">' +
+          "El texto es el del formato oficial; solo se captura quiénes integran la familia.</p>" +
+        '<div class="campo"><label for="nFam">Nombres de las personas de la familia <span class="req">*</span></label>' +
+          '<input type="text" id="nFam" value="' + esc(nuevo.familia) +
+          '" placeholder="Ej. Marisol Rojas Peña, Keiner Alexander y Dariana Rojas Mora"></div>' +
         campoFolioDep() +
         barraNuevo();
     }
@@ -1320,6 +1350,7 @@
     else                  cuerpo = barraAccion() + filtros() + tablaOficios();
 
     $("#panel").innerHTML = cuerpo;
+    SIMH.paginar($("#panel"));
     eventos();
   }
 
@@ -1466,6 +1497,7 @@
     liga("nCaso",  function (val) { nuevo.caso = val; }, true);
     liga("nDestEdu", function (val) { nuevo.destEdu = val; }, true);
     liga("nPide",  function (val) { nuevo.motivo = val; }, true);
+    liga("nFam",   function (val) { nuevo.familia = val; }, true);
 
     /* El folio de la dependencia no repinta en cada tecla: es texto libre y
        repintar movería el cursor. Se recoge al salir del campo. */
@@ -1508,6 +1540,8 @@
         else if (!nuevo.valor)  falta = ["nVal", "Falta el valor correcto."];
         else if (!nuevo.motivo) falta = ["nMot", "Falta el motivo del catálogo."];
         else if (!nuevo.prueba) falta = ["nPru", "Falta el documento probatorio."];
+      } else if (nuevo.pl === "familia") {
+        if (!nuevo.familia.trim()) falta = ["nFam", "Faltan los nombres de la familia."];
       } else if (nuevo.pl === "educacion") {
         if (!nuevo.caso)        falta = ["nCaso", "Elige el caso con la negativa que se reclama."];
         else if (!nuevo.destEdu) falta = ["nDestEdu", "Elige a quién se dirige el oficio."];

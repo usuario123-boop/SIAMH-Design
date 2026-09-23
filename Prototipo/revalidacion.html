@@ -13,21 +13,27 @@
   /* ======================================================================
      REVALIDACIÓN Y ACCESO EDUCATIVO
      ================================================================== */
-  .req-tabla{width:100%;border-collapse:collapse}
-  .req-tabla th{text-align:left;font-size:11.5px;font-weight:700;text-transform:uppercase;
-    color:var(--gris);letter-spacing:.05em;padding:10px 12px;border-bottom:1px solid var(--linea);background:var(--hueso-claro)}
-  .req-tabla td{padding:12px;border-bottom:1px solid var(--linea-suave);vertical-align:top;font-size:13px}
-  .req-tabla tr:last-child td{border-bottom:0}
-  .req-tabla tr:hover td{background:rgba(0,152,135,.02)}
-
-  .sel-req-estado{
-    height:32px;padding:0 8px;border:1px solid var(--linea);border-radius:var(--radio-s);
-    font-family:var(--f-texto);font-size:12.5px;font-weight:600;background:var(--blanco);
-    color:var(--tinta);cursor:pointer;
-  }
-  .sel-req-estado.si{border-color:var(--jade);color:var(--jade-900);background:var(--jade-050)}
-  .sel-req-estado.tramite{border-color:var(--rosa);color:#7d0140;background:var(--rosa-050)}
-  .sel-req-estado.falta{border-color:var(--guinda);color:var(--guinda-900);background:var(--guinda-050)}
+  /* Lista de cotejo: dos estados, PRESENTA / NO PRESENTA (22/09/2026).
+     El estado viaja en glifo + palabra + color, nunca solo en color. */
+  .coteja{display:inline-flex;border:1px solid var(--linea);border-radius:var(--radio-s);overflow:hidden;flex:none}
+  .coteja button{min-height:36px;padding:0 12px;font-family:var(--f-texto);font-size:12.5px;font-weight:600;
+    border:0;border-left:1px solid var(--linea);background:var(--blanco);color:var(--tinta);cursor:pointer}
+  .coteja button:first-child{border-left:0}
+  .coteja button:hover{background:var(--hueso-claro)}
+  .coteja button[data-v="si"][aria-pressed="true"]{background:var(--jade);color:#fff}
+  .coteja button[data-v="no"][aria-pressed="true"]{background:var(--guinda);color:#fff}
+  .coteja-grande button{min-height:44px;padding:0 22px;font-size:13px}
+  .coteja-grande button[aria-checked="true"]{background:var(--jade-900);color:#fff}
+  .coteja-bloques{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media (max-width:1100px){.coteja-bloques{grid-template-columns:1fr}}
+  .coteja-enc{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;
+    padding-bottom:8px;border-bottom:1px solid var(--linea)}
+  .coteja-enc h4{margin:0;font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--gris)}
+  .coteja-lista{list-style:none;margin:0;padding:0}
+  .coteja-fila{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;
+    border-bottom:1px solid var(--linea-suave)}
+  .coteja-fila:last-child{border-bottom:0}
+  .coteja-t{font-size:13px;line-height:1.35;color:var(--tinta);min-width:0}
 
   .grupo-barreras{margin-bottom:16px}
   .grupo-barreras-tit{font-size:11.5px;font-weight:700;text-transform:uppercase;color:var(--gris);
@@ -57,6 +63,9 @@
   .neg-item .n-f{display:block;font-size:11.5px;color:var(--gris-claro);margin-top:4px;
     font-variant-numeric:tabular-nums}
 
+  /* Registro de barreras dentro del diagnóstico (22/09/2026) */
+  .barreras-reg{margin-top:18px;padding-top:16px;border-top:1px solid var(--linea)}
+
   .grid-oficio-educacion{display:grid;grid-template-columns:1.15fr 0.85fr;gap:20px;align-items:start}
   @media (max-width:1100px){.grid-oficio-educacion{grid-template-columns:1fr}}
 </style>
@@ -69,11 +78,10 @@
   <div class="enc">
     <div class="enc-txt">
       <h1>Revalidación y Acceso Educativo</h1>
-      <div class="enc-sub">Diagnóstico de problemáticas, cotejo de requisitos, registro de negativas y oficios de gestión</div>
+      <div class="enc-sub">Diagnóstico de problemáticas, cotejo de requisitos, registro de barreras y oficios de gestión</div>
     </div>
     <div class="enc-acc" id="encAcc">
       <button class="btn btn-secundario btn-s" type="button" id="btnXls"></button>
-      <button class="btn btn-secundario btn-s" type="button" id="btnBuscar"></button>
     </div>
   </div>
 
@@ -94,6 +102,34 @@
   "use strict";
   SIMH.chrome("revalida");
   var ico = SIMH.icono, esc = SIMH.esc;
+
+  /* Restricción por sede (22/09/2026): el módulo solo está habilitado para
+     la Secretaría de la Frontera Sur, Tuxtla y quien administra. El menú ya
+     no dibuja la entrada; si se llega por URL, se enuncia la regla en lugar
+     de mostrar los casos. */
+  if (!SIMH.accesoSede("revalida")) {
+    var yoS = SIMH.sesion();
+    document.querySelector(".enc-acc").innerHTML = "";
+    document.getElementById("avisoMod").hidden = true;
+    document.getElementById("panel").innerHTML =
+      '<div class="accion tibia">' + ico("candado") +
+        '<div class="a-tx"><span class="a-t">La Revalidación de Estudios no está habilitada en tu sede</span>' +
+        '<span class="a-n">Este módulo solo opera en ' + SIMH.sedesDe("revalida").map(esc).join(" y ") +
+        ', y para quien administra el sistema. Tu cuenta entra desde <b>' + esc(SIMH.SEDES[yoS.sede].t) +
+        '</b>. Si una persona necesita revalidar estudios, canalízala a una de esas sedes.</span></div>' +
+        '<div class="a-acc"><a class="btn btn-secundario btn-s" href="canalizaciones.html">' + ico("oficios") +
+          'Ir a Canalizaciones</a></div></div>';
+    return;
+  }
+
+  /* Modo sin datos de prueba (Administración › Datos de prueba). */
+  if (SIMH.sinDatos()) {
+    SIMH.vacioModulo({ ico:"estudios", titulo:"No hay casos educativos",
+      texto:"Los casos de revalidación y acceso educativo se abren sobre personas con expediente.",
+      accion:'<a class="btn btn-primario btn-s" href="registro.html">' + SIMH.icono("registro") + 'Registrar persona</a>' });
+    return;
+  }
+
   var D = window.DATOS;
   var HOY = D.HOY, fecha = D.fecha, hora = D.hora, fechaHora = D.fechaHora;
   var dias = D.dias, edad = D.edad, plural = D.plural;
@@ -101,7 +137,6 @@
   var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
 
   $("#btnXls").innerHTML    = ico("excel") + "Exportar reporte (Excel)";
-  $("#btnBuscar").innerHTML = ico("buscar") + "Buscar otro estudiante";
 
   /* ======================================================================
      1. Marcadores de Barreras y Problemáticas de Acceso a la Educación
@@ -134,13 +169,13 @@
       ]
     },
     {
-      grupo: "Negativas de Atención y Barreras en Planteles",
+      grupo: "Barreras de atención y en centros educativos",
       items: [
-        { id:"neg_inscripcion", t:"Negativa de inscripción en escuela pública",
+        { id:"neg_inscripcion", t:"Barrera de inscripción en escuela pública",
           desc:"El director o personal del plantel rechazó al estudiante por ser extranjero.",
           obliga: true,
           ruta:"Infracción al Art. 3° CPEUM y Acuerdo 286. Emisión inmediata de Oficio de Exhorto e intervención a la Secretaría de Educación.",
-          canaliza:{ inst:"Secretaría de Educación del Estado · Unidad de Inclusión", motivo:"Exhorto por negativa indebida de inscripción escolar (Acuerdo 286 SEP)" } },
+          canaliza:{ inst:"Secretaría de Educación del Estado · Unidad de Inclusión", motivo:"Exhorto por barrera indebida de inscripción escolar (Acuerdo 286 SEP)" } },
         { id:"cobro_cuota", t:"Condicionamiento a cuotas 'voluntarias'",
           desc:"El plantel exige pago de cuotas escolares como requisito de admisión.",
           obliga: true,
@@ -149,7 +184,7 @@
         { id:"sin_cupo", t:"Rechazo verbal por 'falta de cupo'",
           desc:"Niegan el acceso sin otorgar oficio de rechazo ni reubicación.",
           obliga: true,
-          ruta:"Exigir negativa por escrito y solicitar reubicación oficial en escuela con turno disponible.",
+          ruta:"Exigir el rechazo por escrito y solicitar reubicación oficial en escuela con turno disponible.",
           canaliza:{ inst:"Supervisión de Zona Escolar", motivo:"Solicitud de garantía de cupo escolar en plantel cercano" } }
       ]
     },
@@ -181,59 +216,103 @@
   });
 
   /* ======================================================================
-     2. Catálogo de Requisitos por Nivel
+     2. Lista de cotejo por tipo de escuela
+     ------------------------------------------------------------------
+     Pedido de la Dirección (22/09/2026): el capturista solo marca si la
+     persona PRESENTA o NO PRESENTA cada documento. Se retiraron las
+     columnas "Quién lo emite" e "Impacto legal" y el estado de cuatro
+     valores (reunido · en trámite · falta · no aplica): en ventanilla lo
+     que se verifica es si el papel está en la mano o no.
+
+     El formulario se segmenta por TIPO DE ESCUELA —sostenimiento
+     (pública / privada) y nivel— porque cambian los documentos y los
+     trámites: una privada pide carta de no adeudo y hay que verificar su
+     RVOE; una pública no.
      ================================================================== */
-  var REQUISITOS = {
+  var NIVELES = {
+    basica:  { t:"Educación básica · Preescolar, primaria y secundaria" },
+    media:   { t:"Media superior · Bachillerato" },
+    superior:{ t:"Superior · Licenciatura o técnico superior" }
+  };
+
+  var SOSTENIMIENTO = {
+    publica: { t:"Pública" },
+    privada: { t:"Privada" }
+  };
+
+  /* Documentos de cada nivel; `solo` restringe uno a un sostenimiento. */
+  var DOCS_ESC = {
     basica: [
-      { id:"valora",  t:"Valoración o examen de ubicación de la escuela",
-        quien:"La escuela", bloq:"Determina el grado en que se inscribe. No condiciona la inscripción." },
-      { id:"acta",    t:"Acta de nacimiento o documento de identidad",
-        quien:"La persona o su consulado", bloq:"No impide inscribir: se regulariza después." },
-      { id:"curp",    t:"CURP",
-        quien:"RENAPO, con apoyo de la ventanilla", bloq:"No impide inscribir: se tramita en paralelo." },
-      { id:"boletas", t:"Boletas o constancia de estudios del país de origen",
-        quien:"La persona", bloq:"Si no hay, la escuela ubica por examen. No impide inscribir." }
+      { id:"acta",    t:"Acta de nacimiento o documento de identidad" },
+      { id:"curp",    t:"CURP" },
+      { id:"boletas", t:"Boletas o constancia de estudios del país de origen" },
+      { id:"domic",   t:"Comprobante de domicilio" },
+      { id:"noadeudo",t:"Carta de no adeudo de la escuela anterior", solo:"privada" }
     ],
     media: [
-      { id:"cert",  t:"Certificado o constancia de estudios de origen",
-        quien:"La institución de origen", bloq:"Sin él no se abre el trámite de revalidación." },
-      { id:"apost", t:"Apostilla o legalización del certificado",
-        quien:"Autoridad del país de origen o consulado", bloq:"Para revalidación parcial la autoridad resuelve con cotejo." },
-      { id:"trad",  t:"Traducción por perito autorizado",
-        quien:"Perito del Poder Judicial del Estado", bloq:"Solo si el documento no está en español." },
-      { id:"ident", t:"Identificación oficial vigente",
-        quien:"La persona", bloq:"Sin ella no se recibe la solicitud formal." },
-      { id:"curp",  t:"CURP",
-        quien:"RENAPO", bloq:"Requisito para emitir la resolución." },
-      { id:"pago",  t:"Pago de derechos",
-        quien:"La persona", bloq:"Hay exención para personas en situación de vulnerabilidad." }
+      { id:"cert",    t:"Certificado o constancia de estudios de origen" },
+      { id:"apost",   t:"Apostilla o legalización del certificado" },
+      { id:"trad",    t:"Traducción por perito autorizado" },
+      { id:"ident",   t:"Identificación oficial vigente" },
+      { id:"curp",    t:"CURP" },
+      { id:"pago",    t:"Comprobante de pago de derechos" },
+      { id:"noadeudo",t:"Carta de no adeudo de la escuela anterior", solo:"privada" }
     ],
     superior: [
-      { id:"cert",  t:"Título, certificado o constancia de estudios",
-        quien:"La institución de origen", bloq:"Sin él no se abre el trámite." },
-      { id:"plan",  t:"Plan de estudios y calificaciones por materia",
-        quien:"La institución de origen", bloq:"Sin él la revalidación no puede ser por materias." },
-      { id:"apost", t:"Apostilla o legalización",
-        quien:"Autoridad del país de origen o consulado", bloq:"Exigible para la resolución definitiva." },
-      { id:"trad",  t:"Traducción por perito autorizado",
-        quien:"Perito del Poder Judicial del Estado", bloq:"Solo si el documento no está en español." },
-      { id:"ident", t:"Identificación oficial vigente",
-        quien:"La persona", bloq:"Sin ella no se recibe la solicitud." },
-      { id:"curp",  t:"CURP",
-        quien:"RENAPO", bloq:"Requisito para resolución." },
-      { id:"pago",  t:"Pago de derechos",
-        quien:"La persona", bloq:"Hay exención para personas en movilidad." }
+      { id:"cert",    t:"Título, certificado o constancia de estudios" },
+      { id:"plan",    t:"Plan de estudios y calificaciones por materia" },
+      { id:"apost",   t:"Apostilla o legalización" },
+      { id:"trad",    t:"Traducción por perito autorizado" },
+      { id:"ident",   t:"Identificación oficial vigente" },
+      { id:"curp",    t:"CURP" },
+      { id:"pago",    t:"Comprobante de pago de derechos" }
     ]
   };
 
-  var NIVELES = {
-    basica:  { t:"Educación básica · Primaria y Secundaria", revalida:false,
-      regla:"La educación básica no se revalida. La escuela debe inscribir a la niña, niño o adolescente aunque no traiga documentos y regularizar el expediente después (Acuerdo 286 SEP)." },
-    media:   { t:"Media superior · Bachillerato", revalida:true,
-      regla:"La revalidación puede ser parcial, por materias acreditadas. La apostilla se exige para la total; para la parcial la autoridad resuelve con cotejo." },
-    superior:{ t:"Superior · Licenciatura o Técnico Superior", revalida:true,
-      regla:"La revalidación se resuelve por materias contra el plan de estudios mexicano equivalente." }
+  /* Trámites asociados a cada tipo de escuela. */
+  var TRAMITES = {
+    basica: [
+      { id:"insc",   t:"Solicitud de inscripción en el plantel" },
+      { id:"ubica",  t:"Examen o valoración de ubicación de grado" },
+      { id:"ctrl",   t:"Alta en el sistema de control escolar", solo:"publica" },
+      { id:"rvoe",   t:"Verificación de la incorporación del plantel ante la SEP", solo:"privada" },
+      { id:"cuota",  t:"Acuerdo de cuota de inscripción con el plantel", solo:"privada" }
+    ],
+    media: [
+      { id:"solrev", t:"Solicitud de revalidación ante el Departamento de Revalidación" },
+      { id:"cotejo", t:"Cotejo de materias acreditadas" },
+      { id:"insc",   t:"Inscripción en el plantel" },
+      { id:"rvoe",   t:"Verificación del RVOE del plantel", solo:"privada" }
+    ],
+    superior: [
+      { id:"solrev", t:"Solicitud de revalidación o equivalencia de estudios" },
+      { id:"dict",   t:"Dictamen por materias contra el plan de estudios" },
+      { id:"insc",   t:"Inscripción en la institución" },
+      { id:"rvoe",   t:"Verificación del RVOE de la institución", solo:"privada" },
+      { id:"cedula", t:"Trámite de cédula profesional (si va a ejercer)" }
+    ]
   };
+
+  function aplica(lista, sost) {
+    return (lista || []).filter(function (x) { return !x.solo || x.solo === sost; });
+  }
+
+  /* Los casos anteriores se capturaron con cuatro estados; al pasar a la
+     lista de cotejo, solo "reunido" cuenta como PRESENTA. "En trámite" no
+     está en la mano: NO PRESENTA. "No aplica" queda sin marcar. */
+  function normaliza(c) {
+    if (!c.sost) c.sost = "publica";
+    if (!c.doc) {
+      c.doc = {};
+      Object.keys(c.req || {}).forEach(function (k) {
+        var v = c.req[k];
+        if (v === "si") c.doc[k] = "si";
+        else if (v === "falta" || v === "tramite") c.doc[k] = "no";
+      });
+    }
+    if (!c.tram) c.tram = {};
+    return c;
+  }
 
   var MOT_NEG = [
     "Condicionan la inscripción a documentos que la norma no exige",
@@ -267,7 +346,7 @@
       ],
       can: [
         { fecha:"26/08/2026", inst:"Secretaría de Educación del Estado · Unidad de Inclusión",
-          motivo:"Exhorto por negativa indebida de inscripción escolar (Acuerdo 286 SEP)",
+          motivo:"Exhorto por barrera indebida de inscripción escolar (Acuerdo 286 SEP)",
           of:"SFS/0944/2026", est:"Emitido · en seguimiento" }
       ]
     },
@@ -319,6 +398,7 @@
       perId: "SIAMH-2026-FCO-0094",
       nivel: "superior",
       destino: "Revalidación de licenciatura en contaduría",
+      sost: "privada",
       inst: "Secretaría de Educación del Estado · Departamento de Revalidación",
       fechaApertura: "05/08/2026",
       limite: "",
@@ -344,35 +424,45 @@
     }
   ];
 
+  /* Lo que "Descartar" restaura: la ficha tal como se guardó. */
+  function foto(c) {
+    return JSON.stringify({ nivel:c.nivel, sost:c.sost, inst:c.inst, destino:c.destino,
+      doc:c.doc, tram:c.tram, barreras:c.barreras });
+  }
+
   function getCaso(per) {
     var c = CASOS.find(function (x) { return x.perId === per.f; });
     if (!c) {
+      /* La edad sale de la fecha de nacimiento: `per.edad` no existe en el
+         catálogo, y leerlo mandaba a toda persona sin caso a "superior". */
+      var e = edad(per.nac);
       c = {
         perId: per.f,
-        nivel: per.edad < 15 ? "basica" : (per.edad < 18 ? "media" : "superior"),
+        nivel: e < 15 ? "basica" : (e < 18 ? "media" : "superior"),
         destino: "Acompañamiento educativo y acceso escolar",
         inst: "Plantel de la zona escolar Tapachula",
         fechaApertura: HOY.slice(0, 10),
         limite: "",
         limiteTxt: "",
         barreras: [],
-        req: {},
+        sost: "publica",
+        doc: {},
+        tram: {},
         neg: [],
         can: []
       };
       CASOS.push(c);
     }
+    normaliza(c);
+    if (!c.guardado) c.guardado = foto(c);
     return c;
   }
 
   var selPerIdx = 0;
   var panelNegAbierto = false;
-  var folioSeq = 950;
 
-  function folioOficio() {
-    folioSeq += 1;
-    return "SFS/" + ("000" + folioSeq).slice(-4) + "/2026";
-  }
+  /* La serie es la del sistema (`SIMH.folioOficio`), no un contador local. */
+  function folioOficio() { return SIMH.folioOficio(); }
 
   /* ======================================================================
      4. Renderizado del Detalle y Formularios
@@ -381,7 +471,6 @@
     var per = D.PERS[selPerIdx];
     var c = getCaso(per);
     var N = NIVELES[c.nivel] || NIVELES.basica;
-    var reqs = REQUISITOS[c.nivel] || [];
     var na = c.neg.find(function (x) { return !x.oficio; });
 
     var html = "";
@@ -398,7 +487,7 @@
               (c.resuelto
                 ? '<span class="chip chip-jade">' + ico("check") + 'Trámite resuelto</span>'
                 : (na
-                    ? '<span class="chip chip-guinda">' + ico("alerta") + 'Negativa sin reclamar</span>'
+                    ? '<span class="chip chip-guinda">' + ico("alerta") + 'Barrera sin reclamar</span>'
                     : '<span class="chip chip-neutro">' + ico("reloj") + 'En acompañamiento</span>')) +
               '<span class="chip chip-neutro">' + esc(N.t.split(" · ")[0]) + '</span>' +
             '</div>' +
@@ -416,7 +505,6 @@
         '</div>' +
         '<div class="flex gap-8">' +
           '<a class="btn btn-secundario btn-s" href="expediente-detalle.html">' + ico("expedientes") + 'Abrir expediente</a>' +
-          '<a class="btn btn-secundario btn-s" href="canalizaciones.html">' + ico("oficios") + 'Ver canalizaciones</a>' +
         '</div>' +
       '</div>' +
       '<div class="bca-controles">' +
@@ -439,15 +527,11 @@
     /* ---------------- 2. Barra de Acción Prioritaria ------------------ */
     if (na) {
       html += '<div class="accion urge">' + ico("alerta") +
-        '<div class="a-tx"><span class="a-t">Negativa escolar registrada sin reclamar ante la autoridad</span>' +
+        '<div class="a-tx"><span class="a-t">Barrera escolar registrada sin reclamar ante la autoridad</span>' +
         '<span class="a-n">' + esc(na.inst) + ' rechazó la atención: "' + esc(na.motivo) + '". ' + esc(na.detalle) +
-        ' Mientras no se emita el oficio formal, la negativa queda impune y el derecho a la educación frenado.</span></div>' +
+        ' Mientras no se emita el oficio formal, la barrera queda impune y el derecho a la educación frenado.</span></div>' +
         '<div class="a-acc"><button class="btn btn-peligro btn-s" type="button" id="btnReclamarRapido">' +
         ico("oficios") + 'Generar oficio de reclamo</button></div></div>';
-    } else if (c.barreras.length) {
-      html += '<div class="accion tibia">' + ico("info") +
-        '<div class="a-tx"><span class="a-t">' + plural(c.barreras.length, "problemática detectada", "problemáticas detectadas") + ' en el acceso educativo</span>' +
-        '<span class="a-n">Se activaron las rutas legales de solución institucional: consulta los marcadores y genera las intervenciones correspondientes.</span></div></div>';
     }
 
     /* ---------------- 3. Marcadores de Barreras y Problemáticas -------- */
@@ -489,89 +573,20 @@
         '</span></div>';
     }
 
-    html += '</div>';
-
-    /* ---------------- 4. Ficha del Trámite y Cotejo de Requisitos ----- */
-    html += '<div class="tarjeta" style="margin-bottom:16px">' +
+    /* Registro de barreras: va dentro del diagnóstico, debajo de las casillas
+       (22/09/2026), porque es el mismo hecho visto como historial. */
+    html += '<div class="barreras-reg">' +
       '<div class="tarjeta-enc">' +
         '<div>' +
-          '<h3 style="margin:0">Ficha del Trámite y Cotejo de Documentos</h3>' +
-          '<span class="txt-min">Selecciona el nivel educativo y registra el estado de cada documento</span>' +
-        '</div>' +
-        (c.sucio
-          ? '<span class="chip chip-rosa">' + ico("reloj") + 'Cambios sin guardar</span>'
-          : '<span class="chip chip-jade">' + ico("check") + 'Valoración actualizada</span>') +
-      '</div>' +
-
-      '<div class="fila" style="margin-bottom:14px">' +
-        '<div class="campo" style="flex:1">' +
-          '<label for="fNivel">Nivel educativo solicitado <span class="req">*</span></label>' +
-          '<select id="fNivel">' +
-            '<option value="basica"' + (c.nivel === "basica" ? " selected" : "") + '>Educación Básica (Preescolar, Primaria, Secundaria)</option>' +
-            '<option value="media"' + (c.nivel === "media" ? " selected" : "") + '>Media Superior (Bachillerato / Preparatoria)</option>' +
-            '<option value="superior"' + (c.nivel === "superior" ? " selected" : "") + '>Superior (Licenciatura / Técnico Superior)</option>' +
-          '</select>' +
-        '</div>' +
-        '<div class="campo" style="flex:1.5">' +
-          '<label for="fInst">Plantel o Institución Educativa Receptora</label>' +
-          '<input type="text" id="fInst" value="' + esc(c.inst || "") + '" placeholder="Ej. Escuela Primaria Federal Belisario Domínguez">' +
-        '</div>' +
-      '</div>' +
-
-      '<div class="campo" style="margin-bottom:16px">' +
-        '<label for="fDestino">Objetivo específico del trámite</label>' +
-        '<input type="text" id="fDestino" value="' + esc(c.destino || "") + '" placeholder="Ej. Inscripción inmediata a 2.º grado de primaria">' +
-      '</div>' +
-
-      '<div class="aviso ' + (N.revalida ? "aviso-neutro" : "aviso-jade") + '" style="margin-bottom:16px">' +
-        ico(N.revalida ? "info" : "check") +
-        '<span><strong>' + (N.revalida ? "Criterio de revalidación oficial" : "Principio de no revalidación en básica (Acuerdo 286)") + '</strong>' +
-        esc(N.regla) + '</span>' +
-      '</div>' +
-
-      '<div style="overflow-x:auto">' +
-        '<table class="req-tabla">' +
-          '<thead><tr><th style="width:38%">Requisito / Documento</th><th style="width:22%">Quién lo emite</th><th style="width:24%">Impacto Legal</th><th style="width:16%">Estado</th></tr></thead>' +
-          '<tbody>' +
-            reqs.map(function (r) {
-              var st = c.req[r.id] || "falta";
-              return '<tr>' +
-                '<td><b>' + esc(r.t) + '</b></td>' +
-                '<td class="txt-min">' + esc(r.quien) + '</td>' +
-                '<td class="txt-min">' + esc(r.bloq) + '</td>' +
-                '<td>' +
-                  '<select class="sel-req-estado ' + st + '" data-reqid="' + r.id + '">' +
-                    '<option value="si"' + (st === "si" ? " selected" : "") + '>✓ Reunido</option>' +
-                    '<option value="tramite"' + (st === "tramite" ? " selected" : "") + '>⏳ En trámite</option>' +
-                    '<option value="falta"' + (st === "falta" ? " selected" : "") + '>⚠️ Falta</option>' +
-                    '<option value="na"' + (st === "na" ? " selected" : "") + '>— No aplica</option>' +
-                  '</select>' +
-                '</td>' +
-              '</tr>';
-            }).join("") +
-          '</tbody>' +
-        '</table>' +
-      '</div>' +
-
-      '<div class="flex gap-8" style="margin-top:16px;justify-content:flex-end">' +
-        (c.sucio ? '<button class="btn btn-secundario btn-s" type="button" id="btnDescartar">' + ico("cerrar") + 'Descartar</button>' : '') +
-        '<button class="btn btn-primario btn-s" type="button" id="btnGuardarVal">' + ico("guardar") + 'Guardar valoración educativa</button>' +
-      '</div>' +
-    '</div>';
-
-    /* ---------------- 5. Registro de Negativas de Atención ------------ */
-    html += '<div class="tarjeta" style="margin-bottom:16px">' +
-      '<div class="tarjeta-enc">' +
-        '<div>' +
-          '<h3 style="margin:0">Registro de Negativas de Atención en Planteles</h3>' +
+          '<h3 style="margin:0">Barreras de atención registradas</h3>' +
           '<span class="txt-min">Historial de rechazos, condicionamientos o cobros indebidos presentados en ventanilla</span>' +
         '</div>' +
-        '<button class="btn btn-secundario btn-s" type="button" id="btnAbrirNeg">' + ico("mas") + 'Registrar negativa</button>' +
+        '<button class="btn btn-secundario btn-s" type="button" id="btnAbrirNeg">' + ico("mas") + 'Registrar barrera</button>' +
       '</div>';
 
     if (panelNegAbierto) {
       html += '<div class="panel" style="background:var(--hueso-claro);border:1px solid var(--linea);border-radius:var(--radio-s);padding:14px;margin-bottom:14px">' +
-        '<h4 style="margin:0 0 8px;color:var(--guinda-900)">Capturar Negativa de Atención en Plantel</h4>' +
+        '<h4 style="margin:0 0 8px;color:var(--guinda-900)">Capturar barrera de atención en el centro educativo</h4>' +
         '<div class="fila">' +
           '<div class="campo"><label for="nInst">Plantel o Institución infractora <span class="req">*</span></label>' +
             '<input type="text" id="nInst" value="' + esc(c.inst.split(" · ")[0]) + '"></div>' +
@@ -584,8 +599,10 @@
           '</select></div>' +
         '<div class="campo"><label for="nDet">Descripción de lo ocurrido <span class="req">*</span></label>' +
           '<textarea id="nDet" rows="3" placeholder="Quién atendió, qué argumentos dio y qué se solicitó. Esta descripción sustentará el oficio legal."></textarea></div>' +
+        '<div class="campo"><label for="nObs">Observaciones <span class="opc">(opcional)</span></label>' +
+          '<textarea id="nObs" rows="2" placeholder="Situaciones particulares del caso: horarios, personas que acompañaron, acuerdos verbales, etc."></textarea></div>' +
         '<div class="flex gap-8">' +
-          '<button class="btn btn-primario btn-s" type="button" id="btnGuardarNeg">' + ico("guardar") + 'Guardar negativa</button>' +
+          '<button class="btn btn-primario btn-s" type="button" id="btnGuardarNeg">' + ico("guardar") + 'Guardar barrera</button>' +
           '<button class="btn btn-secundario btn-s" type="button" id="btnCancelaNeg">Cancelar</button>' +
         '</div>' +
       '</div>';
@@ -597,6 +614,7 @@
           '<span class="n-tx">' +
             '<span class="n-t">' + esc(x.motivo) + '</span>' +
             '<span class="n-m">' + esc(x.detalle) + '</span>' +
+            (x.obs ? '<span class="n-m"><b>Observaciones:</b> ' + esc(x.obs) + '</span>' : '') +
             '<span class="n-m">' + (x.oficio
               ? '<span class="chip chip-jade" style="margin-right:6px">Reclamada</span>Oficio <b>' + esc(x.oficio) + '</b> · ' + esc(x.hizo || "En trámite")
               : '<span class="chip chip-guinda" style="margin-right:6px">Sin reclamar</span>Pendiente de emitir oficio a la autoridad.') + '</span>' +
@@ -606,10 +624,98 @@
         '</div>';
       }).join("");
     } else {
-      html += '<div class="vacio" style="padding:16px">' + ico("check") + 'No se han registrado negativas de atención en este caso.</div>';
+      html += '<div class="vacio" style="padding:16px">' + ico("check") + 'No se han registrado barreras de atención en este caso.</div>';
     }
 
     html += '</div>';
+
+    html += '</div>';
+
+    /* ---------------- 4. Ficha del Trámite y Lista de Cotejo ----------- */
+    var docs = aplica(DOCS_ESC[c.nivel], c.sost);
+    var trams = aplica(TRAMITES[c.nivel], c.sost);
+    function cuenta(lista, mapa) {
+      var si = 0, no = 0;
+      lista.forEach(function (x) { if (mapa[x.id] === "si") si++; else if (mapa[x.id] === "no") no++; });
+      return { si:si, no:no, sin:lista.length - si - no };
+    }
+    function listaCotejo(lista, mapa, attr, etSi, etNo) {
+      return '<ul class="coteja-lista">' + lista.map(function (x) {
+        var v = mapa[x.id] || "";
+        return '<li class="coteja-fila' + (v ? " marcada-" + v : "") + '">' +
+          '<span class="coteja-t">' + esc(x.t) + '</span>' +
+          '<span class="coteja" role="group" aria-label="' + esc(x.t) + '">' +
+            '<button type="button" ' + attr + '="' + x.id + '" data-v="si" aria-pressed="' + (v === "si") + '">' +
+              (v === "si" ? "✓ " : "") + etSi + '</button>' +
+            '<button type="button" ' + attr + '="' + x.id + '" data-v="no" aria-pressed="' + (v === "no") + '">' +
+              (v === "no" ? "✕ " : "") + etNo + '</button>' +
+          '</span></li>';
+      }).join("") + '</ul>';
+    }
+    var cd = cuenta(docs, c.doc), ct = cuenta(trams, c.tram);
+
+    html += '<div class="tarjeta" style="margin-bottom:16px">' +
+      '<div class="tarjeta-enc">' +
+        '<div>' +
+          '<h3 style="margin:0">Ficha del trámite y lista de cotejo</h3>' +
+          '<span class="txt-min">Elige el tipo de escuela y marca si la persona presenta cada documento</span>' +
+        '</div>' +
+        (c.sucio
+          ? '<span class="chip chip-rosa">' + ico("reloj") + 'Cambios sin guardar</span>'
+          : '<span class="chip chip-jade">' + ico("check") + 'Guardado</span>') +
+      '</div>' +
+
+      '<div class="fila" style="margin-bottom:14px">' +
+        '<div class="campo" style="flex:1">' +
+          '<label id="lblSost">Tipo de escuela <span class="req">*</span></label>' +
+          '<span class="coteja coteja-grande" role="radiogroup" aria-labelledby="lblSost">' +
+            Object.keys(SOSTENIMIENTO).map(function (k) {
+              return '<button type="button" role="radio" data-sost="' + k + '" aria-checked="' + (c.sost === k) + '">' +
+                esc(SOSTENIMIENTO[k].t) + '</button>';
+            }).join("") +
+          '</span>' +
+        '</div>' +
+        '<div class="campo" style="flex:2">' +
+          '<label for="fNivel">Nivel educativo <span class="req">*</span></label>' +
+          '<select id="fNivel">' +
+            Object.keys(NIVELES).map(function (k) {
+              return '<option value="' + k + '"' + (c.nivel === k ? " selected" : "") + '>' + esc(NIVELES[k].t) + '</option>';
+            }).join("") +
+          '</select>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="fila" style="margin-bottom:16px">' +
+        '<div class="campo" style="flex:1.5">' +
+          '<label for="fInst">Plantel o institución educativa receptora</label>' +
+          '<input type="text" id="fInst" value="' + esc(c.inst || "") + '" placeholder="Ej. Escuela Primaria Federal Belisario Domínguez">' +
+        '</div>' +
+        '<div class="campo" style="flex:1.5">' +
+          '<label for="fDestino">Objetivo del trámite</label>' +
+          '<input type="text" id="fDestino" value="' + esc(c.destino || "") + '" placeholder="Ej. Inscripción a 2.º grado de primaria">' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="coteja-bloques">' +
+        '<div>' +
+          '<div class="coteja-enc"><h4>Documentación</h4>' +
+            '<span class="txt-min">' + cd.si + ' presenta · ' + cd.no + ' no presenta' +
+              (cd.sin ? ' · ' + cd.sin + ' sin marcar' : '') + '</span></div>' +
+          listaCotejo(docs, c.doc, "data-doc", "Presenta", "No presenta") +
+        '</div>' +
+        '<div>' +
+          '<div class="coteja-enc"><h4>Trámites asociados · escuela ' + esc(SOSTENIMIENTO[c.sost].t.toLowerCase()) + '</h4>' +
+            '<span class="txt-min">' + ct.si + ' realizado' + (ct.si === 1 ? '' : 's') + ' · ' + ct.no + ' pendiente' + (ct.no === 1 ? '' : 's') +
+              (ct.sin ? ' · ' + ct.sin + ' sin marcar' : '') + '</span></div>' +
+          listaCotejo(trams, c.tram, "data-tram", "Realizado", "Pendiente") +
+        '</div>' +
+      '</div>' +
+
+      '<div class="flex gap-8" style="margin-top:16px;justify-content:flex-end">' +
+        (c.sucio ? '<button class="btn btn-secundario btn-s" type="button" id="btnDescartar">' + ico("cerrar") + 'Descartar</button>' : '') +
+        '<button class="btn btn-primario btn-s" type="button" id="btnGuardarVal">' + ico("guardar") + 'Guardar ficha del trámite</button>' +
+      '</div>' +
+    '</div>';
 
     /* ---------------- 6. Generador de Oficio de Canalización / Exhorto -- */
     html += '<div class="tarjeta">' +
@@ -631,15 +737,8 @@
               '<input type="text" id="ofDest" value="' + esc(c.inst || "Secretaría de Educación del Estado · Dirección de Educación Básica") + '">' +
             '</div>' +
             '<div class="campo" style="flex:1">' +
-              '<label for="ofAsunto">Asunto / Tipo de intervención <span class="req">*</span></label>' +
-              '<select id="ofAsunto">' +
-                '<option value="Exhorto por negativa de inscripción (Acuerdo 286 SEP)">Exhorto por negativa de inscripción (Acuerdo 286 SEP)</option>' +
-                '<option value="Solicitud de revalidación parcial por materias">Solicitud de revalidación parcial por materias</option>' +
-                '<option value="Exención de pago de derechos de revalidación">Exención de pago de derechos de revalidación</option>' +
-                '<option value="Solicitud de valoración y examen de ubicación">Solicitud de valoración y examen de ubicación</option>' +
-                '<option value="Canalización a educación especial / USAER">Canalización a educación especial / USAER</option>' +
-                '<option value="Garantía de cupo y reubicación en zona escolar">Garantía de cupo y reubicación en zona escolar</option>' +
-              '</select>' +
+              '<label for="ofAsunto">Asunto <span class="req">*</span></label>' +
+              '<input type="text" id="ofAsunto" value="' + esc(c.asuntoOf || "") + '" placeholder="Escribe el asunto del oficio">' +
             '</div>' +
           '</div>' +
 
@@ -673,7 +772,7 @@
             '<span>Vista Previa del Oficio Oficial</span>' +
             '<span class="chip chip-neutro">En vivo</span>' +
           '</div>' +
-          '<div class="oficio-hoja" id="hojaOficio" style="font-size:10.5px;box-shadow:0 4px 18px rgba(0,0,0,.08);background:#fff"></div>' +
+          '<div id="hojaOficio"></div>' +
           '<div class="oficio-cap">El documento se asentará en la bitácora y se enviará al módulo de Canalizaciones para firma y seguimiento.</div>' +
         '</div>' +
       '</div>' +
@@ -694,35 +793,33 @@
     /* Pintar la hoja de vista previa en tiempo real */
     function pintarHojaOficio() {
       var dest = $("#ofDest") ? $("#ofDest").value.trim() : "Autoridad Destinataria";
-      var asunto = $("#ofAsunto") ? $("#ofAsunto").value : "Asunto del oficio";
+      if ($("#ofAsunto")) c.asuntoOf = $("#ofAsunto").value;
+      var asunto = (c.asuntoOf || "").trim() || "— asunto —";
       var cita = $("#ofCita") ? $("#ofCita").value : "";
       var citaTxt = cita ? cita.split("-").reverse().join("/") : "inmediata";
       var acomp = $("#ofAcomp") ? $("#ofAcomp").value : "Sí, personal de la Secretaría";
       var fund = $("#ofFundamento") ? $("#ofFundamento").value.trim() : "";
-      var folioPrevio = "SFS/" + ("000" + (folioSeq + 1)).slice(-4) + "/2026";
+      var folioPrevio = "— se asigna al firmar —";
 
       var hoja = $("#hojaOficio");
       if (!hoja) return;
 
-      hoja.innerHTML =
-        '<div class="o-sello bor">' + ico("editar") + 'Borrador en edición · No válido sin firma del Director</div>' +
-        '<div class="o-membrete">' +
-          '<span class="o-inst">Gobierno del Estado de Chiapas</span>' +
-          '<span class="o-inst">Secretaría de la Frontera Sur</span>' +
-          '<span class="o-inst" style="color:var(--gris-claro)">Dirección de Atención a Personas en Movilidad</span>' +
-          '<div class="cenefa-fina" style="margin-top:7px"></div>' +
-        '</div>' +
-        '<div class="o-cuerpo">' +
-          '<span class="o-folio">Oficio <b>' + esc(folioPrevio) + '</b><br>Tapachula, Chiapas, a ' + fecha(HOY.slice(0, 10)) + '</span>' +
-          '<span class="o-dest">' + esc(dest.toUpperCase()) + '<br>P R E S E N T E</span>' +
-          '<p><b>Asunto:</b> ' + esc(asunto) + '</p>' +
-          '<p>Por medio del presente y en cumplimiento a las atribuciones de esta Secretaría, me permito intervenir en favor de la persona <span class="o-var">' + esc(per.n) + '</span>, de <span class="o-var">' + edad(per.nac) + ' años</span> de edad, nacionalidad <span class="o-var">' + esc(per.pais) + '</span>, con expediente SIAMH <span class="o-var">' + esc(per.f) + '</span>' + (per.curp ? ' y CURP <span class="o-var">' + esc(per.curp) + '</span>' : '') + '.</p>' +
-          '<p>' + esc(fund) + '</p>' +
-          '<p><b>Fecha de atención / gestión:</b> ' + esc(citaTxt) + '. <b>Acompañamiento:</b> ' + esc(acomp) + '.</p>' +
-          '<p>Agradeciendo de antemano la atención al presente oficio, quedo a sus distinguidas órdenes.</p>' +
-          '<div class="o-firma"><span class="o-raya"></span><b>' + esc(D.DIRECTOR.n) + '</b><br>' + esc(D.DIRECTOR.cargo) + '<br>Secretaría de la Frontera Sur</div>' +
-        '</div>' +
-        '<div class="o-pie">Documento oficial con validez por folio y sello ante la Secretaría de la Frontera Sur. Conforme al principio del interés superior de la niñez y el Acuerdo 286 de la SEP.</div>';
+      /* Membrete y composición del formato oficial (22/09/2026). */
+      hoja.innerHTML = SIMH.hojaSFS({
+        sello: '<div class="o-sello bor">' + ico("editar") + 'Borrador en edición · el folio se asigna al firmar</div>',
+        folio: '<span class="o-pend">se asigna al firmar</span>',
+        fecha: SIMH.fechaLarga(HOY) + ".",
+        asunto: esc(asunto),
+        dest: esc(dest),
+        cuerpo: [
+          'Por medio del presente, la <b>Subsecretaría de Movilidad Humana a través de la Secretaría de la Frontera Sur</b>, en el ámbito de sus atribuciones, se permite intervenir en favor de la persona <span class="o-var">' + esc(per.n) + '</span>, de <span class="o-var">' + edad(per.nac) + ' años</span> de edad, de nacionalidad <span class="o-var">' + esc(per.pais) + '</span>, con expediente <span class="o-var">' + esc(per.f) + '</span>' + (per.curp ? ' y CURP <span class="o-var">' + esc(per.curp) + '</span>' : '') + '.',
+          esc(fund),
+          '<b>Fecha de atención o gestión:</b> ' + esc(citaTxt) + '. <b>Acompañamiento:</b> ' + esc(acomp) + '.',
+          'Agradeciendo de antemano su atención y colaboración, quedamos a disposición para proporcionar la información y documentación necesaria para el seguimiento del caso.',
+          'Sin otro particular, reciba un cordial saludo.'
+        ]
+      });
+      SIMH.paginar(hoja);
     }
 
     /* Eventos para actualizar la vista previa en vivo */
@@ -774,13 +871,39 @@
       };
     }
 
-    /* Cambio de estado en requisitos */
-    $$(".sel-req-estado").forEach(function (sel) {
-      sel.onchange = function () {
-        var reqId = this.getAttribute("data-reqid");
-        c.req[reqId] = this.value;
+    /* Lista de cotejo: un clic marca; otro clic sobre la misma opción la
+       desmarca, para poder corregir un "presenta" puesto por error. */
+    function marca(mapa, id, v) {
+      if (mapa[id] === v) delete mapa[id]; else mapa[id] = v;
+      c.sucio = true;
+      pintarDetalle();
+    }
+    $$("[data-doc]").forEach(function (b) {
+      b.onclick = function () { marca(c.doc, this.getAttribute("data-doc"), this.getAttribute("data-v")); };
+    });
+    $$("[data-tram]").forEach(function (b) {
+      b.onclick = function () { marca(c.tram, this.getAttribute("data-tram"), this.getAttribute("data-v")); };
+    });
+    $$("[data-sost]").forEach(function (b) {
+      b.onclick = function () {
+        if (c.sost === this.getAttribute("data-sost")) return;
+        c.sost = this.getAttribute("data-sost");
         c.sucio = true;
         pintarDetalle();
+      };
+    });
+
+    /* Lo escrito en plantel y objetivo se conserva en el caso mientras se
+       marca la lista: cada marca repinta la tarjeta. */
+    ["#fInst", "#fDestino"].forEach(function (sel) {
+      var el = $(sel);
+      if (el) el.oninput = function () {
+        if (sel === "#fInst") c.inst = this.value; else c.destino = this.value;
+        if (!c.sucio) {
+          c.sucio = true;
+          var chip = this.closest(".tarjeta").querySelector(".tarjeta-enc .chip");
+          if (chip) { chip.className = "chip chip-rosa"; chip.innerHTML = ico("reloj") + "Cambios sin guardar"; }
+        }
       };
     });
 
@@ -788,19 +911,23 @@
     var bg = $("#btnGuardarVal");
     if (bg) {
       bg.onclick = function () {
-        var fi = $("#fInst"), fd = $("#fDestino");
-        if (fi) c.inst = fi.value.trim();
-        if (fd) c.destino = fd.value.trim();
+        c.inst = ($("#fInst") ? $("#fInst").value : c.inst).trim();
+        c.destino = ($("#fDestino") ? $("#fDestino").value : c.destino).trim();
         c.sucio = false;
+        c.guardado = foto(c);
         pintarDetalle();
-        if (SIMH.toast) SIMH.toast("Valoración educativa guardada en el expediente", "ok");
+        if (SIMH.toast) SIMH.toast("Ficha del trámite guardada en el expediente", "ok");
       };
     }
 
-    /* Descartar */
+    /* Descartar: vuelve a lo último guardado, no solo apaga el aviso. */
     var bd = $("#btnDescartar");
     if (bd) {
       bd.onclick = function () {
+        if (c.guardado) {
+          var g = JSON.parse(c.guardado);
+          Object.keys(g).forEach(function (k) { c[k] = g[k]; });
+        }
         c.sucio = false;
         pintarDetalle();
       };
@@ -832,8 +959,9 @@
         var fec = $("#nFec") ? $("#nFec").value : HOY.slice(0, 10);
         var mot = $("#nMot") ? $("#nMot").value : "";
         var det = $("#nDet") ? $("#nDet").value.trim() : "";
+        var obs = $("#nObs") ? $("#nObs").value.trim() : "";
         if (!inst || !mot || !det) {
-          alert("Por favor completa la institución, el motivo y el detalle de la negativa.");
+          alert("Por favor completa la institución, el motivo y el detalle de la barrera.");
           return;
         }
         c.neg.push({
@@ -841,13 +969,14 @@
           inst: inst,
           motivo: mot,
           detalle: det,
+          obs: obs,
           hizo: "",
           oficio: null
         });
         if (c.barreras.indexOf("neg_inscripcion") < 0) c.barreras.push("neg_inscripcion");
         panelNegAbierto = false;
         pintarDetalle();
-        if (SIMH.toast) SIMH.toast("Negativa registrada en el historial", "alerta");
+        if (SIMH.toast) SIMH.toast("Barrera registrada en el historial", "alerta");
       };
     }
 
@@ -857,7 +986,7 @@
       brr.onclick = function () {
         var ofd = $("#ofDest"), ofa = $("#ofAsunto");
         if (ofd) ofd.value = "Secretaría de Educación del Estado · Unidad de Inclusión";
-        if (ofa) ofa.value = "Exhorto por negativa de inscripción (Acuerdo 286 SEP)";
+        if (ofa) ofa.value = "Exhorto por barrera de inscripción (Acuerdo 286 SEP)";
         $("#ofDest").focus();
         $("#ofDest").scrollIntoView({ behavior:"smooth", block:"center" });
         pintarHojaOficio();
@@ -869,13 +998,18 @@
     if (bgo) {
       bgo.onclick = function () {
         var dest = $("#ofDest") ? $("#ofDest").value.trim() : "";
-        var asunto = $("#ofAsunto") ? $("#ofAsunto").value : "";
+        var asunto = $("#ofAsunto") ? $("#ofAsunto").value.trim() : "";
         var cita = $("#ofCita") ? $("#ofCita").value : "";
         var citaTxt = cita ? cita.split("-").reverse().join("/") : "inmediata";
         var acomp = $("#ofAcomp") ? $("#ofAcomp").value : "Sí, personal de la Secretaría";
         var fund = $("#ofFundamento") ? $("#ofFundamento").value.trim() : "";
         if (!dest) {
           alert("Indica la autoridad destinataria del oficio.");
+          return;
+        }
+        if (!asunto) {
+          alert("Escribe el asunto del oficio.");
+          $("#ofAsunto").focus();
           return;
         }
         var folio = folioOficio();
@@ -898,7 +1032,7 @@
         // Crear objeto completo para el módulo de Canalizaciones
         var ofiCompleto = {
           id: "o_edu_" + Date.now(),
-          ref: "BOR-" + ("000" + (folioSeq)).slice(-4),
+          ref: SIMH.refBorrador(),
           folio: folio,
           pl: "educacion",
           est: "emitido",
@@ -971,10 +1105,8 @@
   /* Aviso explicativo */
   $("#avisoModCuerpo").innerHTML =
     '<div class="resumen-lista">' +
-      '<div class="resumen-dato"><span class="r-lab">La educación básica no se revalida</span>' +
-        '<span class="r-val">Conforme al <b>Acuerdo 286 de la SEP</b> y los estándares de inclusión educativa, toda niña, niño o adolescente tiene derecho a inscribirse de manera inmediata en primaria o secundaria aunque carezca de documentos de identidad o boletas de origen. La escuela inscribe provisionalmente y regulariza después.</span></div>' +
       '<div class="resumen-dato"><span class="r-lab">Prohibición de exigir apostilla en básica</span>' +
-        '<span class="r-val">Condicionar el acceso a apostillas, cuotas o regularidad migratoria es un acto violatorio de derechos humanos. Este módulo permite registrar la negativa con fecha, plantel y testimonio para sustentar el oficio de intervención.</span></div>' +
+        '<span class="r-val">Condicionar el acceso a apostillas, cuotas o regularidad migratoria es un acto violatorio de derechos humanos. Este módulo permite registrar la barrera con fecha, plantel y testimonio para sustentar el oficio de intervención.</span></div>' +
       '<div class="resumen-dato"><span class="r-lab">Revalidación en Media Superior y Superior</span>' +
         '<span class="r-val">En bachillerato y universidad se realiza el cotejo de materias y planes de estudio. Para revalidación parcial procede la resolución mediante cotejo directo sin exigir apostilla previa.</span></div>' +
     '</div>';
@@ -983,7 +1115,7 @@
 
   /* Eventos globales */
   document.addEventListener("click", function (e) {
-    if (e.target.closest("#btnAbrirSelector") || e.target.closest("#btnBuscar")) {
+    if (e.target.closest("#btnAbrirSelector")) {
       gestor.abrir();
     } else if (e.target.closest("#btnCasoAnt")) {
       gestor.anterior();

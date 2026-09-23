@@ -99,6 +99,14 @@
 (function () {
   "use strict";
   SIMH.chrome("inicio");
+
+  /* Modo sin datos de prueba (Administración › Datos de prueba). */
+  if (SIMH.sinDatos()) {
+    SIMH.vacioModulo({ ico:"inicio", titulo:"El panel todavía no tiene cifras",
+      texto:"Las cifras del panel se calculan con los expedientes registrados; en cuanto se capture el primero, aparecen aquí.",
+      accion:'<a class="btn btn-primario btn-s" href="registro.html">' + SIMH.icono("registro") + 'Registrar persona</a>' });
+    return;
+  }
   var ico = SIMH.icono, n = SIMH.n, T = SIMH.TINTA;
   var $ = function (q) { return document.querySelector(q); };
 

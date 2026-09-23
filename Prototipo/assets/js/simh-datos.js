@@ -63,13 +63,18 @@
          con su explicación ocupa el lugar de la acción sin poder hacerla.
      Registrar un acuse sí procede: no modifica el oficio, agrega un hecho
      sobre él, y eso es `crear`.                                            */
+  /* Desde el 22/09/2026 quien opera sale de la sesión del chrome
+     (`SIMH.sesion()`), y los permisos se derivan del rol con la misma regla
+     de la matriz: solo el Director de Área firma; la ventanilla no exporta. */
+  var SES = (global.SIMH && global.SIMH.sesion) ? global.SIMH.sesion()
+          : { n:"María Gómez Pérez", rolT:"Capturista Municipal", mun:"Tapachula", rol:"capturista" };
   var YO = {
-    n: "María Gómez Pérez",
-    rol: "Capturista Municipal",
-    mun: "Tapachula",
+    n: SES.n,
+    rol: SES.rolT,
+    mun: SES.mun,
     puedeCrear: true,
-    puedeFirmar: false,
-    puedeExportar: false
+    puedeFirmar: SES.rol === "director",
+    puedeExportar: SES.rol !== "capturista"
   };
 
   var DIRECTOR = { n: "Dr. Luis A. Ramírez Toledo", cargo: "Director de Atención y Salud" };
@@ -155,18 +160,14 @@
      Administración: un control que no deja rastro de lo que impidió no
      demuestra nada.
      ------------------------------------------------------------------ */
+  /* El "principio de no revalidación en básica" se retiró de la interfaz y
+     de la lógica por pedido de la Dirección (22/09/2026): los tres niveles
+     se trabajan con la misma lista de cotejo, segmentada por tipo de
+     escuela en `revalidacion.html`. */
   var NIVELES = {
-    basica:  { t:"Educación básica · primaria y secundaria", revalida:false,
-      regla:"La educación básica no se revalida. La escuela debe inscribir a la niña, niño o " +
-            "adolescente aunque no traiga documentos y regularizar el expediente después; " +
-            "condicionar la inscripción a papeles es justamente la negativa que se registra aquí " +
-            "(Acuerdo 286 de la SEP y normativa de inclusión educativa)." },
-    media:   { t:"Media superior · bachillerato", revalida:true,
-      regla:"La revalidación puede ser parcial, por materias acreditadas. La apostilla se exige para " +
-            "la revalidación total; para la parcial la autoridad puede resolver con el cotejo." },
-    superior:{ t:"Superior · licenciatura o técnico superior", revalida:true,
-      regla:"La revalidación se resuelve por materias contra el plan de estudios mexicano " +
-            "equivalente. Sin el plan de estudios de origen solo cabe una resolución total." }
+    basica:  { t:"Educación básica · primaria y secundaria" },
+    media:   { t:"Media superior · bachillerato" },
+    superior:{ t:"Superior · licenciatura o técnico superior" }
   };
 
   /* Motivos de catálogo, redactados como los enuncia la norma que se
@@ -514,12 +515,101 @@
     return x ? x.c : "+52";
   }
 
+
+  /* ------------------------------------ Expediente único · población de
+     Capacitación y Empleabilidad (22/09/2026)
+     --------------------------------------------------------------------
+     Lo que OTROS módulos saben de cada persona de la cartera de empleo, para
+     que Empleabilidad lo lea en vez de volver a preguntarlo:
+       · reg   → Registro de Persona (sexo, teléfono en residencia,
+                 domicilio, ingreso a México, permanencia estimada)
+       · fam   → Expediente Familiar (integrantes del grupo; null = la
+                 persona no tiene grupo registrado, [] = grupo unipersonal)
+       · cursos → Capacitación (grupos en que está o estuvo inscrita; los
+                 del ciclo 2026 son los de capacitacion.html)
+       · salud → lo ÚNICO que Salud comparte con Empleo: si hay una
+                 condición registrada (enf) y si lleva control médico
+                 (control). Nunca el diagnóstico ni el código (RNF01).
+                 Sin la clave, Salud no tiene valoración de la persona.
+     En el sistema real es una consulta a la base; en el prototipo, cada
+     pantalla lleva sus datos dentro y esta tabla hace de base común. */
+  var EXP_EMPLEO = {
+    "0412": { reg:{ sexo:"Mujer", tel:"+52 962 104 3381", dom:"Col. Las Américas, Tapachula", mun:"Tapachula",
+                    ingreso:"2025-06-20", permanencia:"Indefinida" },
+              fam:[ { n:"Brandon Ramírez Coc", p:"Hijo", e:8, mun:"Tapachula" } ],
+              cursos:[ { t:"Panadería básica", inst:"ICATECH Tapachula", est:"en curso", g:"G-2026-018" },
+                       { t:"Repostería básica", inst:"ICATECH Tapachula", est:"acreditado", g:"2025" } ] },
+    "0429": { reg:{ sexo:"Hombre", tel:"+52 962 211 0457", dom:"Col. 5 de Febrero, Tapachula", mun:"Tapachula",
+                    ingreso:"2025-10-28", permanencia:"Más de 6 meses" },
+              fam:[],
+              cursos:[ { t:"Panadería básica", inst:"ICATECH Tapachula", est:"en curso", g:"G-2026-018" },
+                       { t:"Electricidad básica", inst:"ICATECH Tapachula", est:"acreditado", g:"2025" },
+                       { t:"Albañilería y acabados", inst:"ICATECH Tapachula", est:"acreditado", g:"2025" } ] },
+    "0447": { reg:{ sexo:"Mujer", tel:"+52 964 102 7719", dom:"Barrio San Juan, Huixtla", mun:"Huixtla",
+                    ingreso:"2026-02-25", permanencia:"1 a 6 meses" },
+              fam:null,
+              cursos:[ { t:"Panadería básica", inst:"ICATECH Tapachula", est:"en curso", g:"G-2026-018" } ] },
+    "0464": { reg:{ sexo:"Hombre", tel:"+52 962 330 8841", dom:"Col. Centro, Tapachula", mun:"Tapachula",
+                    ingreso:"2024-08-15", permanencia:"Indefinida" },
+              fam:[ { n:"Yanet Rodríguez Batista", p:"Cónyuge", e:36, mun:"Tapachula" } ],
+              salud:{ enf:true, control:true, f:"2026-07-30" },
+              cursos:[ { t:"Panadería básica", inst:"ICATECH Tapachula", est:"en curso", g:"G-2026-018" } ] },
+    "0470": { reg:{ sexo:"Mujer", tel:"+52 962 187 5520", dom:"Fracc. Los Laureles, Tapachula", mun:"Tapachula",
+                    ingreso:"2025-08-10", permanencia:"Más de 6 meses" },
+              fam:[ { n:"Carmen Silva de Rondón", p:"Madre", e:55, mun:"Tapachula" },
+                    { n:"Valentina Rondón Silva", p:"Hija", e:6, mun:"Tapachula" } ],
+              cursos:[ { t:"Panadería básica", inst:"ICATECH Tapachula", est:"en curso", g:"G-2026-018" } ] },
+    "0658": { reg:{ sexo:"Mujer", tel:"+52 962 145 6603", dom:"Col. Solidaridad 2000, Tapachula", mun:"Tapachula",
+                    ingreso:"2025-12-20", permanencia:"" },
+              fam:null,
+              cursos:[ { t:"Corte y confección", inst:"ICATECH Tapachula", est:"inscrita, inicia el 07/09/2026", g:"G-2026-021" } ] },
+    "0201": { reg:{ sexo:"Mujer", tel:"+52 962 118 2290", dom:"Ejido Viva México, Tapachula", mun:"Tapachula",
+                    ingreso:"", permanencia:"" },
+              salud:{ enf:false, f:"2026-06-12" },
+              fam:[ { n:"Kevin Roblero Pérez", p:"Hijo", e:12, mun:"Tapachula" },
+                    { n:"Ximena Roblero Pérez", p:"Hija", e:15, mun:"Tapachula" } ],
+              cursos:[ { t:"Panadería básica", inst:"ICATECH Tapachula", est:"en curso", g:"G-2026-018" },
+                       { t:"Cocina económica", inst:"ICATECH Tapachula", est:"acreditado", g:"2025" } ] },
+    "0435": { reg:{ sexo:"Mujer", tel:"+52 962 290 1164", dom:"Col. Indeco Cebadilla, Tapachula", mun:"Tapachula",
+                    ingreso:"2025-03-02", permanencia:"Indefinida" },
+              fam:[ { n:"Mauricio Hernández Ruiz", p:"Cónyuge", e:33, mun:"Tapachula" } ],
+              salud:{ enf:true, control:false, f:"2026-08-02" },
+              cursos:[ { t:"Panadería básica", inst:"ICATECH Tapachula", est:"en curso", g:"G-2026-018" } ] }
+  };
+  function expEmpleo(folio) { return EXP_EMPLEO[folio] || null; }
+
+  /* ------------------------------ Altas rápidas desde Empleabilidad -----
+     22/09/2026. Una persona que llega solo por empleo se registra primero
+     (expediente único) con el alta rápida de Registro, y vuelve a
+     Empleabilidad. Sin servidor, el alta se guarda en el navegador y se
+     suma aquí al expediente común, para que el cuestionario la lea como a
+     las demás. «Limpiar datos de prueba» las borra.                      */
+  var LLAVE_ALTAS = "SIAMH_ALTAS_EMPLEO";
+  function altasEmpleo() {
+    try { return JSON.parse(localStorage.getItem(LLAVE_ALTAS) || "[]"); } catch (e) { return []; }
+  }
+  function agregaAltaEmpleo(a) {
+    var l = altasEmpleo().filter(function (x) { return x.e !== a.e; });
+    l.push(a);
+    try { localStorage.setItem(LLAVE_ALTAS, JSON.stringify(l)); } catch (e) { /* sin persistencia */ }
+  }
+  function folioAltaEmpleo() {
+    var n = 800 + altasEmpleo().length + 1;
+    return ("000" + n).slice(-4);
+  }
+  altasEmpleo().forEach(function (a) {
+    EXP_EMPLEO[a.e] = { reg:{ sexo:a.sexo, tel:a.tel, dom:a.dom, mun:a.mun, ingreso:a.ingreso,
+                              permanencia:a.permanencia }, fam:null, cursos:null };
+  });
+
   global.DATOS = {
     HOY:HOY, dt:dt, fecha:fecha, hora:hora, fechaHora:fechaHora,
     horas:horas, dias:dias, horasTxt:horasTxt, edad:edad, plural:plural,
     YO:YO, DIRECTOR:DIRECTOR, PERS:PERS,
     persona:persona, activos:activos, corto:corto,
     NIVELES:NIVELES, MOT_NEG:MOT_NEG, REVAL:REVAL, negAbierta:negAbierta,
+    EXP_EMPLEO:EXP_EMPLEO, expEmpleo:expEmpleo,
+    altasEmpleo:altasEmpleo, agregaAltaEmpleo:agregaAltaEmpleo, folioAltaEmpleo:folioAltaEmpleo,
 
     /* Catálogos de captura compartidos */
     PAISES:PAISES, paisesPlanos:paisesPlanos, ESCOLARIDAD:ESCOLARIDAD,

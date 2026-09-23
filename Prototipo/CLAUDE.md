@@ -66,7 +66,25 @@ Atajos de revisión implementados en las páginas: `registro.html?paso=3` (y `?p
 `canalizaciones.html?o=BOR-0034` (y `?o=0942`, `?o=0938`, `?o=0943`, `?o=0944`, `?nuevo=1`,
 `?nuevo=modificacion`, `?nuevo=educacion&caso=r2`), `revalidacion.html?r=r1` (y `?r=r2`),
 `documentacion.html?d=0410`, `constancias.html?c=0410` (y `?c=0203`, `?sop=carta`),
-`index.html?mun=Suchiate`.
+`index.html?mun=Suchiate`, `capacitacion.html?g=025` (grupo programado), `administracion.html?tab=datos`.
+`registro.html?origen=empleo` abre el alta rápida para Empleabilidad (regresa con `empleabilidad.html?e=0801&alta=1`).
+En cualquier pantalla, `?cuenta=luis.ramirez` (o `maria.gomez`, `jorge.pineda`,
+`ruben.castellanos`) entra con esa cuenta de demostración: la sesión y la sede ya no están escritas
+en el chrome, salen de `SIMH.sesion()`.
+
+**Modo sin datos de prueba.** Administración › Datos de prueba lo activa (`SIMH.sinDatos()`); cada
+módulo, justo después de `SIMH.chrome()`, pinta `SIMH.vacioModulo()` y termina. Una pantalla nueva
+debe hacer lo mismo. **Folios:** la serie de oficios es una sola (`SIMH.folioOficio()`,
+`SIMH.refBorrador()`); no escribir contadores locales.
+
+**Documentos oficiales.** Toda vista previa de oficio se dibuja con `SIMH.hojaSFS()` (hoja carta con
+el membrete real de «Recursos y plantillas») y se pagina con `SIMH.paginar()` después de insertarla
+en el DOM. Los oficios que tienen formato en la carpeta usan su texto literal (`SIMH.plantillaSFS`).
+No volver a `.oficio-hoja` para documentos nuevos. El Excel de Empleabilidad se arma con la
+plantilla original (`assets/js/plantilla-solicitantes.js`, generado del .xlsx; no editar a mano) y
+`SIMH.zip()`. Para imprimir o guardar PDF de cualquier documento se usa `SIMH.imprimir(html)`, que
+imprime solo el documento a tamaño carta. La Solicitud de Empleo SNE vive en
+`assets/js/solicitud-empleo.js` (`SNE.abrir`) y Empleabilidad le pasa lo precargado.
 
 ## Arquitectura
 
@@ -200,11 +218,16 @@ Estas se dedujeron corrigiendo el prototipo y están documentadas en `AVANCES.md
   está acompañando ese trámite o el de la tarjeta migratoria, **la marca de acompañamiento va en la
   cabecera de la persona**, no dentro de una pestaña: si no se ve, en la ventanilla se vuelve a pedir
   el papel que la propia Secretaría está gestionando.
-- **La educación básica no se revalida: se inscribe.** Una niña o un niño se matricula aunque no
-  traiga documentos y la escuela regulariza el expediente después (Acuerdo 286 de la SEP). Por eso el
-  módulo de revalidación no le pide requisitos a la básica: registra la **negativa de atención**, que
-  es el hecho que sí existe. Y una negativa sin fecha, institución, motivo de catálogo y qué se hizo
-  no es reclamable: para la autoridad no ocurrió.
+- **Revalidación trabaja con una lista de cotejo, no con reglas por nivel.** Desde el 22/09/2026 la
+  Dirección retiró el "principio de no revalidación en básica" de la interfaz y de la lógica: los tres
+  niveles se registran igual, marcando si la persona **presenta o no presenta** cada documento, y el
+  formulario se segmenta por **escuela pública o privada** y nivel, con sus trámites asociados. Lo que
+  sigue vigente: una negativa sin fecha, institución, motivo de catálogo y qué se hizo no es
+  reclamable: para la autoridad no ocurrió.
+- **Hay módulos restringidos por sede.** Revalidación solo está habilitada para la Secretaría de la
+  Frontera Sur (Tapachula), las oficinas de Tuxtla y el Superadmin. La regla está una sola vez en
+  `simh.js` (`MOD_SEDE`, `SIMH.accesoSede`) y la leen el menú, la pantalla y la matriz de
+  Administración; no se duplica en otra parte.
 - **Una fecha puede ser aproximada, y entonces la edad es un intervalo.** El alta captura la
   precisión (día, mes y año, solo el año, o edad declarada). **Cuando el intervalo cruza los 18 rige
   la presunción de minoría de edad**: se clasifica como NNA hasta que un documento diga otra cosa,
@@ -226,6 +249,8 @@ Estas se dedujeron corrigiendo el prototipo y están documentadas en `AVANCES.md
   plazo legal, no el número de marcadores.
 - **Aislamiento estricto entre direcciones** (RNF01): Salud no lee Empleo. Se muestra que el módulo
   existe (con candado), no su contenido.
+  Única excepción (22/09/2026): Salud comparte con Empleo **solo sí/no** (hay condición registrada,
+  lleva control médico) para el cuestionario de personas empleadas; nunca diagnóstico ni código.
 - **El capturista municipal no edita ni cierra expedientes** (RNF02): requiere oficio y autorización
   del Director de Área. Los permisos se muestran explícitamente, no se ocultan.
 - Meta de captura: **menos de 5 minutos por persona** (RNF04); por eso el alta prioriza teclado,

@@ -1111,6 +1111,244 @@ existe en el catálogo**, que es la que habría atrapado el error de Yordanis; y
 —agrupación, E.164, mensajes de "faltan/sobran N dígitos", revaluación al cambiar de país,
 normalización de lo que se escriba a mano y el vacío como caso válido—. Las 40 pasan.
 
+### 4.23 Lo que pidió la Dirección el 22/09/2026 · plan de mejoras y cambios pendientes
+
+Fuente: `Recursos y plantillas/SIAMH_Plan_de_Mejoras_y_Cambios_Pendientes.docx`, que resume la reunión.
+Tiene tres bloques: Atención Educativa (2.1–2.3), Capacitación (3.1–3.3) y Datos y Empleabilidad
+(4.1–4.2). Todo está aplicado salvo lo que depende de la Dirección: los datos reales (4.1) y la
+corrección de la plantilla de Excel (4.2), para la que aquí queda la auditoría.
+
+**2.1 Nombre de la sección.** *"Negativas de Atención y Barreras en Planteles"* pasó a
+**"Barreras de atención y en centros educativos"**. La tarjeta de negativas también dejó de decir
+"planteles": *"Negativas de atención en centros educativos"*.
+
+**2.2 Flujo de revalidación depurado.**
+
+- Se retiró el **principio de no revalidación en básica** de la interfaz (el aviso de la ficha y el
+  apartado del plegable normativo) **y de la lógica**: `NIVELES` ya no lleva la bandera `revalida`
+  ni en `revalidacion.html` ni en `simh-datos.js`. Canalizaciones, que la usaba para redactar el
+  asunto, ahora lo decide por el nivel.
+- Se quitaron las columnas **"Quién lo emite"** e **"Impacto legal"**.
+- La tabla de cuatro estados (reunido · en trámite · falta · no aplica) pasó a una **lista de cotejo
+  de dos**: *Presenta* / *No presenta*. Un segundo clic desmarca, para corregir un error. Los casos
+  capturados antes se convierten solos: *reunido* → presenta; *en trámite* y *falta* → no presenta
+  (el papel no está en la mano); *no aplica* → sin marcar.
+- El formulario se **segmenta por tipo de escuela**: sostenimiento (**pública / privada**) y nivel.
+  Cambian los documentos (la privada pide carta de no adeudo) y los **trámites asociados**, que
+  tienen su propia lista de *Realizado / Pendiente* (la privada agrega verificar su incorporación o
+  RVOE; la pública, el alta en control escolar).
+- **Duplicados depurados:** el botón "Buscar otro estudiante" del encabezado repetía "Cambiar
+  estudiante / Buscar"; "Ver canalizaciones" estaba en la cabecera del caso y en la tarjeta del
+  oficio. Se dejó uno de cada uno.
+- **Observaciones** (texto libre, opcional) en el registro de negativas; se muestra en el historial.
+- **Asunto libre:** el `<select>` de seis asuntos es ahora un campo de texto. Los atajos "→ Cargar
+  en oficio" lo siguen llenando, y lo escrito sobrevive al repintado de la tarjeta.
+
+Errores corregidos de paso: **"Descartar" no descartaba**, solo apagaba el aviso de cambios sin
+guardar; ahora restaura lo último guardado. Y un caso nuevo leía `per.edad`, que no existe en el
+catálogo: toda persona sin caso caía en *superior*. Ahora la edad sale de la fecha de nacimiento.
+
+**2.3 Restricción por sede.** La regla vive **una sola vez** en `simh.js` (`MOD_SEDE`,
+`accesoSede()`, `sedesDe()`) y la leen tres sitios: el **menú** no dibuja la entrada, la **pantalla**
+enuncia la regla si se llega por URL (con salida a Canalizaciones) y la **matriz de Administración**
+muestra un sexto estado de celda, *"Sin acceso: sede no habilitada"*, con la sede de cada cuenta.
+Revalidación queda habilitada para **Secretaría de la Frontera Sur · Tapachula**, **Oficinas
+centrales · Tuxtla Gutiérrez** y para el **Superadmin** desde cualquier sede.
+
+Para que la regla se pudiera ver hubo que dejar de tener la sesión escrita a mano en el chrome: hay
+**cuatro cuentas de demostración** (`SIMH.CUENTAS`) —ventanilla de Tapachula, Director en la
+Secretaría, Superadmin en Tuxtla y brigadista de Suchiate—. El **login** elige la cuenta por el
+usuario que se escribe, el **menú de cuenta** permite cambiarla y `?cuenta=luis.ramirez` es el
+atajo de revisión. `DATOS.YO` en `simh-datos.js` ahora sale de la sesión, y sus permisos del rol
+(solo el Director firma; la ventanilla no exporta).
+
+**3.1 Grupos por temporada.** `capacitacion.html` tiene **temporadas** (`TEMPORADAS`) con periodo
+de registro, inicio de cursos y **límite de atención**. Un plegable arriba del grupo las enumera
+con su estado (*Programada · Registro abierto · En atención · Concluida*) y permite **programar
+una nueva**, con validación de fechas. El alta de grupo elige temporada y propone sus fechas; no
+deja registrar fuera del periodo ni concluir después del límite. Nació el estado de grupo
+**Programado**: la inscripción aún no abre, así que no se dibuja "Agregar participante" y el
+calendario dice cuándo abre. Hay uno de ejemplo, `?g=025` (Electricidad básica, invierno).
+
+Error latente corregido: el formulario de nuevo grupo llamaba a `suma()`, que **no existía**;
+abrir "Abrir nuevo grupo ICATECH" lanzaba `ReferenceError` y el panel no aparecía.
+
+**3.2 Simulador de oficios.** Tarjeta *"Oficios del grupo · simulador"* con cuatro tipos (apertura
+de grupo, espacio o aula, lista para acreditación y libre) que proponen destinatario, asunto y
+cuerpo desde los datos del grupo, con **vista previa en vivo**. Recorre el ciclo real:
+**borrador con referencia `BOR-####` → a firma → firma → folio → emitido**, y un emitido se
+**cancela** conservando su folio (RNF03). La firma está **simulada** y así se rotula. Al firmar,
+el oficio se registra para que aparezca en Canalizaciones.
+
+La serie de folios pasó a ser **una sola** (`SIMH.folioOficio()`, `SIMH.refBorrador()`,
+persistidas): Revalidación tenía su propio contador desde 950 y el simulador habría repetido
+folios. De paso, la vista previa de Revalidación ya no anuncia un folio antes de la firma. `.o-sello`
+subió a `simh.css` §22 (tercer consumidor).
+
+**3.3 Constancia de registro automática.** Al inscribir a alguien en un grupo, la constancia
+(`CI-####/2026`) se **envía sola** al medio que dio: WhatsApp o correo, según su preferencia. El
+aviso muestra el mensaje y un enlace real (`wa.me` o `mailto:`) para mandarlo a mano mientras no
+exista la integración (WhatsApp Business o correo institucional): **el envío automático está
+simulado**. Sin teléfono ni correo, se dice y se ofrece imprimirla. Cada fila muestra si la
+constancia se envió y permite reenviarla.
+
+**4.1 Poblar / limpiar.** Nueva pestaña **Administración › Datos de prueba** (`?tab=datos`). Solo
+el Superadmin limpia o puebla, porque afecta a todas las pantallas y cuentas. **Limpiar no borra
+nada**: guarda el modo (`SIMH.sinDatos()`) y cada uno de los doce módulos, al arrancar, pinta un
+estado vacío con su explicación y una salida útil (`SIMH.vacioModulo`); la barra superior dice
+*"Sin datos de prueba"*. Se conservan cuentas, catálogos y bitácora; se descartan los oficios y
+folios generados en pruebas. **Lo que no se pudo hacer: cargar los datos reales**, porque no se han
+entregado. Y el prototipo no persiste lo que se captura en el alta, así que "recorrer el flujo sin
+datos" llega hasta el registro; el resto necesita el backend.
+
+**4.2 Auditoría de la matriz de empleabilidad.** `BASE_REGISTRO DE SOLICITANTES DE TRABAJO.xlsx`
+es una **plantilla sin registros**: una hoja, 25 columnas en cinco grupos con celdas combinadas,
+50 renglones numerados y **ninguna validación de datos**. Contra lo que ya captura Empleabilidad:
+
+| Columna del Excel | Hallazgo | Propuesta |
+|---|---|---|
+| NOMBRE | Un solo campo | Nombre(s), primer y segundo apellido: la búsqueda de duplicados y la CURP los necesitan separados |
+| NACIONALIDAD · ÚLTIMO GRADO DE ESTUDIOS | Texto libre | Lista desplegable con los catálogos del sistema (50 países; escolaridad con la trunca por nivel), o no se podrán importar |
+| EDAD | Se deriva de la fecha de nacimiento | Quitarla: capturar las dos es invitar a que no coincidan |
+| DOMICILIO ACTUAL | Un solo campo | Separar al menos **municipio**: es el filtro de todas las carteras |
+| TELÉFONO | Sin clave de país | Agregar clave de país (el sistema guarda E.164) y **medio preferido** (WhatsApp / correo), que usa la constancia de 3.3 |
+| RFC · IMSS | Solo el valor | Renombrar IMSS a NSS y agregar su estado (tiene · en trámite · no aplica): son opcionales al inicio |
+| ¿CUÁNTO TIEMPO LABORÓ AHÍ? | Texto libre | Número y unidad (meses/años) |
+| ¿TIENE ALGUNA DISCAPACIDAD? | Dato de Salud | Decidir si Empleabilidad lo captura o lo consulta con consentimiento (RNF01 aísla Salud de Empleo) |
+| PROGRAMA DE ASISTENCIA SOCIAL | No existe en el sistema | Agregar el campo (y cuál programa) si la Dirección lo quiere en el expediente |
+| DOCUMENTOS CON LOS QUE CUENTA · QUE LE FALTAN | La segunda se deduce de la primera | Una lista de cotejo presenta / no presenta, como la de Revalidación |
+| EMPRESA A LA QUE SE VINCULARÁ | Una sola empresa | En el sistema una persona tiene **varias vinculaciones** con etapa; el Excel pierde el historial |
+
+**Le faltan al Excel** campos que el sistema ya exige o usa: sexo o género, **estatus migratorio y
+documento de estancia con vigencia** (decide si se puede contratar), si cuenta hoy con empleo,
+dominio del español y lengua, disponibilidad de turno y de traslado, sector de interés, fecha de
+registro y quién capturó, **aviso de privacidad aceptado**, y todo el **seguimiento** (postulación,
+entrevista, contratación y verificaciones de 15 y 30 días). Para importarlo tal cual, además,
+debería tener **un solo renglón de encabezados sin celdas combinadas**.
+
+**Verificación.** Sintaxis de las quince páginas y de los dos `.js` compartidos; capturas de
+Revalidación (con y sin sede), la matriz de Administración, Capacitación (grupo en conformación,
+grupo programado, simulador) y el modo sin datos (censo y Administración). Pruebas sobre el DOM real
+con Edge sin interfaz: **31 en Capacitación** (temporadas, validación de fechas, grupo programado,
+envío por WhatsApp y correo, persona sin contacto, ciclo completo del oficio con folio consecutivo y
+cancelación), **14 en Revalidación** y la carga de los **12 módulos en modo vacío sin errores**. Las
+pruebas encontraron dos fallas antes de la entrega: un `\n` literal que rompía por completo
+Administración y un aviso de error oculto que se dibujaba igual (`.aviso` pisaba el atributo
+`hidden`; se corrigió en `simh.css` para todo el sistema).
+
+### 4.24 Ajustes del 22/09/2026 (segunda ronda) · barreras, capacitación, formatos oficiales y Excel
+
+**Revalidación.** Se quitó la advertencia *"N problemáticas detectadas en el acceso educativo"*. En
+toda la pantalla **"negativa" pasó a "barrera"** (registrar, guardar, historial, aviso sin reclamar).
+El registro de barreras **dejó de ser una tarjeta aparte**: vive dentro de *Diagnóstico de Barreras
+y Problemáticas Educativas*, debajo de las casillas, porque es el mismo hecho visto como historial.
+
+**Capacitación.** Los asteriscos de obligatorio se veían corridos porque la pantalla tenía su propia
+clase `.req` (los renglones de *Requisitos para acreditar*) que pisaba el marcador del sistema; pasó
+a `.req-fila`. El módulo **dejó de estar atado a ICATECH**: dice *grupo de capacitación*, la
+acreditación es de "la institución que imparte el curso", la clave es opcional y sin prefijo. La
+**sede** es catálogo con **"Otra sede (especificar)"** (regla única de 'Otro') y el **cupo máximo es
+libre** (número mayor que cero). ICATECH queda solo como nombre de algunas sedes.
+
+**Formatos oficiales.** Todas las vistas previas de oficios usan ahora el **formato de «Recursos y
+plantillas»**: `SIMH.hojaSFS()` dibuja una hoja carta con el **membrete real** —generado desde la
+plantilla de Word con el cuerpo vacío (`assets/img/membrete-sfs.jpg`)— y encima la composición del
+formato (Arial 12, folio/lugar/fecha y asunto a la derecha, destinatario en negritas, cuerpo
+justificado, *Atentamente*, firma del Subsecretario y C.c.p.). `SIMH.paginar()` pasa a la hoja
+siguiente lo que no cabe, como Word, y un clic en la hoja la abre a tamaño carta. Los tres oficios
+con plantilla usan su **texto literal** (`SIMH.plantillaSFS`): *Oficio a Centro de Salud* (Salud y
+canalizaciones a salud), *NNA no acompañado* (llena nombre y nacionalidad) y *Atención a Familia*,
+que se agregó como plantilla nueva en Canalizaciones. Revalidación, Capacitación y el resto de
+plantillas de Canalizaciones conservan su cuerpo sobre el mismo membrete. De paso se estilizó
+`.btn-colapsar-maestro`, que se usaba sin estar definido y dibujaba una flecha de 150 px.
+
+**Excel de Empleabilidad.** *Exportar a Excel* abre un panel con las **25 columnas del formato
+marcadas por omisión** y **17 campos adicionales del sistema** (folio, municipio, documento de
+estancia y vigencia, empleo actual, aspiración, etapa, sector, fechas, verificaciones de 15 y 30
+días, cursos, responsable…). El archivo es un `.xlsx` real armado con **la propia plantilla**
+(`assets/js/plantilla-solicitantes.js`, generado del original: estilos, colores, textos y anchos):
+mismo título, mismos cinco grupos, 50 renglones numerados; los campos extra salen en el grupo
+*Información del sistema*. Se arma sin bibliotecas con `SIMH.zip()`. La cartera no guardaba varios
+datos que el formato pide (fecha de nacimiento, domicilio, contacto, último empleo, sueldo,
+discapacidad, programas sociales): se agregaron a las ocho personas de ejemplo.
+
+**Verificación.** Sintaxis de las quince páginas; capturas de Revalidación, Canalizaciones (oficio NNA
+en dos hojas), Salud y el formulario de Capacitación; prueba del formulario (sede "Otra", cupo 25,
+grupo creado); el Excel generado **se abrió con Excel** en sus dos variantes (formato y formato +
+3 campos − IMSS): sin reparaciones, 25 y 27 columnas, celdas combinadas y colores del formato.
+
+**No cubierto:** *Solicitud de entrevista* (COMAR), *Aviso de privacidad*, *Cuestionario de personas
+empleadas* y la *Solicitud de empleo del SNE* no tienen hoy pantalla que los previsualice; quedan
+listos para agregarse con `SIMH.hojaSFS`. La constancia de registro conserva su diseño (no hay
+formato en la carpeta).
+
+### 4.25 Aviso de privacidad, cuestionario de personas empleadas y Solicitud de Empleo SNE (22/09/2026)
+
+**Aviso de privacidad** (Registro de Persona, paso 6). Botón *Ver e imprimir aviso de privacidad*:
+formato de «Recursos y plantillas» sobre el membrete oficial, con el nombre capturado en el paso 2 y la
+fecha; firma o huella a mano. Solo se imprime o se guarda como PDF (`SIMH.imprimir`, que imprime
+únicamente el documento a tamaño carta). El formato original habla del *Censo a Negocios*; para el
+alta se ajustó esa frase a *su registro en el SIAMH* y el correo al de la Subsecretaría
+(`movilidad.humana@`). Ver §5.3.
+
+**Cuestionario de personas empleadas.** Se revisó el formato contra Empleabilidad: el diagnóstico
+cubría nombre, edad, nacionalidad, estatus migratorio, CURP/RFC/NSS, escolaridad e interés en
+capacitarse, y el negocio y la fecha de inicio solo cuando la colocación la hizo la Secretaría.
+**Faltaban** sexo, teléfono, domicilio, documentos TRP/TVTF y "otro documento", capacitación recibida
+(en qué y quién), cómo se enteró del empleo, tiempo viviendo en el municipio, familia ahí, si planea
+establecerse, hijos en edad escolar y enfermedad/control médico. Se agregó la tarjeta *Cuestionario de
+persona en contexto de movilidad empleada* en la pestaña Diagnóstico, con el orden y la redacción del
+formato y precargada con lo que ya había. La enfermedad es autodeclarada: Empleabilidad no lee Salud
+(RNF01).
+
+**Cuestionario: extraer antes de preguntar** (misma fecha, segunda indicación). El cuestionario ya no
+pide lo que el sistema tiene: cada pregunta busca su respuesta en su módulo —Registro de Persona (sexo,
+teléfono, domicilio, tiempo desde el ingreso a México, permanencia estimada → ¿planea establecerse?),
+Expediente Familiar (familia en el municipio, hijos en edad escolar), Capacitación (cursos en curso y
+acreditados), la vinculación vigente (negocio, fecha de inicio, cómo se enteró) y los requisitos
+(TRP, TVTF, RFC, CURP, NSS)— y la muestra con su fuente en **"Ya en el sistema"**, con botón
+*Corregir*. Solo lo que no existe aparece en **"Falta preguntar"**. Lo corregido se marca *Corregido
+en ventanilla* y alimenta el Excel y la Solicitud SNE. Para que los módulos compartan esos datos se
+agregó `D.EXP_EMPLEO` / `D.expEmpleo()` en `simh-datos.js` (el expediente único de la población de
+Capacitación y Empleabilidad); teléfono, domicilio y sexo salieron de la tabla local de Empleabilidad
+para no tenerlos dos veces. Resultado: Yesenia 12 de 13 extraídas (solo se pregunta salud); Suyapa 6
+de 13 (no tiene grupo familiar ni permanencia registrada). La enfermedad siempre se pregunta (RNF01).
+
+**Solicitud de Empleo SNE.** Botón *Generar solicitud de empleo* en la cabecera de la persona. Abre
+formulario a la izquierda (12 secciones, ~190 campos del formato) y **vista previa en vivo** a la
+derecha con la réplica de las dos hojas del SNE (franjas amarillas, etiquetas cafés, cajas de CURP y
+RFC, foto, firma). Lo que el sistema ya sabe se precarga y se marca *del expediente* (32 campos en el
+caso de Yesenia); lo demás se pregunta. *Guardar en el expediente* conserva lo capturado y *Imprimir o
+guardar PDF* saca las dos hojas carta. Vive en `assets/js/solicitud-empleo.js` (`SNE.abrir`).
+
+**Verificación.** Pruebas sobre el DOM real (cuestionario precargado, solicitud con 2 hojas y 32 campos
+del expediente, vista previa en vivo, aviso con el nombre del paso 2) y **PDF generado por el motor de
+impresión** de Edge para la solicitud y el aviso: salen a tamaño carta, en 2 hojas y 1 hoja, iguales a
+la vista previa. Se corrigió en el camino un choque de nombres (`sel`) que rompía la pestaña.
+
+### 4.26 Alta rápida para Empleabilidad (22/09/2026)
+
+Una persona que llega solo por empleo **se registra primero** (el expediente es único), pero sin
+salir del flujo de empleo:
+
+1. Empleabilidad tiene el botón **Registrar y atender**; y si la búsqueda de la cartera no encuentra a
+   nadie, ofrece **Registrar y atender en Empleabilidad** con el nombre buscado.
+2. Registro abre en **modo rápido** (`registro.html?origen=empleo`): aviso de qué se está haciendo,
+   campos del ejemplo en blanco, el nombre buscado ya repartido en nombre y apellidos, y **sin el paso
+   de fotografía** (el único sin campos obligatorios): Identificación › Datos generales › Movilidad ›
+   Contacto › Revisión, con aviso de privacidad y consentimiento.
+3. Al guardar, el cierre ofrece como acción principal **Continuar en Empleabilidad**, que abre a la
+   persona seleccionada en la pestaña Diagnóstico con el acuse *"Expediente … creado en Registro"*.
+4. El cuestionario ya extrae lo que capturó Registro (sexo, teléfono, domicilio, tiempo desde el
+   ingreso, permanencia) y **solo pregunta el resto**.
+
+Sin servidor, el alta se guarda en el navegador (`D.altasEmpleo()`, `SIAMH_ALTAS_EMPLEO`) y se suma al
+expediente común (`D.expEmpleo`). Con los **datos de prueba limpios**, Empleabilidad muestra solo a las
+personas dadas de alta así, lo que permite recorrer el flujo real desde cero; *Limpiar datos de
+prueba* también las borra. Se corrigió de paso que `pendiente()` fallaba con una persona sin ninguna
+vinculación. Verificado de punta a punta con el mismo perfil de navegador en las dos pantallas, con
+datos de prueba y sin ellos.
+
 ### 4.8 Correcciones técnicas ya aplicadas
 
 - Barras horizontales sin relleno (`span` inline sin `display:block`).
@@ -1250,6 +1488,30 @@ siguiente:
   que convertir esa escritura en una canalización. Se asume lo segundo, que es lo que de verdad acopla
   los dos módulos.
 
+- **Qué sedes habilitan Revalidación (22/09/2026).** El documento dice *"las sedes de la
+  Secretaría de la Frontera y Tuxtla como los administradores"*. Se leyó como: la oficina de la
+  Secretaría en Tapachula, las oficinas centrales de Tuxtla y el rol Superadmin desde cualquier sede;
+  las **ventanillas municipales quedan fuera**, incluida la de Tapachula. Si la ventanilla de
+  Tapachula también debe entrar, es agregar `vent_tap` a `MOD_SEDE.revalida` en `simh.js`.
+- **"En trámite" en la lista de cotejo.** Al pasar a presenta / no presenta, un documento que estaba
+  *en trámite* cuenta como **no presenta**. Si la Dirección quiere distinguirlo, es un tercer estado,
+  y eso es justo lo que el documento pidió quitar.
+- **Integración real de las constancias por WhatsApp y correo.** El envío automático está simulado.
+  Hace falta decidir el proveedor (WhatsApp Business API o correo institucional) y el texto aprobado
+  del mensaje.
+- **Datos reales (4.1) y plantilla de empleabilidad (4.2).** El control para poblar y limpiar ya
+  existe, pero la información real no se ha entregado y la plantilla de Excel llegó vacía. La
+  auditoría de §4.23 lista qué columnas cambiar antes de llenarla.
+
+- **Texto del aviso de privacidad del alta.** El formato entregado es el del *Censo a Negocios* (habla
+  de negocios y usa `empleabilidad.capacitacion@`). Para el registro de personas se cambió esa frase por
+  el registro en el SIAMH y el correo por el de la Subsecretaría. Confirmar el texto que debe llevar.
+
+- **Dato mínimo de Salud hacia Empleo (22/09/2026).** RNF01 dice que Salud no lee Empleo y viceversa. Para
+  no volver a preguntar la enfermedad en el cuestionario de personas empleadas, Salud comparte con Empleo
+  únicamente **sí/no** (hay condición registrada, lleva control médico), sin diagnóstico. Confirmar con la
+  Dirección que esta excepción mínima es aceptable; si no, basta quitar el caso `salud` de `derivaCq`.
+
 ---
 
 ## 6. Bitácora de correcciones solicitadas
@@ -1277,6 +1539,13 @@ siguiente:
 
 | 17 | 15/09/2026 | `assets/js/simh-datos.js`, `assets/js/simh.js`, `assets/css/simh.css`, `registro.html`, `empleabilidad.html`, `expedientes.html` | Aplicar `SIAMH_Especificacion_de_Mejoras_y_Requerimientos.docx` (21 requerimientos en cinco módulos más la regla transversal de campos 'Otro'). | **Parcial** — bloques 1 a 3 de 7 aplicados | Ver 4.22 y 5.4. La **regla §3 de 'Otro' se escribió una sola vez** (`SIMH.activarOtro`, `valorOtro`, `textoOtro`, marcado declarativo `data-otro`, idempotente para pantallas que repintan por `innerHTML`), en vez de repetirla en los siete campos que la usan. Los **catálogos bajaron a `simh-datos.js`**: países (de 8 a 50, agrupados, con los de mayor flujo al frente), escolaridad **única y con la trunca explícita por nivel** —requisito del autollenado a Empleabilidad—, etnias, lenguas (dejó de ser texto libre), motivos de migración con *Motivos económicos*, estatus con *Por razones humanitarias* y *Con amparo*, sectores con *Servicio al cliente* y *Belleza y cuidado personal*, y las claves LADA. Dos errores latentes corregidos: el aviso de estatus estaba indexado por el texto de la opción y **habría pintado `undefined`** con los estatus nuevos, y el filtro de nacionalidad de Expedientes no ofrecía países que el alta sí registraba, dejando esas personas **imposibles de encontrar**. Verificado con capturas y con un banco de **20 pruebas sobre el DOM real**, todas pasan. Lo que falta está en §5.4 con su orden; tres puntos abiertos quedaron en §5.3 (tachaduras del historial telefónico contra RF03, regla de 3 asistencias contra el 80 %, alcance de separar Capacitación). **Bloque 2 (2.1 y 2.2):** la escolaridad se captura **una sola vez** —el nivel vive en el registro general y Empleabilidad solo lo detalla (área, institución, año, documento que lo acredita); corregirlo desde Empleabilidad corrige el expediente único, no una copia—, y "Situación laboral actual" se separó en los dos campos que pide el documento, porque mezclados **no dejaban registrar a quien sí tiene empleo y quiere cambiarlo**, que es la mitad de la cartera de RF12. Al hacerlo se destapó que tres personas tenían escolaridades que no existen en el catálogo y que un `<select>` sin coincidencia hacía aparecer a un técnico en soldadura con catorce años de oficio como **"Sin instrucción formal"**; la cura fue separar nivel de especialidad. El banco de pruebas subió a **27**, incluida la que habría atrapado ese error. **Bloque 3 (1.6 y 1.7):** el contacto se separó en **residencia** y **país de origen**, con catálogo de relación propio —deliberadamente más amplio que el parentesco directo de RF05, porque a quien se llama en origen suele ser una tía o una vecina y restringirlo obligaría a escribir un parentesco falso—; y el teléfono pasó a ser **componente** (`SIMH.activarTelefono`) con clave internacional, formato, E.164 y una validación que dice **cuántos dígitos faltan o sobran para el país elegido** en vez de un genérico "número inválido". Se saldó de paso el riesgo que el análisis había señalado: `nuevaAlta()` limpiaba el teléfono por un selector que este mismo bloque acababa de renombrar, y habría heredado el número de la persona anterior al siguiente expediente en silencio. La captura obligatoria atrapó dos desbordes de layout —el número recortado a `962 118` y una etiqueta a dos renglones que descuadraba su columna—. Banco de pruebas en **40**. La **cámara web queda solo declarada** por decisión de la Dirección: `getUserMedia` no funciona con `file://`. |
 
+| 18 | 22/09/2026 | `revalidacion.html`, `capacitacion.html`, `administracion.html`, `canalizaciones.html`, `login.html`, los doce módulos (modo vacío), `assets/js/simh.js`, `assets/js/simh-datos.js`, `assets/css/simh.css` | Aplicar `SIAMH_Plan_de_Mejoras_y_Cambios_Pendientes.docx` (reunión del 22/09/2026): educación (2.1–2.3), capacitación (3.1–3.3) y datos y empleabilidad (4.1–4.2). | **Aplicado**, salvo la carga de datos reales, que depende de la Dirección | Ver 4.23. Sección renombrada; fuera el principio de no revalidación (interfaz y lógica) y las columnas "Quién lo emite" e "Impacto legal"; **lista de cotejo presenta / no presenta** segmentada por **escuela pública o privada** y nivel, con sus trámites asociados; Observaciones en negativas; Asunto libre; duplicados retirados. **Revalidación solo para la Secretaría, Tuxtla y Superadmin**, con la regla escrita una vez en `simh.js` y visible en menú, pantalla y matriz; para verla hay cuatro cuentas de demostración y selector de cuenta. Capacitación: **temporadas** con periodo de registro y límite de atención, estado **Programado**, **simulador de oficios** con folio al firmar y serie única, y **constancia de registro enviada sola** por WhatsApp o correo (simulada, con enlace real). **Poblar / limpiar datos de prueba** en Administración con estado vacío en los doce módulos. Auditoría de la plantilla de Excel (vacía) con propuesta de columnas. Errores latentes corregidos: "Descartar" no descartaba, `suma()` inexistente impedía abrir un grupo nuevo, `per.edad` inexistente, `.aviso` ignoraba `hidden`. 31 + 14 pruebas sobre el DOM real y los 12 módulos en modo vacío, sin fallas. |
+
+| 19 | 22/09/2026 | `revalidacion.html`, `capacitacion.html`, `canalizaciones.html`, `salud.html`, `empleabilidad.html`, `assets/js/simh.js`, `assets/js/plantilla-solicitantes.js` (nuevo), `assets/img/membrete-sfs.jpg` (nuevo), `assets/css/simh.css` | Quitar la advertencia de problemáticas y cambiar "negativas" por "barreras" subiendo su registro al diagnóstico; en Capacitación corregir asteriscos, desligar de ICATECH, sede con "Otro" y cupo libre; vistas previas idénticas a «Recursos y plantillas»; Excel de Empleabilidad con el formato de la Dirección y campos adicionales a elegir. | **Aplicado** | Ver 4.24. Membrete real generado desde la plantilla de Word, textos literales de los tres oficios, paginación como Word; `.xlsx` construido con la plantilla original y verificado abriéndolo en Excel. Pendiente: pantallas para los cuatro formatos que hoy no tienen vista previa. |
+| 20 | 22/09/2026 | `registro.html`, `empleabilidad.html`, `assets/js/solicitud-empleo.js` (nuevo), `assets/js/simh.js`, `assets/css/simh.css` | Aviso de privacidad para imprimir o guardar en PDF durante el registro; revisar que Empleabilidad cubra las preguntas del cuestionario de personas empleadas; botón para generar la Solicitud de Empleo del SNE con los datos del sistema, formulario para lo que falte, vista previa e impresión. | **Aplicado** | Ver 4.25. Once preguntas del cuestionario no existían y se agregaron. Solicitud SNE de dos hojas con 32 campos precargados en el ejemplo; impresión verificada generando el PDF. Texto del aviso por confirmar (§5.3). |
+| 21 | 22/09/2026 | `empleabilidad.html`, `assets/js/simh-datos.js` | Que el cuestionario extraiga del sistema lo que ya existe y solo pida lo que falta. | **Aplicado** | Ver 4.25. Respuestas con su módulo de origen y botón Corregir; "Falta preguntar" solo con lo inexistente. Base común `D.expEmpleo()`. |
+| 22 | 22/09/2026 | `empleabilidad.html`, `assets/js/simh-datos.js` | Extraer también "¿Padece alguna enfermedad? ¿Lleva control médico?" para no volver a preguntarlo, y preguntarlo solo si no existe. | **Aplicado** | Salud comparte con Empleo **solo sí/no** (hay condición registrada, lleva control médico), nunca diagnóstico ni código: minimización de datos compatible con RNF01. Si Salud no tiene valoración de la persona, se pregunta y queda como declaración propia. Ver §5.3. |
+| 23 | 22/09/2026 | `empleabilidad.html`, `registro.html`, `assets/js/simh-datos.js`, `assets/js/simh.js` | Flujo para quien no está registrado y solo va por empleo. | **Aplicado** | Ver 4.26. Registro primero (expediente único) con alta rápida desde Empleabilidad y regreso automático con la persona seleccionada; el cuestionario solo pregunta lo que Registro no capturó. Funciona también sin datos de prueba. |
 ---
 
 ## 7. Cómo retomar el trabajo

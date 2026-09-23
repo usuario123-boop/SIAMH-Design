@@ -172,6 +172,10 @@
       return;
     }
     errorForm.classList.remove("visible");
+    /* La cuenta decide la sede, y la sede qué módulos se ven (Revalidación
+       solo en la Secretaría y en Tuxtla). Un usuario que el prototipo no
+       conoce entra con la cuenta de ventanilla. */
+    SIMH.iniciarSesion(usuario.value);
     location.href = "index.html";
   });
 

@@ -291,6 +291,36 @@
   .chip-oficio:hover{border-color:var(--arena)}
   .chip-oficio.sel{background:var(--jade-050);border-color:var(--jade);color:var(--jade-900);font-weight:700}
   .chip-oficio input{margin:0;accent-color:var(--jade)}
+  /* Exportar a Excel con el formato de la Dirección (22/09/2026) */
+  .xls-velo{position:fixed;inset:0;z-index:200;background:rgba(20,20,20,.45);display:flex;
+    align-items:flex-start;justify-content:center;overflow:auto;padding:40px 16px}
+  .xls-caja{width:100%;max-width:880px;margin:0}
+  .xls-g{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--gris);
+    margin:16px 0 8px}
+  .xls-g small{text-transform:none;letter-spacing:0;font-weight:400}
+  .xls-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:2px 16px}
+  .xls-op{display:flex;align-items:center;gap:9px;min-height:36px;font-size:13px;cursor:pointer}
+  .xls-op input{width:17px;height:17px;accent-color:var(--jade);flex:none}
+  .xls-acc{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:18px;padding-top:14px;
+    border-top:1px solid var(--linea)}
+  /* Cuestionario de persona empleada (22/09/2026) */
+  .cq-g{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--gris);
+    margin:16px 0 8px;padding-top:12px;border-top:1px solid var(--linea-suave)}
+  .cq-g:first-of-type{border-top:0;padding-top:0}
+  .cq-falta{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:4px 14px}
+  .cq-fila{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.3fr) auto auto;gap:10px;align-items:center;
+    padding:8px 0;border-bottom:1px solid var(--linea-suave);font-size:13px}
+  .cq-fila:last-child{border-bottom:0}
+  .cq-p{color:var(--gris);line-height:1.35}
+  .cq-r{font-weight:600;color:var(--tinta);line-height:1.35}
+  .cq-f{display:inline-block;font-size:11.5px;font-weight:700;color:var(--jade-900);background:var(--jade-050);
+    border-radius:10px;padding:2px 8px;white-space:nowrap;text-transform:none;letter-spacing:0}
+  .cq-f.man{color:#7d0140;background:var(--rosa-050)}
+  .cq-corr{grid-column:1/-1;background:var(--hueso-claro);padding:10px 12px;border-radius:var(--radio-s);margin:6px 0}
+  @media (max-width:900px){.cq-fila{grid-template-columns:1fr}}
+  .cq-docs{display:flex;gap:10px 18px;align-items:flex-end;flex-wrap:wrap;margin-bottom:6px}
+  .cq-doc{display:flex;align-items:center;gap:7px;min-height:44px;font-weight:700;font-size:13px;cursor:pointer}
+  .cq-doc input{width:18px;height:18px;accent-color:var(--jade)}
 </style>
 </head>
 <body>
@@ -306,6 +336,7 @@
     <div class="enc-acc">
       <button class="btn btn-secundario btn-s" type="button" id="btnXls"></button>
       <button class="btn btn-secundario btn-s" type="button" id="btnPdf"></button>
+      <a class="btn btn-primario btn-s" id="btnAltaEmpleo" href="registro.html?origen=empleo"></a>
     </div>
   </div>
 
@@ -328,10 +359,23 @@
 
 <script src="assets/js/simh.js"></script>
 <script src="assets/js/simh-datos.js"></script>
+<script src="assets/js/plantilla-solicitantes.js"></script>
+<script src="assets/js/solicitud-empleo.js"></script>
 <script>
 (function () {
   "use strict";
   SIMH.chrome("empleo");
+
+  /* Modo sin datos de prueba (Administración › Datos de prueba). */
+  /* Con los datos de prueba limpios, la cartera muestra solo a quienes se
+     registraron con el alta rápida; si no hay ninguna, el estado vacío. */
+  if (SIMH.sinDatos() && !window.DATOS.altasEmpleo().length) {
+    SIMH.vacioModulo({ ico:"empleo", titulo:"La cartera de Empleabilidad está vacía",
+      texto:"Aquí aparecen las personas registradas que buscan empleo, con su diagnóstico y sus vinculaciones.",
+      accion:'<a class="btn btn-primario btn-s" href="registro.html?origen=empleo">' + SIMH.icono("registro") +
+             'Registrar y atender en Empleabilidad</a>' });
+    return;
+  }
   /* Catálogos compartidos: assets/js/simh-datos.js. Sectores y escolaridad
      ya no se escriben aquí porque los comparte con el alta de persona. */
   var D = window.DATOS;
@@ -341,7 +385,8 @@
 
   var HOY = "2026-08-27";
 
-  $("#btnXls").innerHTML = ico("excel") + "Exportar cartera de seguimiento";
+  $("#btnXls").innerHTML = ico("excel") + "Exportar a Excel";
+  $("#btnAltaEmpleo").innerHTML = ico("registro") + "Registrar y atender";
   $("#btnPdf").innerHTML = ico("pdf") + "Reporte de vinculación laboral";
 
   $("#avisoPermisosCuerpo").innerHTML =
@@ -635,6 +680,54 @@
       ]
     }
   ];
+  /* Datos del registro general que pide el formato de la Dirección y la
+     cartera no guardaba (se usan en el Excel, el cuestionario y la
+     solicitud de empleo). */
+  var SOL = {
+    "0412": { nacF:"1999-03-15", mail:"yesenia.ramirez.coc@gmail.com",
+              curp:"RACY990315MNEMCS02", emp:"Panadería La Espiga (Quetzaltenango)", puesto:"Ayudante de panadería",
+              gana:"Q 2,400 (≈ $5,300)", tiempo:"3 años", disc:"No", prog:"No" },
+    "0429": { nacF:"1992-04-15", mail:"",
+              curp:"BUAJ920415HNEYLS08", emp:"Constructora Valle de Sula (San Pedro Sula)", puesto:"Albañil",
+              gana:"L 9,000 (≈ $6,800)", tiempo:"8 años", disc:"No", prog:"No" },
+    "0447": { nacF:"2003-01-20", mail:"yoselin.chavez03@outlook.com",
+              curp:"CAMY030120MNENNS05", emp:"Abarrotes Doña Mary (Managua)", puesto:"Cajera",
+              gana:"C$ 7,500 (≈ $3,900)", tiempo:"2 años", disc:"No", prog:"No" },
+    "0464": { nacF:"1985-06-02", mail:"yordanisperezlazo@gmail.com",
+              curp:"PELY850602HNERZR01", emp:"Taller Automotriz El Vedado (La Habana)", puesto:"Soldador y hojalatero",
+              gana:"CUP 6,000 (≈ $1,000)", tiempo:"14 años", disc:"No", prog:"No" },
+    "0470": { nacF:"1997-02-11", mail:"genesis.rondon@gmail.com",
+              curp:"ROSG970211MNENLN03", emp:"Farmacia Saas (Caracas)", puesto:"Auxiliar de farmacia",
+              gana:"Bs 1,200 (≈ $2,900)", tiempo:"4 años", disc:"No", prog:"No" },
+    "0658": { nacF:"2000-09-28", mail:"",
+              curp:"LAMS000928MNEGNY06", emp:"Maquila Textil del Norte (Choloma)", puesto:"Operaria de costura",
+              gana:"L 8,500 (≈ $6,400)", tiempo:"3 años", disc:"No", prog:"No" },
+    "0201": { nacF:"1990-05-06", mail:"lupita.roblero90@gmail.com",
+              curp:"ROPG900506MCSBRD04", emp:"Comercializadora del Soconusco", puesto:"Empacadora",
+              gana:"$6,200", tiempo:"5 años", disc:"No", prog:"Sí · Programa Sembrando Vida (familiar)" },
+    "0435": { nacF:"1995-08-19", mail:"kenia.alvarenga@yahoo.com",
+              curp:"AAPK950819MNELRN07", emp:"Pupusería La Salvadoreña (San Miguel)", puesto:"Cocinera",
+              gana:"US$ 300 (≈ $5,400)", tiempo:"6 años", disc:"No", prog:"No" }
+  };
+  /* Altas rápidas (22/09/2026): personas que llegaron solo por empleo y se
+     registraron desde aquí. Entran a la cartera sin vinculaciones y con el
+     perfil por diagnosticar; lo que capturó Registro ya está en el
+     expediente común (D.expEmpleo) y el cuestionario lo lee de ahí. */
+  if (SIMH.sinDatos()) PERSONAS.length = 0;
+  D.altasEmpleo().forEach(function (a) {
+    if (PERSONAS.some(function (x) { return x.e === a.e; })) return;
+    var cod = null;
+    Object.keys(PAIS).forEach(function (k) { if (PAIS[k] === a.nac) cod = k; });
+    if (!cod) { cod = a.nac || "—"; PAIS[cod] = a.nac || "—"; }
+    PERSONAS.push({
+      e:a.e, n:a.n, nac:cod, edad:a.edad, mun:a.mun, alta:a,
+      curp:0, estancia:null, rfc:{ est:"pend" }, nss:{ est:"pend" },
+      perfil:"Por diagnosticar", exp:"", disp:"Por definir", cursos:"Sin cursos registrados", v:[]
+    });
+    SOL[a.e] = { nacF:a.fnac };
+  });
+
+
 
   /* ======================================================================
      3. Cálculo. Todo lo que la pantalla afirma sale de aquí.
@@ -752,6 +845,10 @@
       return { peso:4, tibia:true, txt:"Contratación registrada el " + fecha(si.fcon) +
                " sin fecha de inicio de labores: el seguimiento no puede arrancar" };
     }
+    /* Recién registrada (alta rápida): todavía no hay ninguna vinculación. */
+    if (!p.v.length) {
+      return { peso:5, txt:"Sin vinculaciones todavía: completa el diagnóstico y registra la primera postulación" };
+    }
     if (!vg && !enProceso(p).length) {
       var ult = p.v[p.v.length - 1];
       return { peso:5, txt:"Sin colocación vigente ni postulación en proceso desde el " +
@@ -821,6 +918,14 @@
 
   if (qs.get("e")) {
     PERSONAS.forEach(function (p) { if (p.e === qs.get("e")) sel = p.e; });
+  }
+  if (!PERSONAS.some(function (p) { return p.e === sel; }) && PERSONAS.length) sel = PERSONAS[0].e;
+  if (qs.get("alta") === "1") {
+    PERSONAS.forEach(function (p) {
+      if (p.e === qs.get("e") && p.alta) {
+        acuses.push("Expediente " + p.alta.folio + " creado en Registro. Continúa con el diagnóstico laboral y el cuestionario");
+      }
+    });
   }
   if (qs.get("nueva") === "1") panel = "nueva";
   if (qs.get("ver")) {
@@ -978,6 +1083,7 @@
         '</div>' +
         '<div class="flex gap-8">' +
           '<a class="btn btn-secundario btn-s" href="expediente-detalle.html">' + ico("expedientes") + 'Ver expediente</a>' +
+          '<button class="btn btn-primario btn-s" type="button" id="btnSNE">' + ico("doc") + 'Generar solicitud de empleo</button>' +
         '</div>' +
       '</div>' +
       '<div class="bca-controles">' +
@@ -1906,9 +2012,280 @@
       }).join("") + "</div>";
   }
 
+
+  /* ======================================================================
+     Cuestionario de personas en contexto de movilidad empleadas
+     --------------------------------------------------------------------
+     «FORMATO CUESTIONARIO PERSONAS EMPLEADAS.pdf» es la guía de lo que se
+     pregunta. Regla (22/09/2026): si el sistema ya tiene el dato, se
+     EXTRAE de su módulo y se muestra con su fuente; solo se pregunta lo que
+     falta. Cada respuesta extraída puede corregirse en ventanilla, y lo
+     corregido manda sobre lo extraído.
+
+     Fuentes: Registro de Persona, Expediente Familiar y Capacitación (vía
+     D.expEmpleo), y la vinculación y los requisitos de este módulo. La
+     enfermedad nunca se extrae: Empleo no lee Salud (RNF01).
+     ================================================================== */
+  var DOCS_CQ = ["TRP", "TVTF", "RFC", "CURP", "NSS"];
+  var ENTERO_CQ = ["Vinculación de la Secretaría", "Recomendación de familiares o amigos",
+                   "Anuncio o redes sociales", "Acudió directamente al negocio"];
+  var cqEdit = {};                     /* preguntas que se están corrigiendo */
+
+  function mesesDesde(iso) {
+    var a = iso.split("-"), b = HOY.split("-");
+    return (+b[0] - +a[0]) * 12 + (+b[1] - +a[1]) - (+b[2] < +a[2] ? 1 : 0);
+  }
+  function tiempoTxt(m) {
+    var y = Math.floor(m / 12), r = m % 12, t = [];
+    if (y) t.push(plural(y, "año", "años"));
+    if (r || !y) t.push(plural(r, "mes", "meses"));
+    return t.join(" ");
+  }
+  function docsTxt(d) {
+    var l = DOCS_CQ.filter(function (k) { return d[k]; });
+    if (d.otro) l.push(d.otro);
+    return l.join(", ");
+  }
+
+  var PREG_CQ = [
+    { id:"sexo",    t:"Sexo", tipo:"sel", ops:["Mujer", "Hombre", "Prefiere no decirlo"] },
+    { id:"tel",     t:"Teléfono" },
+    { id:"dom",     t:"Domicilio" },
+    { id:"negocio", t:"Nombre del negocio donde labora" },
+    { id:"fechaIni",t:"Fecha en que comenzó a laborar en su actual empleo", tipo:"date" },
+    { id:"entero",  t:"¿Cómo se enteró de este empleo?", tipo:"lista", ops:ENTERO_CQ },
+    { id:"docs",    t:"Documentos con los que cuenta", tipo:"docs" },
+    { id:"cap",     t:"¿Ha recibido capacitación laboral? ¿En qué se capacitó y quién le capacitó?" },
+    { id:"tiempo",  t:"¿Qué tiempo lleva viviendo en {mun}?" },
+    { id:"familia", t:"¿Tiene familia en {mun}? (especifique)" },
+    { id:"establecerse", t:"¿Planea establecerse en {mun}?", tipo:"sel", ops:["Sí", "No", "Aún no lo decide"] },
+    { id:"hijos",   t:"¿Tiene hijos en edad escolar? (especifique)" },
+    { id:"salud",   t:"¿Padece alguna enfermedad? ¿Lleva control médico?" }
+  ];
+
+  /* Lo que el sistema sabe: { v, txt, f } (valor, texto, fuente) o null. */
+  function derivaCq(p, id) {
+    var X = D.expEmpleo(p.e) || {}, R = X.reg || {}, vg = vigente(p), mun = R.mun || p.mun;
+    switch (id) {
+      case "sexo": return R.sexo ? { v:R.sexo, f:"Registro de Persona" } : null;
+      case "tel":  return R.tel ? { v:R.tel, f:"Registro de Persona" } : null;
+      case "dom":  return R.dom ? { v:R.dom, f:"Registro de Persona" } : null;
+      case "negocio":  return vg ? { v:vg.emp, f:"Vinculación laboral" } : null;
+      case "fechaIni": return vg && vg.inicio ? { v:vg.inicio, txt:fechaMx(vg.inicio), f:"Vinculación laboral" } : null;
+      case "entero":   return vg ? { v:"Vinculación de la Secretaría", f:"Vinculación laboral" } : null;
+      case "docs": {
+        if (p.alta) return null;
+        var est = (p.estancia && p.estancia.doc) || "", d = {};
+        if (/Residente Temporal/i.test(est)) d.TRP = true;
+        if (/Trabajador Fronterizo/i.test(est)) d.TVTF = true;
+        if (p.rfc && p.rfc.est === "reg") d.RFC = true;
+        if (p.curp) d.CURP = true;
+        if (p.nss && p.nss.est === "reg") d.NSS = true;
+        if (est && !d.TRP && !d.TVTF) d.otro = est;
+        return { v:d, txt:docsTxt(d) || "Ninguno", f:"Requisitos y documentos" };
+      }
+      case "cap": {
+        if (!X.cursos) return null;
+        if (!X.cursos.length) return { v:"No", f:"Capacitación" };
+        return { v:"Sí · " + X.cursos.map(function (c) {
+          return c.t + " (" + c.inst + ", " + c.est + ")"; }).join("; "), f:"Capacitación" };
+      }
+      case "tiempo": {
+        if (!R.ingreso) return null;
+        return { v:tiempoTxt(mesesDesde(R.ingreso)) + " (ingresó a México el " + fechaMx(R.ingreso) + ")",
+                 f:"Registro de Persona" };
+      }
+      case "familia": {
+        if (!X.fam) return null;
+        var aqui = X.fam.filter(function (x) { return x.mun === mun; });
+        return { v: aqui.length ? "Sí · " + aqui.map(function (x) { return x.p.toLowerCase() + " " + x.n + " (" + x.e + ")"; }).join(", ")
+                                : "No registra familiares en " + mun, f:"Expediente Familiar" };
+      }
+      case "establecerse": {
+        if (!R.permanencia) return null;
+        var sn = R.permanencia === "Indefinida" ? "Sí" : (/Menos de 1 mes|1 a 6 meses/.test(R.permanencia) ? "No" : "Aún no lo decide");
+        return { v:sn, txt:sn + " · permanencia estimada: " + R.permanencia.toLowerCase(), f:"Registro de Persona" };
+      }
+      case "hijos": {
+        if (!X.fam) return null;
+        var h = X.fam.filter(function (x) { return /^hij/i.test(x.p) && x.e >= 3 && x.e <= 17; });
+        return { v: h.length ? "Sí · " + h.map(function (x) { return x.n.split(" ")[0] + " (" + x.e + " años)"; }).join(", ") : "No",
+                 f:"Expediente Familiar" };
+      }
+      case "salud": {
+        /* Salud publica solo Sí/No, nunca el diagnóstico (RNF01): basta
+           para no volver a preguntar y no expone el contenido del módulo. */
+        if (!X.salud) return null;
+        var sv = !X.salud.enf ? "No registra enfermedades"
+               : "Sí" + (X.salud.control ? " · lleva control médico" : " · sin control médico");
+        return { v:sv, f:"Salud (solo sí/no)" };
+      }
+    }
+    return null;
+  }
+
+  /* Respuesta vigente: la corregida o capturada en ventanilla, si existe. */
+  function respCq(p, id) {
+    var c = p.cuest || {};
+    if (c[id] !== undefined && c[id] !== "" && !(id === "docs" && !docsTxt(c[id]))) {
+      return { v:c[id], txt: id === "docs" ? docsTxt(c[id]) : (id === "fechaIni" ? fechaMx(c[id]) : c[id]),
+               f: derivaCq(p, id) ? "Corregido en ventanilla" : "Capturado en ventanilla", manual:true };
+    }
+    var d = derivaCq(p, id);
+    if (d && !d.txt) d.txt = d.v;
+    return d;
+  }
+  function cqValor(p, id) { var r = respCq(p, id); return r ? r.v : ""; }
+
+  function inputCq(q, val) {
+    var id = "cq_" + q.id;
+    if (q.tipo === "sel") return selCq(id, q.ops, val);
+    if (q.tipo === "date") return '<input type="date" id="' + id + '" value="' + esc(val || "") + '">';
+    if (q.tipo === "lista") {
+      return '<input type="text" id="' + id + '" list="' + id + 'L" value="' + esc(val || "") + '">' +
+        '<datalist id="' + id + 'L">' + q.ops.map(function (o) { return "<option>" + esc(o) + "</option>"; }).join("") + "</datalist>";
+    }
+    if (q.tipo === "docs") {
+      var d = val || {};
+      return '<div class="cq-docs">' + DOCS_CQ.map(function (k) {
+          return '<label class="cq-doc"><input type="checkbox" data-cqdoc="' + k + '"' + (d[k] ? " checked" : "") + "><span>" + k + "</span></label>";
+        }).join("") +
+        '<input type="text" id="cq_docsOtro" value="' + esc(d.otro || "") + '" placeholder="Otro documento" style="flex:1;min-width:200px"></div>';
+    }
+    return '<input type="text" id="' + id + '" value="' + esc(val || "") + '">';
+  }
+
+  function bloqueCuestionario(p) {
+    var mun = ((D.expEmpleo(p.e) || {}).reg || {}).mun || p.mun;
+    var ya = [], falta = [];
+    PREG_CQ.forEach(function (q) {
+      var r = respCq(p, q.id);
+      var t = q.t.replace(/\{mun\}/g, mun);
+      if (r && !cqEdit[q.id]) {
+        ya.push('<div class="cq-fila"><span class="cq-p">' + esc(t) + "</span>" +
+          '<span class="cq-r">' + esc(r.txt) + "</span>" +
+          '<span class="cq-f' + (r.manual ? " man" : "") + '">' + esc(r.f) + "</span>" +
+          '<button class="btn btn-texto btn-s" type="button" data-cqcorr="' + q.id + '">Corregir</button></div>');
+      } else {
+        var val = r ? r.v : "";
+        (r ? ya : falta).push('<div class="campo' + (r ? " cq-corr" : "") + '"><label for="cq_' + q.id + '">' + esc(t) +
+          (r ? ' <span class="cq-f">corrigiendo · ' + esc(r.f) + "</span>" : "") + "</label>" + inputCq(q, val) +
+          (q.id === "salud" ? '<div class="ayuda">Salud no tiene valoración de esta persona. Lo que responda se guarda como declaración propia; el diagnóstico nunca se captura aquí.</div>' : "") +
+          "</div>");
+      }
+    });
+    return '<div class="tarjeta">' +
+      '<div class="tarjeta-enc"><div>' +
+        '<h3 class="sec-tit" style="margin:0">Cuestionario de persona en contexto de movilidad empleada</h3>' +
+        '<span class="txt-min">Lo que el sistema ya sabe se extrae de su módulo; solo se pregunta lo que falta.</span></div>' +
+        '<span class="chip ' + (falta.length ? "chip-rosa" : "chip-jade") + '">' +
+          (falta.length ? plural(falta.length, "pregunta pendiente", "preguntas pendientes") : ico("check") + "Completo") + "</span></div>" +
+      '<form id="formCq" onsubmit="return false">' +
+        '<h4 class="cq-g">Falta preguntar · ' + falta.length + "</h4>" +
+        (falta.length ? '<div class="cq-falta">' + falta.join("") + "</div>"
+                      : '<p class="txt-min" style="margin:0">No falta ninguna: todo salió del expediente.</p>') +
+        '<h4 class="cq-g">Ya en el sistema · ' + ya.length + " de " + PREG_CQ.length + "</h4>" +
+        '<div class="cq-ya">' + ya.join("") + "</div>" +
+        '<div class="flex gap-8" style="justify-content:flex-end;margin-top:14px">' +
+          '<button class="btn btn-primario" type="button" id="btnGuardarCq">' + ico("guardar") + "Guardar respuestas</button>" +
+        "</div>" +
+      "</form></div>";
+  }
+
+  function guardaCuestionario(p) {
+    var c = p.cuest || (p.cuest = {});
+    PREG_CQ.forEach(function (q) {
+      if (q.tipo === "docs") {
+        if (!$("#cq_docsOtro")) return;
+        var d = {};
+        $$("[data-cqdoc]").forEach(function (x) { if (x.checked) d[x.getAttribute("data-cqdoc")] = true; });
+        if ($("#cq_docsOtro").value.trim()) d.otro = $("#cq_docsOtro").value.trim();
+        c.docs = d;
+        return;
+      }
+      var el = $("#cq_" + q.id);
+      if (el) c[q.id] = el.value.trim();
+    });
+    cqEdit = {};
+  }
+
+  function selCq(id, ops, v) {
+    return '<select id="' + id + '"><option value="">—</option>' + ops.map(function (o) {
+      return '<option' + (o === v ? " selected" : "") + ">" + esc(o) + "</option>";
+    }).join("") + "</select>";
+  }
+
+  /* ======================================================================
+     Solicitud de empleo (formato SNE) · lo que el sistema ya sabe
+     ================================================================== */
+  function nivelSNE(nivel) {
+    if (/primaria/i.test(nivel)) return "prim";
+    if (/secundaria/i.test(nivel)) return "sec";
+    if (/bachillerato|preparatoria|media/i.test(nivel)) return "prep";
+    if (/licenciatura|ingenier|maestr|doctor|profesional/i.test(nivel)) return "prof";
+    if (/técnica|tecnica|comercial/i.test(nivel)) return "com";
+    return null;
+  }
+
+  function prefillSNE(p) {
+    var s = SOL[p.e] || {}, dg = getDiag(p), v = vincActual(p), vg = vigente(p);
+    var X = D.expEmpleo(p.e) || {};
+    var w = p.n.split(" "), d = {}, o = {};
+    function pon(k, val) { if (val !== undefined && val !== null && val !== "") { d[k] = String(val); o[k] = true; } }
+    d.fecha = HOY;
+    pon("puesto", v && v.con !== 0 && !v.fin ? v.vac : p.perfil);
+    pon("sueldoDes", dg.sueldoMin);
+    pon("fechaCont", v && v.fcon);
+    pon("ap1", w.length > 2 ? w[w.length - 2] : w[1]);
+    pon("ap2", w.length > 2 ? w[w.length - 1] : "");
+    pon("nombres", w.slice(0, Math.max(1, w.length - 2)).join(" "));
+    pon("edad", p.edad);
+    var dom = String(cqValor(p, "dom") || "").split(",");
+    pon("colonia", dom[0] ? dom[0].trim() : "");
+    pon("ciudad", (dom[1] ? dom[1].trim() : p.mun) + ", Chiapas");
+    pon("tel", cqValor(p, "tel"));
+    var sx = cqValor(p, "sexo");
+    pon("sexo", sx === "Mujer" ? "Femenino" : sx === "Hombre" ? "Masculino" : "");
+    pon("entNac", PAIS[p.nac] !== "México" ? PAIS[p.nac] : "");
+    pon("fnac", s.nacF);
+    pon("nacionalidad", PAIS[p.nac]);
+    pon("curp", p.curp ? s.curp : "");
+    pon("rfc", p.rfc && p.rfc.est === "reg" ? p.rfc.d : "");
+    pon("nss", p.nss && p.nss.est === "reg" ? String(p.nss.d).split(" · ")[0] : "");
+    if (p.nac !== "MEX" && p.estancia) pon("docExt", p.estancia.doc + (p.estancia.vig ? " · vigente al " + fechaMx(p.estancia.vig) : ""));
+    var enf = cqValor(p, "salud");
+    pon("cronica", enf ? (/^no\b/i.test(enf) ? "No" : (/^sí/i.test(enf) ? enf : "Sí · " + enf)) : "");
+    var nv = nivelSNE(dg.escol.nivel);
+    if (nv) {
+      pon(nv + "Esc", dg.escol.inst);
+      pon(nv + "A", dg.escol.anio);
+      pon(nv + "Tit", /concluid|título|titulo/i.test(dg.escol.nivel + " " + dg.escol.doc) ? dg.escol.doc : "");
+    }
+    pon("idiomas", "Español · " + dg.idiomaEsp);
+    pon("otros", dg.oficios.join(", "));
+    /* Empleos: el vigente (si lo colocó la Secretaría) y el último declarado. */
+    var e = vg ? "e2" : "e1";
+    if (vg) {
+      pon("e1Emp", vg.emp); pon("e1PueI", vg.puesto || vg.vac);
+      pon("e1Tiempo", "Desde el " + fechaMx(vg.inicio));
+    }
+    pon(e + "Emp", s.emp); pon(e + "PueF", s.puesto); pon(e + "SueF", s.gana); pon(e + "Tiempo", s.tiempo);
+    var ent = cqValor(p, "entero");
+    pon("entero", ent ? (/anuncio/i.test(ent) ? "Anuncio" : "Otro medio") : "");
+    pon("enteroOtro", ent && !/anuncio/i.test(ent) ? ent : "");
+    pon("viajar", /^Sí/.test(dg.dispTraslado) ? "Sí" : (/^No/.test(dg.dispTraslado) ? "No" : ""));
+    pon("hijos", (X.fam || []).filter(function (x) { return /^hij/i.test(x.p); })
+      .map(function (x) { return x.n + " (" + x.e + " años)"; }).join(", "));
+    var cy = (X.fam || []).filter(function (x) { return /cónyuge/i.test(x.p); })[0];
+    if (cy) { pon("conyNom", cy.n.split(" ")[0]); pon("conyVive", "Vive"); pon("conyDom", "Chiapas · " + cy.mun); }
+    /* Lo guardado antes en el expediente manda sobre lo precargado. */
+    Object.keys(p.sne || {}).forEach(function (k) { d[k] = p.sne[k]; });
+    return { datos:d, origen:o };
+  }
+
   function cuerpoPestana(p) {
     if (pest === "diag") {
-      return bloqueDiagnostico(p);
+      return bloqueDiagnostico(p) + '<div class="mt-16">' + bloqueCuestionario(p) + "</div>";
     }
     if (pest === "seg") {
       return vigente(p)
@@ -2052,6 +2429,33 @@
         caja = $("#dgEscConse");  if (caja) caja.innerHTML = conseEscolar(d);
       });
     });
+
+    /* Cuestionario de persona empleada */
+    $$("[data-cqcorr]").forEach(function (b) {
+      b.onclick = function () {
+        var id = this.getAttribute("data-cqcorr");
+        cqEdit[id] = true;
+        pintaDetalle();
+        var el = $("#cq_" + id) || $("#cq_docsOtro");
+        if (el) el.focus();
+      };
+    });
+    var bcq = $("#btnGuardarCq");
+    if (bcq) bcq.onclick = function () {
+      guardaCuestionario(p);
+      pintaDetalle();
+      if (SIMH.toast) SIMH.toast("Respuestas guardadas en el expediente", "ok");
+    };
+
+    /* Solicitud de empleo (formato SNE) */
+    var bsn = $("#btnSNE");
+    if (bsn) bsn.onclick = function () {
+      if ($("#formCq")) guardaCuestionario(p);
+      var pre = prefillSNE(p);
+      SNE.abrir({ titulo: p.n, datos: pre.datos, origen: pre.origen,
+        alGuardar: function (d) { p.sne = JSON.parse(JSON.stringify(d)); },
+        alCerrar: function () { var b = $("#btnSNE"); if (b) b.focus(); } });
+    };
 
     /* Guardar diagnóstico laboral */
     var bgd = $("#btnGuardarDiag");
@@ -2245,6 +2649,14 @@
     indiceInicial: Math.max(0, PERSONAS.findIndex(function(p){ return p.e === sel; })),
     titulo: "Cartera de Seguimiento Laboral",
     placeholder: "Buscar persona, folio o empresa...",
+    /* Si nadie coincide, la persona no tiene expediente: se registra primero
+       (expediente único) y se vuelve aquí. */
+    sinResultados: function (txt) {
+      return '<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;align-items:center">' +
+        '<span>Si la persona no tiene expediente, se registra primero y vuelve aquí.</span>' +
+        '<a class="btn btn-primario btn-s" href="registro.html?origen=empleo&n=' + encodeURIComponent(txt || "") + '">' +
+        ico("registro") + "Registrar y atender en Empleabilidad</a></div>";
+    },
     filtraItem: function(p, txt) {
       if (!txt) return true;
       var t = (p.n + " " + p.e + " " + p.perfil + " " + p.mun + " " + (p.v.map(function(v){return v.emp+" "+v.vac;}).join(" "))).toLowerCase();
@@ -2294,6 +2706,261 @@
       gestor.siguiente();
     }
   });
+
+  /* ======================================================================
+     Exportar a Excel con el formato de la Dirección (22/09/2026)
+     --------------------------------------------------------------------
+     El archivo sale con la plantilla «BASE_REGISTRO DE SOLICITANTES DE
+     TRABAJO.xlsx»: mismo título, mismos cinco grupos de color, mismos
+     encabezados, anchos y 50 renglones numerados. Por omisión exporta sus
+     25 columnas; los campos que el sistema tiene y el Excel no, se pueden
+     agregar y salen en un grupo propio al final.
+
+     SOL completa lo que el Excel pide y la cartera de Empleabilidad no
+     guardaba (fecha de nacimiento, domicilio, contacto, último empleo…).
+     ================================================================== */
+
+
+  function docTexto(x, nombre) {
+    if (!x || !x.est) return null;
+    if (x.est === "reg") return { tiene:true, t:nombre };
+    if (x.est === "na")  return null;
+    return { tiene:false, t:nombre + (x.est === "tram" ? " (en trámite)" : "") };
+  }
+  function documentos(p) {
+    var l = [];
+    if (p.estancia && p.estancia.doc) l.push({ tiene:true, t:p.estancia.doc });
+    l.push({ tiene:!!p.curp, t:"CURP" });
+    var r = docTexto(p.rfc, "RFC"), n = docTexto(p.nss, "NSS");
+    if (r) l.push(r);
+    if (n) l.push(n);
+    return l;
+  }
+  function vincActual(p) {
+    return vigente(p) || sinInicio(p) || enProceso(p)[0] ||
+           p.v.filter(function (v) { return !v.fin; })[0] || p.v[0] || null;
+  }
+  function verif(v, h) {
+    if (!v || !v.seg || !v.seg[h] || !v.seg[h].length) return "";
+    var r = v.seg[h][v.seg[h].length - 1];
+    return fechaMx(r.f) + " · " + (r.res === "continua" ? "Continúa laborando" : r.res);
+  }
+  function fechaMx(iso) { return iso ? iso.split("-").reverse().join("/") : ""; }
+
+  /* Grupos con los estilos de la plantilla: s2 = celda del renglón de
+     grupo, s3 = celda de encabezado, ss = índice del texto compartido. */
+  var GRUPOS_XLS = {
+    gen: { t:"DATOS GENERALES",            s2:10, s3:3, ss:11 },
+    esc: { t:"ESCOLARIDAD",                s2:11, s3:4, ss:14 },
+    exp: { t:"EXPERIENCIA LABORAL",        s2:12, s3:5, ss:15 },
+    com: { t:"INFORMACIÓN COMPLEMENTARIA", s2:14, s3:6, ss:30 },
+    seg: { t:"SEGUIMIENTO",                s2:13, s3:7, ss:24 },
+    sis: { t:"INFORMACIÓN DEL SISTEMA",    s2:10, s3:3 }
+  };
+
+  /* Columnas: las 25 del formato (xls:true, en su orden) y las del sistema. */
+  var COLS_XLS = [
+    { id:"no",    g:"gen", ss:28, col:1,  s3:2, f:function (p, i) { return i + 1; } },
+    { id:"nom",   g:"gen", ss:1,  col:2,  f:function (p) { return p.n; } },
+    { id:"nac",   g:"gen", ss:2,  col:3,  f:function (p) { return PAIS[p.nac] || p.nac; } },
+    { id:"edad",  g:"gen", ss:3,  col:4,  f:function (p) { return p.edad; } },
+    { id:"fnac",  g:"gen", ss:4,  col:5,  f:function (p, i, s) { return fechaMx(s.nacF); } },
+    { id:"dom",   g:"gen", ss:5,  col:6,  f:function (p) { return cqValor(p, "dom") || p.mun; } },
+    { id:"tel",   g:"gen", ss:6,  col:7,  f:function (p) { return cqValor(p, "tel"); } },
+    { id:"mail",  g:"gen", ss:7,  col:8,  f:function (p, i, s) { return s.mail; } },
+    { id:"curp",  g:"gen", ss:8,  col:9,  f:function (p, i, s) { return p.curp ? s.curp : "Sin CURP"; } },
+    { id:"rfc",   g:"gen", ss:9,  col:10, f:function (p) { return p.rfc && p.rfc.est === "reg" ? p.rfc.d : (p.rfc && p.rfc.est === "tram" ? "En trámite" : "Pendiente"); } },
+    { id:"imss",  g:"gen", ss:10, col:11, f:function (p) { return p.nss && p.nss.est === "reg" ? String(p.nss.d).split(" · ")[0] : (p.nss && p.nss.est === "tram" ? "En trámite" : "Pendiente"); } },
+    { id:"grado", g:"esc", ss:12, col:12, f:function (p) { return getDiag(p).escol.nivel; } },
+    { id:"area",  g:"esc", ss:13, col:13, f:function (p) { return getDiag(p).escol.area || ""; } },
+    { id:"comp",  g:"exp", ss:16, col:14, f:function (p) { return getDiag(p).oficios.join(", "); } },
+    { id:"emp",   g:"exp", ss:17, col:15, f:function (p, i, s) { return s.emp; } },
+    { id:"pue",   g:"exp", ss:18, col:16, f:function (p, i, s) { return s.puesto; } },
+    { id:"gana",  g:"exp", ss:19, col:17, f:function (p, i, s) { return s.gana; } },
+    { id:"tiem",  g:"exp", ss:20, col:18, f:function (p, i, s) { return s.tiempo; } },
+    { id:"int",   g:"exp", ss:21, col:19, f:function (p) { return p.perfil; } },
+    { id:"sueldo",g:"exp", ss:22, col:20, f:function (p) { return getDiag(p).sueldoMin; } },
+    { id:"disc",  g:"com", ss:23, col:21, f:function (p, i, s) { return s.disc || "No"; } },
+    { id:"prog",  g:"com", ss:29, col:22, s3:15, f:function (p, i, s) { return s.prog || "No"; } },
+    { id:"doc",   g:"seg", ss:25, col:23, f:function (p) { return documentos(p).filter(function (d) { return d.tiene; }).map(function (d) { return d.t; }).join(", "); } },
+    { id:"falta", g:"seg", ss:26, col:24, f:function (p) { return documentos(p).filter(function (d) { return !d.tiene; }).map(function (d) { return d.t; }).join(", ") || "Ninguno"; } },
+    { id:"vinc",  g:"seg", ss:27, col:25, f:function (p) { var v = vincActual(p); return v && v.con !== 0 ? v.emp : ""; } },
+
+    { id:"folio", g:"sis", t:"FOLIO DEL EXPEDIENTE", f:function (p) { return "MH-2026-" + p.e; } },
+    { id:"mun",   g:"sis", t:"MUNICIPIO", f:function (p) { return p.mun; } },
+    { id:"est",   g:"sis", t:"DOCUMENTO DE ESTANCIA", f:function (p) { return p.estancia ? p.estancia.doc : ""; } },
+    { id:"vig",   g:"sis", t:"VIGENCIA DEL DOCUMENTO", f:function (p) { return p.estancia ? fechaMx(p.estancia.vig) : ""; } },
+    { id:"tiene", g:"sis", t:"¿CUENTA CON EMPLEO?", f:function (p) { return getDiag(p).empleo; } },
+    { id:"asp",   g:"sis", t:"ASPIRACIÓN LABORAL", f:function (p) { return getDiag(p).aspira; } },
+    { id:"disp",  g:"sis", t:"DISPONIBILIDAD DE TURNO", f:function (p) { return p.disp || ""; } },
+    { id:"expd",  g:"sis", t:"EXPERIENCIA DECLARADA", f:function (p) { return p.exp || ""; } },
+    { id:"etapa", g:"sis", t:"ETAPA DE LA VINCULACIÓN", f:function (p) { var v = vincActual(p); return v ? etapa(v).t : "Sin vinculación"; } },
+    { id:"sect",  g:"sis", t:"SECTOR", f:function (p) { var v = vincActual(p); return v ? v.sector : ""; } },
+    { id:"post",  g:"sis", t:"FECHA DE POSTULACIÓN", f:function (p) { var v = vincActual(p); return v ? fechaMx(v.post) : ""; } },
+    { id:"fcon",  g:"sis", t:"FECHA DE CONTRATACIÓN", f:function (p) { var v = vincActual(p); return v ? fechaMx(v.fcon) : ""; } },
+    { id:"ini",   g:"sis", t:"INICIO DE LABORES", f:function (p) { var v = vincActual(p); return v ? fechaMx(v.inicio) : ""; } },
+    { id:"v15",   g:"sis", t:"VERIFICACIÓN 15 DÍAS", f:function (p) { return verif(vincActual(p), "15"); } },
+    { id:"v30",   g:"sis", t:"VERIFICACIÓN 30 DÍAS", f:function (p) { return verif(vincActual(p), "30"); } },
+    { id:"cur",   g:"sis", t:"CURSOS DE CAPACITACIÓN", f:function (p) { return p.cursos || ""; } },
+    { id:"resp",  g:"sis", t:"RESPONSABLE DEL SEGUIMIENTO", f:function (p) { var v = vincActual(p); return v ? v.resp : ""; } }
+  ];
+  var TEXTOS_XLS = window.PLANTILLA_SOLICITANTES ? window.PLANTILLA_SOLICITANTES.textos : [];
+  function tituloCol(c) { return c.t || (TEXTOS_XLS[c.ss] || "").trim(); }
+  var colsElegidas = {};
+  function colsPorOmision() {
+    colsElegidas = {};
+    COLS_XLS.forEach(function (c) { if (c.col) colsElegidas[c.id] = true; });
+  }
+  colsPorOmision();
+
+  function xmlEsc(v) {
+    return String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function letra(n) {
+    var s = "";
+    while (n > 0) { var m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); }
+    return s;
+  }
+
+  function hojaXlsx(cols, personas) {
+    var PL = window.PLANTILLA_SOLICITANTES;
+    var N = cols.length, ult = letra(N);
+    var filasMin = Math.max(50, personas.length);
+    var x = [], merges = ["A1:" + ult + "1"];
+
+    var colsXml = "<cols>" + cols.map(function (c, i) {
+      var w = c.col ? PL.anchos[c.col] : 24;
+      return '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + w + '" style="1" customWidth="1"/>';
+    }).join("") + '<col min="' + (N + 1) + '" max="16384" width="11.42578125" style="1"/></cols>';
+
+    /* Renglón 1: título en toda la anchura. */
+    x.push('<row r="1" spans="1:' + N + '">' + cols.map(function (c, i) {
+      return i === 0 ? '<c r="A1" s="9" t="s"><v>0</v></c>' : '<c r="' + letra(i + 1) + '1" s="9"/>';
+    }).join("") + "</row>");
+
+    /* Renglón 2: grupos, uno por tramo contiguo. */
+    var r2 = [], i = 0;
+    while (i < N) {
+      var g = GRUPOS_XLS[cols[i].g], j = i;
+      while (j + 1 < N && cols[j + 1].g === cols[i].g) j++;
+      for (var k = i; k <= j; k++) {
+        var ref = letra(k + 1) + "2";
+        if (k === i) {
+          r2.push(g.ss !== undefined
+            ? '<c r="' + ref + '" s="' + g.s2 + '" t="s"><v>' + g.ss + "</v></c>"
+            : '<c r="' + ref + '" s="' + g.s2 + '" t="inlineStr"><is><t>' + xmlEsc(g.t) + "</t></is></c>");
+        } else {
+          r2.push('<c r="' + ref + '" s="' + g.s2 + '"/>');
+        }
+      }
+      if (j > i) merges.push(letra(i + 1) + "2:" + letra(j + 1) + "2");
+      i = j + 1;
+    }
+    x.push('<row r="2" spans="1:' + N + '" ht="30" customHeight="1">' + r2.join("") + "</row>");
+
+    /* Renglón 3: encabezados. */
+    x.push('<row r="3" spans="1:' + N + '" ht="50.25" customHeight="1">' + cols.map(function (c, i) {
+      var s = c.s3 || GRUPOS_XLS[c.g].s3, ref = letra(i + 1) + "3";
+      return c.ss !== undefined
+        ? '<c r="' + ref + '" s="' + s + '" t="s"><v>' + c.ss + "</v></c>"
+        : '<c r="' + ref + '" s="' + s + '" t="inlineStr"><is><t>' + xmlEsc(c.t) + "</t></is></c>";
+    }).join("") + "</row>");
+
+    /* Renglones de datos, y los numerados vacíos hasta 50 como el formato. */
+    for (var f = 0; f < filasMin; f++) {
+      var p = personas[f], rr = f + 4;
+      x.push('<row r="' + rr + '" spans="1:' + N + '">' + cols.map(function (c, ci) {
+        var ref = letra(ci + 1) + rr;
+        if (c.id === "no") return '<c r="' + ref + '" s="8"><v>' + (f + 1) + "</v></c>";
+        if (!p) return '<c r="' + ref + '" s="8"/>';
+        var v = c.f(p, f, SOL[p.e] || {});
+        if (v === null || v === undefined || v === "") return '<c r="' + ref + '" s="8"/>';
+        if (typeof v === "number") return '<c r="' + ref + '" s="8"><v>' + v + "</v></c>";
+        return '<c r="' + ref + '" s="8" t="inlineStr"><is><t xml:space="preserve">' + xmlEsc(v) + "</t></is></c>";
+      }).join("") + "</row>");
+    }
+
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
+      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" ' +
+      'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+      '<dimension ref="A1:' + ult + (filasMin + 3) + '"/>' +
+      '<sheetViews><sheetView tabSelected="1" zoomScale="90" zoomScaleNormal="90" workbookViewId="0">' +
+      '<pane ySplit="3" topLeftCell="A4" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>' +
+      '<sheetFormatPr baseColWidth="10" defaultRowHeight="15"/>' + colsXml +
+      "<sheetData>" + x.join("") + "</sheetData>" +
+      '<mergeCells count="' + merges.length + '">' + merges.map(function (m) {
+        return '<mergeCell ref="' + m + '"/>';
+      }).join("") + "</mergeCells>" +
+      '<pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>' +
+      '<pageSetup paperSize="9" orientation="landscape"/></worksheet>';
+  }
+
+  function exportarXlsx() {
+    var PL = window.PLANTILLA_SOLICITANTES;
+    var cols = COLS_XLS.filter(function (c) { return colsElegidas[c.id]; });
+    var arch = {};
+    Object.keys(PL.archivos).forEach(function (k) { arch[k] = PL.archivos[k]; });
+    arch["xl/worksheets/sheet1.xml"] = hojaXlsx(cols, PERSONAS);
+    var blob = SIMH.zip(arch, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    SIMH.descargar(blob, "BASE_REGISTRO DE SOLICITANTES DE TRABAJO " + HOY + ".xlsx");
+    return { cols:cols.length, filas:PERSONAS.length };
+  }
+
+  function panelXls() {
+    var formato = COLS_XLS.filter(function (c) { return c.col; });
+    var extra = COLS_XLS.filter(function (c) { return !c.col; });
+    var n = COLS_XLS.filter(function (c) { return colsElegidas[c.id]; }).length;
+    function chk(c) {
+      return '<label class="xls-op"><input type="checkbox" data-xls="' + c.id + '"' +
+        (colsElegidas[c.id] ? " checked" : "") + (c.id === "no" ? " disabled" : "") + ">" +
+        "<span>" + esc(tituloCol(c)) + "</span></label>";
+    }
+    return '<div class="xls-velo" id="xlsVelo" role="dialog" aria-modal="true" aria-labelledby="xlsTit">' +
+      '<div class="xls-caja tarjeta">' +
+        '<div class="tarjeta-enc"><div><h3 id="xlsTit" style="margin:0">Exportar a Excel</h3>' +
+          '<span class="txt-min">Formato «BASE_REGISTRO DE SOLICITANTES DE TRABAJO» de la Dirección · ' +
+          plural(PERSONAS.length, "persona", "personas") + " de la cartera</span></div></div>" +
+        '<h4 class="xls-g">Columnas del formato <small>(marcadas por omisión)</small></h4>' +
+        '<div class="xls-lista">' + formato.map(chk).join("") + "</div>" +
+        '<h4 class="xls-g">Campos adicionales del sistema <small>(salen al final, en el grupo «Información del sistema»)</small></h4>' +
+        '<div class="xls-lista">' + extra.map(chk).join("") + "</div>" +
+        '<div class="xls-acc">' +
+          '<button class="btn btn-texto btn-s" type="button" id="xlsOmision">Restablecer el formato</button>' +
+          '<span style="flex:1"></span>' +
+          '<button class="btn btn-secundario btn-s" type="button" id="xlsCancel">Cancelar</button>' +
+          '<button class="btn btn-primario btn-s" type="button" id="xlsDescarga">' + ico("excel") +
+            "Descargar Excel · " + plural(n, "columna", "columnas") + "</button>" +
+        "</div>" +
+      "</div></div>";
+  }
+
+  function abrePanelXls() {
+    var v = document.getElementById("xlsVelo");
+    if (v) v.remove();
+    document.body.insertAdjacentHTML("beforeend", panelXls());
+    v = document.getElementById("xlsVelo");
+    function cierra() { v.remove(); $("#btnXls").focus(); }
+    v.addEventListener("click", function (e) { if (e.target === v) cierra(); });
+    v.addEventListener("keydown", function (e) { if (e.key === "Escape") cierra(); });
+    v.querySelectorAll("[data-xls]").forEach(function (c) {
+      c.onchange = function () {
+        colsElegidas[this.getAttribute("data-xls")] = this.checked;
+        abrePanelXls();
+        var d = document.querySelector('[data-xls="' + this.getAttribute("data-xls") + '"]');
+        if (d) d.focus();
+      };
+    });
+    $("#xlsOmision").onclick = function () { colsPorOmision(); abrePanelXls(); };
+    $("#xlsCancel").onclick = cierra;
+    $("#xlsDescarga").onclick = function () {
+      var r = exportarXlsx();
+      cierra();
+      if (SIMH.toast) SIMH.toast("Excel descargado: " + plural(r.filas, "persona", "personas") + " · " +
+        plural(r.cols, "columna", "columnas"), "ok");
+    };
+    $("#xlsDescarga").focus();
+  }
+  $("#btnXls").onclick = abrePanelXls;
 })();
 </script>
 </body>

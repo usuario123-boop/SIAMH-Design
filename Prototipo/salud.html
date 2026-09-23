@@ -140,6 +140,14 @@
 (function () {
   "use strict";
   SIMH.chrome("salud");
+
+  /* Modo sin datos de prueba (Administración › Datos de prueba). */
+  if (SIMH.sinDatos()) {
+    SIMH.vacioModulo({ ico:"salud", titulo:"La cartera de Salud está vacía",
+      texto:"Aquí aparecen las personas registradas con marcadores de vulnerabilidad o condiciones de salud.",
+      accion:'<a class="btn btn-primario btn-s" href="registro.html">' + SIMH.icono("registro") + 'Registrar persona</a>' });
+    return;
+  }
   var ico = SIMH.icono, esc = SIMH.esc;
   var $ = function (s) { return document.querySelector(s); };
 
@@ -658,29 +666,23 @@
     var acomp = document.getElementById("cAcomp").value;
     var citaTxt = cita ? cita.split("-").reverse().join("/") : "por agendar";
 
-    document.getElementById("hojaOficio").innerHTML =
-      '<div class="o-membrete">' +
-        '<span class="o-inst">Gobierno del Estado de Chiapas</span>' +
-        '<span class="o-inst">Secretaría de la Frontera Sur</span>' +
-        '<span class="o-inst" style="color:var(--gris-claro)">Dirección de Atención a Personas en Movilidad</span>' +
-        '<div class="cenefa-fina" style="margin-top:7px"></div>' +
-      "</div>" +
-      '<div class="o-cuerpo">' +
-        '<span class="o-folio">Oficio ' + ("SFS/" + ("000" + (oficioSec + 1)).slice(-4) + "/2026") +
-          "<br>Tapachula, Chiapas, a " + hoy() + "</span>" +
-        '<span class="o-dest">' + esc(inst) + "<br>P R E S E N T E</span>" +
-        "<p>Por medio del presente y con fundamento en el artículo 8 de la Ley de Migración, me permito " +
-          "canalizar a la persona <b>" + esc(p.n) + "</b>, de " + p.ed + " años, registrada en el Sistema " +
-          "Integral de Movilidad Humana con folio <b>" + esc(p.f) + "</b>, para su atención por el motivo " +
-          "siguiente:</p>" +
-        "<p><b>" + (mot ? esc(mot) : "— motivo pendiente de capturar —") + "</b></p>" +
-        "<p>Fecha de cita: <b>" + esc(citaTxt) + "</b>. Acompañamiento: <b>" + esc(acomp) + "</b>.</p>" +
-        "<p>Sin otro particular, agradezco las atenciones brindadas.</p>" +
-        '<div class="o-firma"><span class="o-raya"></span>Director de Área<br>' +
-          "Secretaría de la Frontera Sur</div>" +
-      "</div>" +
-      '<div class="o-pie">Documento con datos personales sensibles. Su validación se realiza por folio y sello ' +
-        "ante la Secretaría; no incluye código QR.</div>";
+    /* 22/09/2026: formato «Oficio a Centro de Salud» de Recursos y
+       plantillas, con su texto literal sobre el membrete oficial. El
+       destinatario es el del formato cuando se canaliza a un centro de
+       salud; si es otra institución, se dirige a su titular. */
+    var tp = SIMH.plantillaSFS("salud", { mun: p.mun || "Tapachula" });
+    var dest = /centro de salud/i.test(inst) ? tp.dest : "Titular de " + esc(inst);
+    var caja = document.getElementById("hojaOficio");
+    caja.className = "";
+    caja.innerHTML = SIMH.hojaSFS({
+      sello: '<div class="o-sello bor">' + ico("editar") + "Borrador · el folio se asigna al firmar</div>",
+      folio: '<span class="o-pend">se asigna al firmar</span>',
+      fecha: SIMH.fechaLarga("2026-08-25") + ".",
+      asunto: tp.asunto,
+      dest: dest,
+      cuerpo: tp.cuerpo
+    });
+    SIMH.paginar(caja);
   }
 
   /* -------------------------------------------------- Eventos ---------- */

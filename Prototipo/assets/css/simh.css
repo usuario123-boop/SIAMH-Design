@@ -183,6 +183,17 @@ small,.txt-min{font-size:12.5px;color:var(--gris);line-height:1.45}
 .menu-pop .m-salir{color:var(--guinda);font-weight:700}
 .menu-pop .m-salir svg{stroke:var(--guinda)}
 .menu-pop .m-salir:hover{background:var(--guinda-050)}
+/* Cambio de cuenta del prototipo (22/09/2026): permite recorrer la regla de
+   sede de Revalidación desde las dos cuentas. */
+.menu-pop .m-grupo{padding:6px 10px 4px;font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--gris)}
+.menu-pop .m-cuenta{display:flex;align-items:center;gap:9px;width:100%;padding:7px 10px;border:0;
+  background:none;border-radius:var(--radio-s);font-family:var(--f-texto);font-size:13px;color:var(--tinta);
+  text-align:left;cursor:pointer;line-height:1.3}
+.menu-pop .m-cuenta:hover,.menu-pop .m-cuenta:focus-visible{background:var(--hueso-claro)}
+.menu-pop .m-cuenta .avatar{width:28px;height:28px;border-radius:50%;background:var(--jade-900);color:#fff;
+  display:grid;place-items:center;font-size:11px;font-weight:700;flex:none}
+.menu-pop .m-cuenta small{display:block;font-size:11.5px;color:var(--gris);margin-top:1px}
 
 /* ------------------------------------------------------ 4. Menú lateral -- */
 .sidebar{
@@ -540,6 +551,9 @@ table.tabla .num{text-align:right;font-variant-numeric:tabular-nums}
 .tabla-datos td.num{text-align:right;font-variant-numeric:tabular-nums}
 
 /* ------------------------------------------------------- 12. Avisos ----- */
+/* `display:flex` pisaba el atributo `hidden`: un aviso de error oculto se
+   dibujaba como una franja vacía. */
+.aviso[hidden],.accion[hidden]{display:none}
 .aviso{display:flex;gap:10px;padding:12px 14px;border-radius:var(--radio);font-size:13px;align-items:flex-start;
   border:1px solid transparent;margin-bottom:16px;line-height:1.45}
 .aviso svg{width:18px;height:18px;flex:none;stroke-width:1.6;fill:none;margin-top:1px}
@@ -892,6 +906,18 @@ table.tabla .num{text-align:right;font-variant-numeric:tabular-nums}
 .oficio-hoja .o-pie{border-top:1px solid var(--linea-suave);padding:8px 14px;background:var(--hueso-claro);
   font-size:8px;line-height:1.5;color:var(--gris-claro)}
 .oficio-cap{font-size:11px;color:var(--gris-claro);text-align:center;margin-top:8px;line-height:1.45}
+/* Subió de canalizaciones.html el 22/09/2026 (tercer consumidor: Capacitación). */
+/* Sello de estado en la cara de la hoja: un borrador que se ve idéntico a
+   un oficio firmado es una trampa. El documento dice si ya vale.       */
+.o-sello{display:flex;align-items:center;gap:7px;padding:7px 14px;font-size:11px;
+  font-weight:700;line-height:1.4;border-bottom:1px solid var(--linea-suave)}
+.o-sello svg{width:14px;height:14px;stroke-width:2;fill:none;flex:none}
+.o-sello.bor{background:var(--arena-050);color:var(--gris)}
+.o-sello.bor svg{stroke:var(--gris)}
+.o-sello.fir{background:var(--rosa-050);color:#7d0140}
+.o-sello.fir svg{stroke:var(--rosa)}
+.o-sello.can{background:var(--guinda-050);color:var(--guinda-900)}
+.o-sello.can svg{stroke:var(--guinda)}
 
 /* ------------------------------- 23. Piezas de módulo compartidas ------- */
 /* Lo que repetían Administración y los cuatro módulos de documentos. Cada uno
@@ -1019,3 +1045,124 @@ h2[tabindex]:focus,h3[tabindex]:focus{outline:3px solid var(--jade);outline-offs
   }
 }
 
+
+/* ----------------------------- 24. Modo sin datos de prueba (22/09/2026) -- */
+.chip-modo{display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:15px;
+  background:#fff;color:var(--guinda-900);font-size:12px;font-weight:700;margin-right:10px;white-space:nowrap}
+.chip-modo:hover{text-decoration:none;background:var(--hueso-claro)}
+@media (max-width:900px){.chip-modo{display:none}}
+.vacio-modulo{text-align:center;padding:40px 24px}
+.vacio-modulo .vm-ico svg{width:40px;height:40px;stroke:var(--gris-claro);stroke-width:1.4;fill:none}
+.vacio-modulo .vm-t{font-family:var(--f-texto);font-size:18px;font-weight:700;color:var(--tinta);
+  text-transform:none;letter-spacing:0;margin:10px 0 6px}
+.vacio-modulo .vm-n{font-size:13.5px;color:var(--gris);max-width:560px;margin:0 auto 18px;line-height:1.55}
+.vacio-modulo .vm-acc{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+
+/* ------------------ 25. Hoja oficial con membrete de la SFS (22/09/2026) -- */
+/* Página carta (8.5 × 11 in) con el membrete de «Recursos y plantillas» de
+   fondo. Márgenes y tipografía del .docx original: izquierdo 0.98 in,
+   derecho 0.79 in, Arial 12 pt. La letra en `cqw` escala la hoja completa
+   con el ancho de su columna. Ver SIMH.hojaSFS() y SIMH.paginar().      */
+.hoja-sfs{container-type:inline-size;cursor:zoom-in;display:flex;flex-direction:column;gap:10px}
+.hs-pag{position:relative;aspect-ratio:1275/1650;background:#fff url(../img/membrete-sfs.jpg) center/100% 100% no-repeat;
+  border:1px solid var(--linea);box-shadow:0 2px 10px rgba(0,0,0,.06);
+  font-family:Arial,Helvetica,sans-serif;color:#000;font-size:1.96cqw;line-height:1.15;text-align:left}
+.hs-cont{position:absolute;left:11.6%;right:9.3%;top:17.2%;bottom:13.4%;overflow:hidden}
+.hs-pag.hs-sig .hs-cont{top:19.4%}
+.hs-cont p{margin:0 0 1.15em;text-align:justify}
+.hs-cont b{color:#000}
+.hs-der{text-align:right;margin-bottom:1.15em}
+.hs-asunto{margin-left:auto;width:43%;text-align:right;margin-bottom:2.3em}
+.hs-dest{font-weight:700;text-transform:uppercase;margin-bottom:2.3em}
+.hs-titulo{font-weight:700;text-align:center;margin:1.2em 0 1.6em}
+.hs-firma{margin-top:3.4em;margin-bottom:2.4em}
+.hs-ccp{font-size:.67em;line-height:1.3}
+.hs-linea{display:inline-block;min-width:8em;border-bottom:.08em solid #000;line-height:1.1}
+.hs-cont .o-var{background:rgba(0,152,135,.14);border-radius:2px;color:#000}
+.hs-cont .o-pend{background:#FFF2A8;color:#000;font-style:normal}
+.hoja-sfs .o-sello{border:1px solid var(--linea);border-radius:6px}
+.hs-velo{position:fixed;inset:0;z-index:200;background:rgba(20,20,20,.55);overflow:auto;padding:24px 16px}
+.hs-caja{max-width:816px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.hs-caja .hs-cerrar{align-self:flex-end}
+.hs-caja .hoja-sfs{cursor:default}
+@media print{.hs-velo{position:static;background:none;padding:0}.hs-cerrar{display:none}}
+
+/* Botón para plegar el visor o la lista (Canalizaciones, Constancias). La
+   clase se usaba sin estar definida y el icono se dibujaba a 150 px. */
+.btn-colapsar-maestro{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;
+  border:1px solid var(--linea);border-radius:var(--radio-s);background:var(--blanco);color:var(--tinta);
+  font-family:var(--f-texto);font-size:12.5px;font-weight:600;cursor:pointer}
+.btn-colapsar-maestro:hover{background:var(--hueso-claro)}
+.btn-colapsar-maestro svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2}
+
+/* ------------------------------------------ 26. Impresión de documentos -- */
+#zonaImpresion{position:absolute;left:-10000px;top:0;width:8.5in}
+@media print{
+  @page{size:letter;margin:0}
+  body.imprimiendo{background:#fff!important}
+  body.imprimiendo > *:not(#zonaImpresion){display:none!important}
+  body.imprimiendo #zonaImpresion{position:static;left:auto;width:8.5in}
+  #zonaImpresion .hoja-sfs,#zonaImpresion .sne-hoja{gap:0;display:block}
+  #zonaImpresion .hs-pag,#zonaImpresion .sne-pag{border:0!important;box-shadow:none!important;margin:0;
+    break-after:page;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #zonaImpresion .o-sello{display:none}
+  #zonaImpresion .o-var,#zonaImpresion .o-pend{background:none}
+}
+
+/* ------------------- 27. Solicitud de empleo · formato SNE (22/09/2026) -- */
+/* Réplica de SNE_SOLICITUD_DE_EMPLEO_PLANTILLA_PDF: franjas amarillas con
+   título café, etiqueta en banda gris sobre el espacio de respuesta. Todo
+   en `cqw` para que la hoja escale entera con su columna.               */
+.sne-hoja{container-type:inline-size;display:flex;flex-direction:column;gap:12px}
+.sne-pag{position:relative;aspect-ratio:8.5/11;background:#fff;border:1px solid var(--linea);
+  padding:3.4cqw 3.6cqw 5cqw;font-family:Arial,Helvetica,sans-serif;font-size:1.13cqw;line-height:1.2;color:#000;overflow:hidden}
+.sne-pag .st{width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:.9cqw;border:.14cqw solid #222}
+.sne-pag td,.sne-pag th{border:.08cqw solid #444;padding:0;vertical-align:top;word-break:break-word}
+.sne-pag .sl{display:block;background:#efefef;color:#7a4712;padding:.2cqw .45cqw;font-size:1.08cqw}
+.sne-pag .sl small,.sne-pag .scab small{color:#999;font-size:.8em}
+.sne-pag .sv{display:block;min-height:2.3cqw;padding:.3cqw .45cqw;font-size:1.15cqw}
+.sne-pag .sgrande{min-height:6cqw}
+.sne-pag .sh{background:#fffbc2;color:#6b3a08;font-weight:700;text-align:center;font-size:1.35cqw;padding:.15cqw}
+.sne-pag .stit{background:#fffbc2;color:#6b3a08;font-weight:700;font-size:2.6cqw;text-align:center;vertical-align:middle;padding:.6cqw}
+.sne-pag .sfoto{background:#e8e8e8;color:#b0b0b0;text-align:center;vertical-align:middle;font-size:1cqw}
+.sne-pag .sfecha{display:flex;padding:.2cqw .45cqw;gap:0}
+.sne-pag .sfecha i{flex:1;font-style:normal;text-align:center;border-left:.08cqw solid #444;min-height:1.9cqw}
+.sne-pag .sfecha i:first-child{border-left:0}
+.sne-pag .scajas{display:flex;padding:0}
+.sne-pag .scajas i{flex:1;font-style:normal;text-align:center;border-right:.08cqw solid #444;height:2.5cqw;line-height:2.5cqw;font-size:1.1cqw}
+.sne-pag .scajas i:last-child{border-right:0}
+.sne-pag .sfilas td{padding:.3cqw .4cqw;height:2cqw}
+.sne-pag .scab td{background:#efefef;color:#7a4712;text-align:center;font-size:1.05cqw}
+.sne-pag .slc{background:#efefef;color:#7a4712}
+.sne-pag .sc{text-align:center}
+.sne-pag .salto td{height:3cqw}
+.sne-pag .salto2 td{height:5cqw}
+.sne-pag .sgr{color:#7a4712}
+.sne-pag .sfirma td{height:8cqw}
+.sne-pag .sraya{display:block;margin:4.5cqw 1cqw 0 30%;border-top:.12cqw dashed #222;text-align:center;color:#7a4712;font-size:1.05cqw}
+.sne-pag .snota{text-align:center;font-weight:700;font-size:.95cqw;margin-top:.4cqw}
+.sne-pag .spie{position:absolute;left:3.6cqw;right:3.6cqw;bottom:1.8cqw;display:flex;justify-content:space-between;
+  font-size:.85cqw;color:#555}
+
+.sne-velo{position:fixed;inset:0;z-index:200;background:rgba(20,20,20,.5);display:flex;padding:14px}
+.sne-caja{flex:1;display:flex;flex-direction:column;background:var(--hueso);border-radius:var(--radio);overflow:hidden;min-width:0}
+.sne-barra{display:flex;gap:14px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;
+  padding:14px 18px;background:var(--blanco);border-bottom:1px solid var(--linea)}
+.sne-barra h2{font-family:var(--f-texto);font-size:17px;font-weight:700;color:var(--tinta);text-transform:none;letter-spacing:0;margin:0 0 3px}
+.sne-acc{display:flex;gap:8px;flex-wrap:wrap}
+.sne-cuerpo{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);min-height:0}
+@media (max-width:1000px){.sne-cuerpo{grid-template-columns:1fr;overflow:auto}}
+.sne-form{overflow:auto;padding:14px 16px}
+.sne-visor{overflow:auto;padding:14px 16px;border-left:1px solid var(--linea)}
+.sne-visor .lbl-visor{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gris);margin-bottom:8px}
+.sne-sec{background:var(--blanco);border:1px solid var(--linea);border-radius:var(--radio-s);margin-bottom:10px}
+.sne-sec > summary{cursor:pointer;padding:11px 14px;font-weight:700;font-size:13.5px;display:flex;justify-content:space-between;gap:10px;min-height:44px;align-items:center}
+.sne-cta{font-size:12px;font-weight:400;color:var(--gris)}
+.sne-campos{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px 12px;padding:0 14px 12px}
+.sne-campos .sne-ancho{grid-column:1/-1}
+.sne-exp{display:inline-block;font-size:10.5px;font-weight:700;text-transform:none;letter-spacing:0;color:var(--jade-900);
+  background:var(--jade-050);border-radius:8px;padding:0 6px;margin-left:4px}
+
+/* Campos para llenar del aviso de privacidad (hoja oficial). */
+.hs-cont .hs-campos{margin:0 0 1.2em;line-height:1.6}
+.hs-velo .hoja-sfs{cursor:default}

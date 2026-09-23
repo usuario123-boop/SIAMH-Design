@@ -75,6 +75,14 @@
 <script>
 (function () {
   SIMH.chrome("familiar");
+
+  /* Modo sin datos de prueba (Administración › Datos de prueba). */
+  if (SIMH.sinDatos()) {
+    SIMH.vacioModulo({ ico:"familia", titulo:"No hay grupos familiares",
+      texto:"Los grupos familiares se forman al registrar personas que viajan juntas.",
+      accion:'<a class="btn btn-primario btn-s" href="registro.html">' + SIMH.icono("registro") + 'Registrar persona</a>' });
+    return;
+  }
   var ico = SIMH.icono, esc = SIMH.esc, $ = function (s) { return document.querySelector(s); };
 
   /* ======================================================================
