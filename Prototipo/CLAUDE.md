@@ -288,4 +288,5 @@ errores de responsive.
 Dependencias externas que no dependen del código: isotipo y logos oficiales (el actual es una
 reconstrucción geométrica en `SIMH.isotipo()`), tipografías con licencia Novecento Wide y Gilroy
 (hay un `@font-face` comentado en el CSS; el prototipo usa Montserrat y Poppins), nombre oficial
-definitivo del sistema y GeoJSON municipal si se requiere un mapa preciso.
+definitivo del sistema. El mapa del Panel ya usa límites reales (INEGI 2022) desde
+`assets/js/mapa-chiapas.js`, archivo generado que no se edita a mano.

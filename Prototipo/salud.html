@@ -121,7 +121,7 @@
   <div class="enc">
     <div class="enc-txt">
       <h1>Salud y Vulnerabilidad</h1>
-      <div class="enc-sub">Valoración, catálogo OMS y canalización al sector salud (RF07)</div>
+      <div class="enc-sub">Valoración, catálogo OMS y canalización al sector salud</div>
     </div>
     <div class="enc-acc">
       <button class="btn btn-secundario btn-s" type="button" id="btnXls"></button>
@@ -235,6 +235,7 @@
   ];
 
   var INSTITUCIONES = [
+    "A las personas titulares de los centros de salud del municipio de Tapachula, Chiapas",
     "IMSS-Bienestar",
     "Hospital General de Tapachula",
     "Hospital Regional de Alta Especialidad Ciudad Salud",
@@ -243,7 +244,10 @@
     "Otra institución"
   ];
 
-  var ESTADOS_COND = ["Activa", "En tratamiento", "Controlada", "Resuelta"];
+  /* Asunto de la plantilla «Oficio a Centro de Salud», precargado y editable. */
+  var ASUNTO_SALUD = "Solicitud de atención a personas en contexto de movilidad";
+
+  var ESTADOS_COND =["Activa", "En tratamiento", "Controlada", "Resuelta"];
 
   /* ======================================================================
      3. Cartera de trabajo del módulo
@@ -573,13 +577,13 @@
     /* ---------------- Canalización ----------------------------------- */
     h += '<article class="tarjeta">' +
       '<div class="grafica-enc"><h3>Canalización al sector salud</h3></div>' +
-      '<div class="grafica-sub">El oficio se genera en borrador y queda pendiente de la firma del Director de ' +
-        "Área; el sistema lo numera y lo asienta en la bitácora del expediente (RF11).</div>" +
       '<div class="g-canaliza"><div>' +
         '<div class="campo"><label for="cInst">Institución receptora <span class="req">•</span></label>' +
           '<select id="cInst">' + INSTITUCIONES.map(function (x) {
             return "<option>" + esc(x) + "</option>";
           }).join("") + "</select></div>" +
+        '<div class="campo"><label for="cAsunto">Asunto del oficio <span class="req">•</span></label>' +
+          '<input type="text" id="cAsunto" value="' + esc(ASUNTO_SALUD) + '"></div>' +
         '<div class="campo"><label for="cMotivo">Motivo de la canalización <span class="req">•</span></label>' +
           '<input type="text" id="cMotivo" placeholder="Ej. Control prenatal y valoración obstétrica"></div>' +
         '<div class="fila">' +
@@ -669,14 +673,18 @@
        plantillas, con su texto literal sobre el membrete oficial. El
        destinatario es el del formato cuando se canaliza a un centro de
        salud; si es otra institución, se dirige a su titular. */
-    var tp = SIMH.plantillaSFS("salud", { mun: p.mun || "Tapachula" });
-    var dest = /centro de salud/i.test(inst) ? tp.dest : "Titular de " + esc(inst);
+    var titularesTap = /^A las personas titulares/.test(inst);
+    var tp = SIMH.plantillaSFS("salud", { mun: titularesTap ? "Tapachula" : (p.mun || "Tapachula") });
+    var dest = /centros? de salud/i.test(inst) ? tp.dest : "Titular de " + esc(inst);
+    var asu = document.getElementById("cAsunto").value.trim();
+    /* Sin editar, conserva el salto de línea de la plantilla. */
+    var asunto = asu === ASUNTO_SALUD ? tp.asunto : (asu ? esc(asu) : "____________________");
     var caja = document.getElementById("hojaOficio");
     caja.className = "";
     caja.innerHTML = SIMH.hojaSFS({
       sello: '<div class="o-sello bor">' + ico("editar") + "Borrador · el folio se asigna al firmar</div>",
       fecha: SIMH.fechaLarga("2026-08-25") + ".",
-      asunto: tp.asunto,
+      asunto: asunto,
       dest: dest,
       cuerpo: tp.cuerpo
     });
@@ -796,7 +804,7 @@
     });
 
     /* Vista previa en vivo */
-    ["#cInst", "#cMotivo", "#cCita", "#cAcomp"].forEach(function (s) {
+    ["#cInst", "#cAsunto", "#cMotivo","#cCita", "#cAcomp"].forEach(function (s) {
       var el = det.querySelector(s);
       if (el) {
         el.addEventListener("input", pintarOficio);
@@ -819,7 +827,9 @@
         var cita = citaEl ? citaEl.value : "";
         var folio = nuevoFolio();
         var instEl = det.querySelector("#cInst");
+        var asuEl = det.querySelector("#cAsunto");
         p.can.push({ fecha:hoy(), inst:instEl ? instEl.value : "", motivo:mot.value.trim(),
+                     asunto:(asuEl && asuEl.value.trim()) || ASUNTO_SALUD,
                      of:folio, cita:cita ? cita.split("-").reverse().join("/") : "",
                      est:"Borrador · pendiente de firma" });
         if (p.urg !== "seg" && p.urg !== "fin") p.urg = "seg";

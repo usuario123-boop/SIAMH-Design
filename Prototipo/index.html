@@ -9,6 +9,19 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/simh.css">
+<style>
+  /* Mapa de Atención por municipio (24/09/2026) */
+  .mapa-chis{position:relative;margin-top:6px}
+  .mapa-chis svg{width:100%;height:auto;display:block;border-radius:8px}
+  .mapa-chis .mm{cursor:pointer;outline:none}
+  .mapa-fuente{font-size:11.5px;color:var(--gris-claro,#6A6A6A);margin-top:6px;text-align:right}
+  .mapa-chis .mm:focus-visible .mm-c{stroke:var(--tinta,#1F1F1F);stroke-width:2.5}
+  .mapa-chis .mm-tip{position:absolute;pointer-events:none;background:#fff;border:1px solid #DDD8CF;
+    border-radius:8px;padding:8px 10px;font-size:12.5px;line-height:1.4;color:#2B2B2B;white-space:nowrap;
+    transform:translate(-50%,calc(-100% - 12px));display:none;z-index:2}
+  .mapa-chis .mm-tip b{display:block;font-weight:700}
+  .mapa-chis .mm-tip span{color:#5F5F5F}
+</style>
 </head>
 <body>
 
@@ -74,14 +87,13 @@
     <article class="tarjeta">
       <div class="grafica-enc">
         <h3>Atención por municipio</h3>
-        <a class="ver-tabla" href="#">Ver detalle territorial</a>
+        <button class="ver-tabla" type="button" id="btnMapaTabla">Ver tabla</button>
       </div>
-      <div class="grafica-sub" id="capMapa">Tamaño del círculo proporcional a personas atendidas</div>
-      <div class="rejilla g-2" style="gap:14px;align-items:center">
-        <div id="grMapa"></div>
-        <table class="tabla-datos"><thead><tr><th>Municipio</th><th class="num">Personas</th><th class="num">%</th></tr></thead>
-          <tbody id="tblMunicipios"></tbody></table>
-      </div>
+      <div class="grafica-sub" id="capMapa">Personas atendidas por municipio de captura</div>
+      <div class="mapa-chis" id="grMapa"></div>
+      <div class="mapa-fuente">Límites municipales: INEGI, Marco Geoestadístico 2022 · Países: Natural Earth</div>
+      <table class="tabla-datos oculto" id="tblMapa"><thead><tr><th>Municipio</th><th class="num">Personas</th><th class="num">%</th></tr></thead>
+        <tbody id="tblMunicipios"></tbody></table>
     </article>
 
     <article class="tarjeta" id="cardGenero"></article>
@@ -95,6 +107,7 @@
 </main>
 
 <script src="assets/js/simh.js"></script>
+<script src="assets/js/mapa-chiapas.js"></script>
 <script>
 (function () {
   "use strict";
@@ -349,12 +362,8 @@
     /* --------------------------------------------------- territorio ---- */
     /* El mapa siempre muestra los seis municipios: es lo que da contexto al
        elegido. Lo que cambia es cuál queda destacado. */
-    var burbujas = MUN.map(function (m) {
-      return { k:m.k, v:m.total, x:m.x, y:m.y };
-    });
-    $("#grMapa").innerHTML = SIMH.mapaBurbujas(burbujas);
-
     var totalEstado = MUN.reduce(function (a, m) { return a + m.total; }, 0);
+    $("#grMapa").innerHTML = mapaChiapas(uno ? fMun : null, totalEstado);
     $("#tblMunicipios").innerHTML = MUN.slice()
       .sort(function (a, b) { return b.total - a.total; })
       .map(function (m) {
@@ -364,8 +373,8 @@
           SIMH.pct(m.total, totalEstado) + "</td></tr>";
       }).join("");
     $("#capMapa").textContent = uno
-      ? "Tamaño proporcional a personas atendidas. " + fMun + " queda resaltado en la tabla."
-      : "Tamaño del círculo proporcional a personas atendidas";
+      ? "Personas atendidas por municipio de captura · " + fMun + " resaltado"
+      : "Personas atendidas por municipio de captura";
 
     /* ----------------------------------------------------- alertas ----- */
     /* Los pendientes también son del municipio: uno de Tuxtla no puede
@@ -386,6 +395,166 @@
       ? "Panel de " + fMun + ": " + n(d.total) + " personas registradas."
       : "Panel de los seis municipios: " + n(d.total) + " personas registradas.";
   }
+
+  /* ======================================================================
+     Mapa de Atención por municipio (24/09/2026)
+     --------------------------------------------------------------------
+     Límites reales: los 124 municipios del Marco Geoestadístico INEGI 2022
+     y los países de Natural Earth, en `assets/js/mapa-chiapas.js`
+     (generado, no editar a mano). Los seis municipios de captura llevan
+     su polígono sombreado y un círculo proporcional en ÁREA a las personas
+     atendidas. `lx`/`ly` solo deciden hacia dónde va el rótulo.
+     ================================================================== */
+  var ROT = {
+    "Tapachula":   { lx:-1, ly: 0 },
+    "Suchiate":    { lx: 1, ly: 0 },
+    "F. Comalapa": { lx: 1, ly: 0 },
+    "Motozintla":  { lx:-1, ly: 0 },
+    "Tuxtla Gtz.": { lx:-1, ly: 0 },
+    "Comitán":     { lx: 1, ly: 0 }
+  };
+  var MC = window.MAPA_CHIS;
+  function px(lon) { return (lon - MC.lon0) * MC.kx; }
+  function py(lat) { return (MC.lat0 - lat) * MC.ky; }
+
+  function mapaChiapas(sel, total) {
+    var W = MC.W, H = MC.H, RMAX = 24;
+    var max = Math.max.apply(null, MUN.map(function (m) { return m.total; }));
+    function radio(v) { return RMAX * Math.sqrt(v / max); }
+    function rot(lon, lat, txt, extra) {
+      return '<text x="' + px(lon).toFixed(1) + '" y="' + py(lat).toFixed(1) + '" ' +
+        'font-family="Poppins,sans-serif" fill="#857D71" font-size="8.5" letter-spacing="2.2" ' +
+        (extra || 'text-anchor="middle"') + ">" + txt + "</text>";
+    }
+
+    var s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-labelledby="mapaTit">' +
+      '<title id="mapaTit">Mapa de Chiapas con las personas atendidas en los seis municipios de captura</title>' +
+      '<defs><clipPath id="mapaMarco"><rect width="' + W + '" height="' + H + '" rx="8"/></clipPath></defs>' +
+      '<g clip-path="url(#mapaMarco)">' +
+      '<rect width="' + W + '" height="' + H + '" fill="#E3EDEE"/>' +
+      '<path d="' + MC.tierra + '" fill="#EFEBE4" stroke="#CFC7BA" stroke-width=".6"/>' +
+      '<path d="' + MC.estados + '" fill="none" stroke="#CFC7BA" stroke-width=".7"/>' +
+      '<path d="' + MC.fronteraOtra + '" fill="none" stroke="#8A8175" stroke-width=".9" stroke-dasharray="5 2 1.5 2"/>' +
+      '<path d="' + MC.chiapas + '" fill="#FFFFFF"/>';
+
+    /* Municipios de captura: polígono sombreado */
+    MUN.forEach(function (m) {
+      var g = MC.mun[m.k]; if (!g) return;
+      var act = sel === m.k;
+      s += '<path d="' + g.d + '" fill="' + (act ? "#C9E8E3" : "#E5F3F1") + '"/>';
+    });
+
+    s += '<path d="' + MC.malla + '" fill="none" stroke="#DDD7CC" stroke-width=".45" stroke-linejoin="round"/>' +
+      '<path d="' + MC.chiapas + '" fill="none" stroke="#9C9387" stroke-width="1" stroke-linejoin="round"/>' +
+      '<path d="' + MC.frontera + '" fill="none" stroke="#6F675C" stroke-width="1.2" stroke-dasharray="5 2 1.5 2"/>' +
+      /* Rótulos de contexto */
+      rot(-91.15, 15.55, "GUATEMALA") +
+      rot(-94.45, 17.62, "VERACRUZ", 'text-anchor="start"') +
+      rot(-94.52, 16.30, "OAXACA", 'text-anchor="start"') +
+      rot(-92.55, 18.02, "TABASCO") +
+      rot(-90.75, 17.95, "CAMPECHE") +
+      '<text x="' + px(-93.75).toFixed(1) + '" y="' + py(15.3).toFixed(1) + '" font-family="Poppins,sans-serif" ' +
+        'fill="#62878A" font-size="9" font-style="italic" letter-spacing="1.5" text-anchor="middle">Océano Pacífico</text>' +
+      '<text x="' + px(-92.85).toFixed(1) + '" y="' + py(17.05).toFixed(1) + '" font-family="Montserrat,sans-serif" ' +
+        'font-weight="800" fill="#DCD5CA" font-size="17" letter-spacing="7" text-anchor="middle">CHIAPAS</text>';
+
+    /* Círculos: primero los grandes, para que los chicos queden encima con
+       su anillo de superficie. */
+    MUN.slice().sort(function (a, b) { return b.total - a.total; }).forEach(function (m) {
+      var g = MC.mun[m.k], o = ROT[m.k]; if (!g || !o) return;
+      var x = g.x, y = g.y, r = radio(m.total);
+      var act = sel === m.k, apagado = sel && !act;
+      var tx = x + o.lx * (r + 6), ty = y + (o.ly ? r * 0.7 + 8 : 3);
+      var anc = o.lx < 0 ? "end" : "start";
+      s += '<g class="mm" tabindex="0" role="button" data-mun="' + SIMH.esc(m.k) + '" data-x="' + x +
+          '" data-y="' + (y - r).toFixed(1) + '" aria-label="' + SIMH.esc(m.k) + ": " + n(m.total) +
+          " personas, " + SIMH.pct(m.total, total) + '. Filtrar el panel."' +
+          (apagado ? ' opacity=".5"' : "") + ">" +
+        '<circle cx="' + x + '" cy="' + y + '" r="' + Math.max(r, 12).toFixed(1) + '" fill="transparent"/>' +
+        '<circle cx="' + x + '" cy="' + y + '" r="' + (r + 1.5).toFixed(1) + '" fill="#FFFFFF" fill-opacity=".55"/>' +
+        '<circle class="mm-c" cx="' + x + '" cy="' + y + '" r="' + r.toFixed(1) + '" ' +
+          'fill="' + (act ? T.d3 : "rgba(0,138,123,.30)") + '" stroke="' + (act ? T.d4 : T.d3) + '" stroke-width="1.3"/>' +
+        '<circle cx="' + x + '" cy="' + y + '" r="1.7" fill="' + (act ? "#FFFFFF" : T.d4) + '"/>' +
+        '<text x="' + tx.toFixed(1) + '" y="' + ty.toFixed(1) + '" text-anchor="' + anc + '" ' +
+          'font-family="Poppins,sans-serif" font-size="9.5" font-weight="600" fill="#2B2B2B" ' +
+          'stroke="#FFFFFF" stroke-width="3" stroke-linejoin="round" paint-order="stroke">' + SIMH.esc(m.k) +
+          '<tspan x="' + tx.toFixed(1) + '" dy="10.5" font-weight="400" font-size="8.8" fill="#5F5F5F">' +
+          n(m.total) + "</tspan></text>" +
+        "</g>";
+    });
+
+    /* Leyenda de tamaños (sobre Guatemala), escala, frontera y norte */
+    var lx = W - 112, ly = H - 16;
+    s += '<g font-family="Poppins,sans-serif" font-size="8" fill="#4A4A4A">' +
+      '<text x="' + lx + '" y="' + (ly - 2 * RMAX - 10) + '" font-weight="600" font-size="8.5">Personas atendidas</text>';
+    [7000, 3000, 500].forEach(function (v) {
+      var r = radio(v), cx = lx + RMAX;
+      s += '<circle cx="' + cx + '" cy="' + (ly - r).toFixed(1) + '" r="' + r.toFixed(1) + '" fill="none" ' +
+          'stroke="' + T.d3 + '" stroke-width=".9"/>' +
+        '<line x1="' + cx + '" y1="' + (ly - 2 * r).toFixed(1) + '" x2="' + (lx + 2 * RMAX + 8) + '" y2="' +
+          (ly - 2 * r).toFixed(1) + '" stroke="#9A9A9A" stroke-width=".6" stroke-dasharray="1.5 1.5"/>' +
+        '<text x="' + (lx + 2 * RMAX + 11) + '" y="' + (ly - 2 * r + 3).toFixed(1) + '">' + n(v) + "</text>";
+    });
+    var km = MC.km100, sx = 18, sy = H - 16;
+    s += '<rect x="' + sx + '" y="' + sy + '" width="' + (km / 2).toFixed(1) + '" height="3" fill="#4A4A4A"/>' +
+      '<rect x="' + (sx + km / 2).toFixed(1) + '" y="' + sy + '" width="' + (km / 2).toFixed(1) +
+        '" height="3" fill="#FFFFFF" stroke="#4A4A4A" stroke-width=".6"/>' +
+      '<text x="' + sx + '" y="' + (sy - 4) + '">0</text>' +
+      '<text x="' + (sx + km).toFixed(1) + '" y="' + (sy - 4) + '" text-anchor="end">100 km</text>' +
+      '<line x1="' + sx + '" y1="' + (sy - 22) + '" x2="' + (sx + 20) + '" y2="' + (sy - 22) + '" stroke="#6F675C" ' +
+        'stroke-width="1.2" stroke-dasharray="5 2 1.5 2"/>' +
+      '<text x="' + (sx + 25) + '" y="' + (sy - 19) + '">Frontera internacional</text>' +
+      '<rect x="' + sx + '" y="' + (sy - 40) + '" width="20" height="9" fill="#E5F3F1" stroke="#DDD7CC" stroke-width=".6"/>' +
+      '<text x="' + (sx + 25) + '" y="' + (sy - 32.5) + '">Municipio de captura</text>' +
+      '<g transform="translate(' + (W - 22) + ',24)">' +
+        '<path d="M0 -12 L6 6 L0 2 L-6 6 Z" fill="#4A4A4A"/>' +
+        '<text y="17" text-anchor="middle" font-weight="700" font-size="8.5">N</text></g>' +
+      "</g>" +
+      "</g></svg>" +
+      '<div class="mm-tip" role="presentation"></div>';
+    return s;
+  }
+
+  /* Pasar el cursor o enfocar muestra la cifra; clic o Enter filtra el panel. */
+  (function () {
+    var caja = $("#grMapa");
+    function tip(g) {
+      var t = caja.querySelector(".mm-tip");
+      if (!g) { t.style.display = "none"; return; }
+      var m = MUN.filter(function (x) { return x.k === g.getAttribute("data-mun"); })[0];
+      var tot = MUN.reduce(function (a, x) { return a + x.total; }, 0);
+      var svg = caja.querySelector("svg"), esc = svg.clientWidth / MC.W;
+      t.innerHTML = "<b>" + SIMH.esc(m.k) + "</b><span>" + n(m.total) + " personas · " +
+        SIMH.pct(m.total, tot) + " de la franja</span>";
+      t.style.left = (+g.getAttribute("data-x") * esc) + "px";
+      t.style.top = (+g.getAttribute("data-y") * esc) + "px";
+      t.style.display = "block";
+    }
+    function elegir(g) {
+      var k = g.getAttribute("data-mun");
+      fMun = fMun === k ? "todos" : k;
+      pintaSelector(); pinta();
+      var nuevo = caja.querySelector('.mm[data-mun="' + k + '"]');
+      if (nuevo) nuevo.focus({ preventScroll:true });
+    }
+    caja.addEventListener("mouseover", function (e) { tip(e.target.closest(".mm")); });
+    caja.addEventListener("mouseleave", function () { tip(null); });
+    caja.addEventListener("focusin", function (e) { tip(e.target.closest(".mm")); });
+    caja.addEventListener("focusout", function () { tip(null); });
+    caja.addEventListener("click", function (e) {
+      var g = e.target.closest(".mm"); if (g) elegir(g);
+    });
+    caja.addEventListener("keydown", function (e) {
+      var g = e.target.closest(".mm");
+      if (g && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); elegir(g); }
+    });
+    $("#btnMapaTabla").addEventListener("click", function () {
+      var verTabla = $("#tblMapa").classList.contains("oculto");
+      $("#tblMapa").classList.toggle("oculto", !verTabla);
+      caja.classList.toggle("oculto", verTabla);
+      this.textContent = verTabla ? "Ver mapa" : "Ver tabla";
+    });
+  })();
 
   var ALERTAS = [
     { mun:"Tapachula",   t:"critica", h:"12 min",
