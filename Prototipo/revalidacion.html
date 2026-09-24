@@ -342,12 +342,12 @@
           motivo:"Condicionan la inscripción a documentos que la norma no exige",
           detalle:"La dirección del plantel pidió CURP y acta de nacimiento apostillada como condición para recibir la solicitud de inscripción.",
           hizo:"Se emitió oficio a la Secretaría de Educación del Estado.",
-          oficio:"SFS/0944/2026" }
+          oficio:"SFS/SMH/0944/2026" }
       ],
       can: [
         { fecha:"26/08/2026", inst:"Secretaría de Educación del Estado · Unidad de Inclusión",
           motivo:"Exhorto por barrera indebida de inscripción escolar (Acuerdo 286 SEP)",
-          of:"SFS/0944/2026", est:"Emitido · en seguimiento" }
+          of:"SFS/SMH/0944/2026", est:"Emitido · en seguimiento" }
       ]
     },
     {
@@ -479,7 +479,7 @@
     html += '<div class="banner-caso-activo">' +
       '<div class="bca-superior">' +
         '<div class="bca-persona">' +
-          '<div class="bca-foto">' + (per.foto ? ico("persona") : esc(per.ini)) + '</div>' +
+          SIMH.fotoPersona(per.foto ? per.f : "", per.n, "bca-foto", per.ini) +
           '<div class="bca-datos">' +
             '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
               '<span class="bca-nombre" id="tPersona" tabindex="-1">' + esc(per.n) + '</span>' +
@@ -768,10 +768,7 @@
         '</div>' +
 
         '<div>' +
-          '<div style="font-size:11.5px;font-weight:700;text-transform:uppercase;color:var(--gris);letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">' +
-            '<span>Vista Previa del Oficio Oficial</span>' +
-            '<span class="chip chip-neutro">En vivo</span>' +
-          '</div>' +
+          SIMH.barraDoc("Oficio de gestión educativa · " + per.n) +
           '<div id="hojaOficio"></div>' +
           '<div class="oficio-cap">El documento se asentará en la bitácora y se enviará al módulo de Canalizaciones para firma y seguimiento.</div>' +
         '</div>' +
@@ -807,7 +804,6 @@
       /* Membrete y composición del formato oficial (22/09/2026). */
       hoja.innerHTML = SIMH.hojaSFS({
         sello: '<div class="o-sello bor">' + ico("editar") + 'Borrador en edición · el folio se asigna al firmar</div>',
-        folio: '<span class="o-pend">se asigna al firmar</span>',
         fecha: SIMH.fechaLarga(HOY) + ".",
         asunto: esc(asunto),
         dest: esc(dest),
@@ -1086,7 +1082,7 @@
       var c = getCaso(p);
       var na = c.neg.find(function (x) { return !x.oficio; });
       return '<button type="button" class="drawer-item' + (esActivo ? ' activo' : '') + '" data-idx="' + idx + '">' +
-        '<div class="drawer-item-avatar">' + (p.foto ? ico("persona") : esc(p.ini)) + '</div>' +
+        SIMH.fotoPersona(p.foto ? p.f : "", p.n, "drawer-item-avatar", p.ini) +
         '<div class="drawer-item-txt">' +
           '<span class="drawer-item-nom">' + esc(p.n) + '</span>' +
           '<span class="drawer-item-sub">Folio ' + esc(p.f) + ' · ' + edad(p.nac) + ' años · ' + esc(p.pais) + '</span>' +

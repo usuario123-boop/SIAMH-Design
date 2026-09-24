@@ -192,7 +192,7 @@
               detalle:"La dirección del plantel pidió CURP y acta de nacimiento apostillada como " +
                       "condición para recibir la solicitud de inscripción.",
               hizo:"Se emitió oficio a la Secretaría de Educación del Estado.",
-              oficio:"SFS/0944/2026" } ] },
+              oficio:"SFS/SMH/0944/2026" } ] },
 
     { id:"r2", per:"SIAMH-2026-TAP-0410", nivel:"media",
       destino:"Revalidación parcial de 1.º y 2.º de bachillerato",

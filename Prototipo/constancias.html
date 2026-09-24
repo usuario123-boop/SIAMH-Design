@@ -89,6 +89,12 @@
     border-radius:.25em;background:var(--hueso-claro);display:grid;place-items:center;
     color:var(--gris-claro)}
   .constancia .k-foto svg{width:2.6em;height:2.6em;stroke-width:1.2;fill:none;stroke:currentColor}
+  .constancia .k-foto{overflow:hidden}
+  /* En gafete los ocho datos no cabían con el nombre a dos renglones y la
+     vigencia se encimaba con el texto legal. «Capturó» queda solo en
+     carta, donde además va la firma de quien capturó. */
+  .constancia.gafete .k-d{margin-bottom:.4em}
+  .constancia .k-foto img{width:100%;height:100%;object-fit:cover;display:block}
   .constancia .k-datos{flex:1;min-width:0}
   .constancia .k-d{margin-bottom:.55em}
   .constancia .k-d:last-child{margin-bottom:0}
@@ -124,6 +130,13 @@
 
   /* Lo que cabe en carta y no en gafete se decide, no se recorta al azar. */
   .constancia.gafete .solo-carta{display:none}
+
+  /* En el visor a pantalla completa (SIMH.verDocumento) el gafete se ve al
+     doble para poder leerlo y la hoja carta a tamaño real. */
+  .hs-caja .doc-imp{display:flex;justify-content:center;background:var(--hueso);
+    border:1px solid var(--linea);border-radius:var(--radio);padding:28px 16px}
+  .hs-caja .constancia.gafete{zoom:2}
+  .hs-caja .constancia.carta{width:100%;max-width:216mm;height:auto;aspect-ratio:216/279;font-size:11pt}
 
   .lienzo-cap{font-size:11.5px;color:var(--gris-claro);text-align:center;margin-top:10px;line-height:1.55}
 
@@ -257,7 +270,7 @@
                 plural(p.emis.length, "constancia", "constancias") + "</span>"
               : '<span class="chip chip-rosa">' + ico("alerta") + "Sin constancia</span>");
         return '<button class="cart-item" type="button" role="option" aria-selected="' + s +
-          '" data-c="' + p.f + '"><span class="avatar-mini">' + esc(p.ini) + "</span>" +
+          '" data-c="' + p.f + '">' + SIMH.fotoPersona(p.foto ? p.f : "", p.n, "avatar-mini en-boton", p.ini) +
           '<span class="k-tx"><span class="k-n">' + esc(p.n) + "</span>" +
           '<span class="k-f">' + esc(p.f) + "</span>" +
           '<span class="k-e">' + chip + "</span></span></button>";
@@ -279,7 +292,7 @@
         '<span class="k-tit">Constancia de registro</span>' +
       "</div>" +
       '<div class="k-cuerpo">' +
-        (conFoto ? '<span class="k-foto">' + ico("persona") + "</span>" : "") +
+        (conFoto ? '<span class="k-foto"><img src="' + SIMH.retrato(p.f, p.n) + '" alt="Fotografía"></span>' : "") +
         '<span class="k-datos">' +
           kd("Folio del expediente", p.f, "folio") +
           kd("Nombre completo", p.n) +
@@ -287,7 +300,7 @@
           kd("Fecha de nacimiento", fecha(p.nac)) +
           kd("Fecha de registro", fecha(p.reg)) +
           kd("Municipio de captura", p.mun) +
-          kd("Capturó", p.cap) +
+          kd("Capturó", p.cap, "", true) +
           kd("Vigencia", vigencia(desde)) +
         "</span>" +
       "</div>" +
@@ -390,7 +403,7 @@
     var banner = '<div class="banner-caso-activo">' +
       '<div class="bca-superior">' +
         '<div class="bca-persona">' +
-          '<div class="bca-foto">' + (p.foto ? ico("persona") : esc(p.ini)) + '</div>' +
+          SIMH.fotoPersona(p.foto ? p.f : "", p.n, "bca-foto", p.ini) +
           '<div class="bca-datos">' +
             '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
               '<span class="bca-nombre">' + esc(p.n) + '</span>' +
@@ -465,6 +478,8 @@
         '<div class="a-acc"><button class="btn btn-primario" type="button" id="btnImprimir">' +
         ico("doc") + (primera ? "Emitir e imprimir" : "Emitir una nueva") + "</button></div></div>" +
       opcionesConstancia(p) +
+      '<div class="doc-barra"><button type="button" class="btn btn-secundario btn-s" id="btnVerCons">' +
+        ico("ojo") + "Ver vista previa</button></div>" +
       '<div class="lienzo">' + constanciaHtml(p) + "</div>" +
       '<div class="lienzo-cap">' +
         (cSop === "gafete"
@@ -505,8 +520,21 @@
     var m = $("#cMot");
     if (m) m.onchange = function () { cMot = this.value; };
 
+    /* Vista previa a pantalla completa, la misma de todos los documentos.
+       Imprimir desde ahí es emitir: pasa por el mismo registro. */
+    var bv = $("#btnVerCons");
+    if (bv) bv.onclick = function () {
+      var p = persona(cSel);
+      SIMH.verDocumento('<div class="doc-imp">' + constanciaHtml(p) + "</div>",
+        "Constancia de registro · " + p.n, {
+          textoImprimir: p.emis.length ? "Emitir una nueva e imprimir" : "Emitir e imprimir",
+          imprimir: function (cierra) { cierra(); emite(); }
+        });
+    };
+
     var b = $("#btnImprimir");
-    if (b) b.onclick = function () {
+    if (b) b.onclick = emite;
+    function emite() {
       var p = persona(cSel);
       var primera = !p.emis.length;
       if (!primera && !cMot) {
@@ -521,8 +549,8 @@
       cMot = "";
       pinta();
       anuncia("Constancia emitida y registrada. Se abre el diálogo de impresión.");
-      window.print();
-    };
+      SIMH.imprimir('<div class="doc-imp">' + constanciaHtml(p) + "</div>", "Constancia de registro · " + p.n);
+    }
   }
   /* ======================================================================
      Pintado y arranque
@@ -580,7 +608,7 @@
             : '<span class="chip chip-rosa">Sin constancia</span>');
 
       return '<button type="button" class="drawer-item' + (esActivo ? ' activo' : '') + '" data-idx="' + idx + '">' +
-        '<div class="drawer-item-avatar">' + esc(p.ini) + '</div>' +
+        SIMH.fotoPersona(p.foto ? p.f : "", p.n, "drawer-item-avatar", p.ini) +
         '<div class="drawer-item-txt">' +
           '<span class="drawer-item-nom">' + esc(p.n) + '</span>' +
           '<span class="drawer-item-sub">Folio ' + esc(p.f) + ' · ' + esc(p.pais) + '</span>' +

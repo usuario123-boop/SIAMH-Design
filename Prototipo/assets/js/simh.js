@@ -168,7 +168,7 @@
 
   /* ------------------------------------------ Serie de folios compartida --
      Revalidación y el simulador de oficios de Capacitación asignaban folio
-     cada uno con su propio contador y podían repetir `SFS/0951/2026`. La
+     cada uno con su propio contador y podían repetir `SFS/SMH/0951/2026`. La
      serie es una sola: aquí se lleva el último folio y la última referencia
      de borrador, persistidos para que dos pantallas no los repitan. Los
      arranques son los últimos que existen en los datos del prototipo.    */
@@ -181,7 +181,7 @@
     try { localStorage.setItem(sr.llave, String(n)); } catch (e) { sr.base = n; }
     return ("000" + n).slice(-4);
   }
-  function folioOficio() { return "SFS/" + siguiente("folio") + "/2026"; }
+  function folioOficio() { return "SFS/SMH/" + siguiente("folio") + "/2026"; }
   function refBorrador() { return "BOR-" + siguiente("bor"); }
 
   /* ---------------------------------------- Datos de prueba (4.1) --------
@@ -233,6 +233,120 @@
     main.appendChild(d);
   }
 
+  /* -------------------------------------- Fotografías de demostración ---
+     23/09/2026: la Dirección pidió fotos ficticias para ver el hover y cómo
+     sale la constancia de registro. Son retratos ilustrados, generados en
+     SVG a partir del folio (siempre el mismo para la misma persona) y sin
+     archivos externos, para que funcionen con `file://`. Los expedientes de
+     SIN_FOTO se quedan sin ella a propósito: son los casos de revisión de
+     «el expediente no tiene fotografía».                                   */
+  var SIN_FOTO = ["SIAMH-2026-TAP-0410", "SIAMH-2026-TAP-0411"];
+  var HOMBRES = ["anthony","brandon","cristian","darwin","diego","jean","jean-baptiste","jefferson",
+    "josé","jose","juan","keiner","kevin","marvin","mauricio","nery","óscar","oscar","osmar","ricardo",
+    "wilmer","wilson","yeison","yordanis","luis","jorge","rubén","ruben","eduardo","carlos","miguel",
+    "pedro","josué","alexander","osiris","samuel","daniel","fernando","edwin","jonathan"];
+  var PIEL = ["#F2CDA9", "#E3B088", "#CB9068", "#AD7049", "#8C5536", "#6E4027"];
+  var PELO = ["#1E1611", "#2F2119", "#4B3122", "#23170F", "#5A3A22"];
+  var ROPA = ["#5B7C99", "#8A5A6E", "#4E7D6B", "#9A7B4F", "#5E5A80", "#6F6A62", "#3F6F8C"];
+  var FONDO = ["#DCE3EA", "#E6E1D8", "#D8E4E0", "#E7DDE3"];
+  function hashTxt(s) {
+    var h = 2166136261;
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+  }
+  function tieneFoto(clave) { return !!clave && SIN_FOTO.indexOf(clave) < 0; }
+  function retrato(clave, nombre) {
+    var h = hashTxt(String(clave || nombre || "x"));
+    function de(arr, k) { return arr[(h >>> k) % arr.length]; }
+    var pila = String(nombre || "").trim().split(/\s+/)[0].toLowerCase();
+    var hombre = HOMBRES.indexOf(pila) >= 0;
+    var piel = de(PIEL, 0), pelo = de(PELO, 4), ropa = de(ROPA, 8), fondo = de(FONDO, 12);
+    var var3 = (h >>> 16) % 3;
+    var atras = "", frente = "";
+    if (hombre) {
+      frente = var3 === 0
+        ? '<path d="M35 64C32 38 45 29 60 29c16 0 29 8 25 35-3-12-11-19-25-19s-22 7-25 19z" fill="' + pelo + '"/>'
+        : var3 === 1
+        ? '<path d="M36 60c-1-20 10-29 24-29s25 8 24 29c-5-9-13-13-24-13s-19 4-24 13z" fill="' + pelo + '"/>'
+        : '<path d="M35 66c-4-26 8-38 25-38 18 0 30 11 25 38-2-6-4-12-7-15-6 4-14 5-20 3-6-2-12 0-17 4-3 3-5 6-6 8z" fill="' + pelo + '"/>';
+    } else {
+      atras = var3 === 2
+        ? '<circle cx="60" cy="30" r="12" fill="' + pelo + '"/>'
+        : '<path d="M31 66c-4-30 11-41 29-41s33 11 29 41l3 ' + (var3 ? 36 : 52) + "c-12 6-52 6-64 0z\" fill=\"" + pelo + '"/>';
+      frente = '<path d="M35 62c1-20 12-30 26-30 15 0 26 10 24 30-8-11-20-16-33-14-7 2-13 7-17 14z" fill="' + pelo + '"/>';
+    }
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 150">' +
+      '<rect width="120" height="150" fill="' + fondo + '"/>' + atras +
+      '<path d="M8 150c2-30 24-42 52-42s50 12 52 42z" fill="' + ropa + '"/>' +
+      '<path d="M49 88h22v18c0 6-22 6-22 0z" fill="' + piel + '"/>' +
+      '<path d="M49 98c7 4 15 4 22 0v4c-7 4-15 4-22 0z" fill="rgba(0,0,0,.12)"/>' +
+      '<ellipse cx="36" cy="69" rx="4" ry="6" fill="' + piel + '"/><ellipse cx="84" cy="69" rx="4" ry="6" fill="' + piel + '"/>' +
+      '<ellipse cx="60" cy="66" rx="24" ry="29" fill="' + piel + '"/>' + frente +
+      '<path d="M46 61q5-3 10 0M64 61q5-3 10 0" stroke="' + pelo + '" stroke-width="2" fill="none" stroke-linecap="round"/>' +
+      '<circle cx="51" cy="68" r="2.3" fill="#2A211C"/><circle cx="69" cy="68" r="2.3" fill="#2A211C"/>' +
+      '<path d="M60 70q-3 6 1 8" stroke="rgba(0,0,0,.2)" stroke-width="1.6" fill="none" stroke-linecap="round"/>' +
+      '<path d="M53 83q7 4 14 0" stroke="#8A4B3C" stroke-width="2" fill="none" stroke-linecap="round"/>' +
+      "</svg>";
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  }
+  /* Miniatura con vista ampliada al pasar el cursor Y al enfocar con el
+     teclado (la misma regla del riel del menú). `clase` es la del
+     contenedor que ya usa la pantalla: avatar-mini, bca-foto,
+     drawer-item-avatar o exp-foto. Sin fotografía, quedan las iniciales.
+     Dentro de un botón (cajón selector, cartera) la miniatura no recibe
+     foco propio: un control dentro de otro confunde al teclado.           */
+  function fotoPersona(clave, nombre, clase, ini) {
+    var enBoton = clase === "drawer-item-avatar" || clase === "avatar-mini en-boton";
+    if (!tieneFoto(clave)) {
+      return '<span class="' + (clase || "avatar-mini") + '">' + esc(ini || iniciales(nombre)) + "</span>";
+    }
+    var src = retrato(clave, nombre);
+    return '<span class="' + (clase || "avatar-mini") + ' con-foto"' + (enBoton ? "" : ' tabindex="0"') + ' role="img" ' +
+      'aria-label="Fotografía de ' + esc(nombre || "la persona") + '">' +
+      '<img src="' + src + '" alt="" data-nombre="' + esc(nombre || "") + '"></span>';
+  }
+  /* La ampliación es un solo elemento flotante (position:fixed): dentro de
+     carteras y tablas con overflow, un globo absoluto quedaría recortado. */
+  var flot = null;
+  function muestraFoto(el) {
+    var img = el.querySelector("img");
+    if (!img) return;
+    if (!flot) {
+      flot = document.createElement("div");
+      flot.className = "foto-flot";
+      flot.setAttribute("aria-hidden", "true");
+      document.body.appendChild(flot);
+    }
+    flot.innerHTML = '<img src="' + img.src + '" alt=""><span class="ff-n">' +
+      esc(img.getAttribute("data-nombre") || "") + "</span>";
+    var r = el.getBoundingClientRect(), W = 180, H = 250;
+    var x = r.right + 12, y = r.top + r.height / 2 - H / 2;
+    if (x + W > window.innerWidth - 8) x = r.left - W - 12;
+    if (x < 8) { x = Math.max(8, r.left); y = r.bottom + 10; }
+    y = Math.max(8, Math.min(y, window.innerHeight - H - 8));
+    flot.style.left = x + "px";
+    flot.style.top = y + "px";
+    flot.classList.add("vis");
+  }
+  function ocultaFoto() { if (flot) flot.classList.remove("vis"); }
+  ["mouseover", "focusin"].forEach(function (ev) {
+    document.addEventListener(ev, function (e) {
+      var el = e.target.closest && e.target.closest(".con-foto");
+      if (el) muestraFoto(el);
+    });
+  });
+  ["mouseout", "focusout"].forEach(function (ev) {
+    document.addEventListener(ev, function (e) {
+      var el = e.target.closest && e.target.closest(".con-foto");
+      if (el && !(e.relatedTarget && el.contains(e.relatedTarget))) ocultaFoto();
+    });
+  });
+  window.addEventListener("scroll", ocultaFoto, true);
+  function iniciales(n) {
+    return String(n || "").split(/\s+/).filter(Boolean).slice(0, 2)
+      .map(function (x) { return x.charAt(0).toUpperCase(); }).join("");
+  }
+
   /* ------------------------------------ Hoja oficial con membrete -------
      22/09/2026: la Dirección pidió que TODAS las vistas previas de
      documentos sean exactamente como los formatos de «Recursos y
@@ -258,13 +372,18 @@
   var CCP_SFS = "C.c.p. <b>Dra. María Amalia G. Toriello Elorza.</b> Titular de la Secretaría de la " +
     "Frontera Sur. Para su conocimiento. Edificio<br><b style=\"padding-left:3.2em\">Archivo/Minutario.</b>";
 
+  /* Borrador: el número sale con el formato de la plantilla
+     («Oficio No. SFS/SMH/0008/2026») y el consecutivo en blanco, porque
+     se asigna al firmar (23/09/2026). Mostrar ya el siguiente número haría
+     que dos borradores enseñaran el mismo folio. */
+  var FOLIO_PEND = 'SFS/SMH/<span class="o-pend">____</span>/2026';
   function hojaSFS(o) {
     var enc = "";
     if (o.encabezado) {
       enc = o.encabezado;
     } else {
       enc = '<div class="hs-der">' +
-        (o.folio !== false ? '<b>Oficio No. ' + (o.folio || "_______") + "</b><br>" : "") +
+        (o.folio !== false ? '<b>Oficio No. ' + (o.folio || FOLIO_PEND) + "</b><br>" : "") +
         (o.lugar || "Tapachula de Córdova y Ordoñez, Chiapas.") + "<br>" +
         (o.fecha || "") + "</div>" +
         (o.asunto ? '<div class="hs-asunto"><b>Asunto:</b> ' + o.asunto + "</div>" : "");
@@ -286,6 +405,53 @@
           (o.presente === false ? "" : "<br>P R E S E N T E.") + "</div>" : "") +
         cuerpo + firma + ccp +
       "</div></div></div>";
+  }
+
+  /* Reporte en hoja oficial (23/09/2026). Las exportaciones «PDF» de los
+     módulos salen con el mismo membrete y el mismo visor que los oficios.
+     `secciones` = [{ t, cols:[..], num:[índices numéricos], filas:[[..]] }].
+     Cada tabla se parte en bloques de 16 renglones con su encabezado
+     repetido, porque paginar() mueve bloques enteros de una hoja a otra. */
+  function hojaReporte(o) {
+    var cuerpo = [];
+    if (o.intro) cuerpo.push(o.intro);
+    (o.secciones || []).forEach(function (s) {
+      if (s.t) cuerpo.push('<h4 class="hs-sec">' + esc(s.t) + "</h4>");
+      var num = s.num || [];
+      var cab = "<thead><tr>" + s.cols.map(function (c, i) {
+        return "<th" + (num.indexOf(i) >= 0 ? ' class="num"' : "") + ">" + esc(c) + "</th>";
+      }).join("") + "</tr></thead>";
+      var anchos = s.anchos ? "<colgroup>" + s.anchos.map(function (a) {
+        return '<col style="width:' + a + '">'; }).join("") + "</colgroup>" : "";
+      if (!s.filas.length) {
+        cuerpo.push('<table class="hs-tabla">' + anchos + cab + '<tbody><tr><td colspan="' + s.cols.length +
+          '">Sin registros.</td></tr></tbody></table>');
+      }
+      for (var i = 0; i < s.filas.length; i += 16) {
+        cuerpo.push('<table class="hs-tabla">' + anchos + cab + "<tbody>" +
+          s.filas.slice(i, i + 16).map(function (f) {
+            return "<tr>" + f.map(function (v, j) {
+              return "<td" + (num.indexOf(j) >= 0 ? ' class="num"' : "") + ">" +
+                (v === null || v === undefined || v === "" ? "—" : esc(String(v))) + "</td>";
+            }).join("") + "</tr>";
+          }).join("") + "</tbody></table>");
+      }
+    });
+    if (o.nota) cuerpo.push('<div class="hs-nota">' + o.nota + "</div>");
+    var ses = sesion ? sesion() : null;
+    cuerpo.push('<div class="hs-nota">Generado en el SIAMH el ' + fechaLarga(o.fecha || HOY_ISO()) +
+      (ses && ses.n ? " por " + esc(ses.n) : "") + ". Sin código QR: se verifica por folio y sello en ventanilla.</div>");
+    return hojaSFS({
+      encabezado: '<div class="hs-der">' + (o.lugar || "Tapachula de Córdova y Ordoñez, Chiapas.") + "<br>" +
+        fechaLarga(o.fecha || HOY_ISO()) + ".</div>",
+      titulo: esc(o.titulo || "REPORTE"),
+      cuerpo: cuerpo,
+      firma: false,
+      ccp: false
+    });
+  }
+  function HOY_ISO() {
+    return (window.DATOS && DATOS.HOY) ? String(DATOS.HOY).slice(0, 10) : "2026-08-28";
   }
 
   /* Reparte el contenido en hojas: mientras una hoja desborde, su último
@@ -316,24 +482,95 @@
     });
   }
 
-  /* Clic en cualquier hoja: se abre a tamaño carta sobre la pantalla. */
-  document.addEventListener("click", function (e) {
-    var h = e.target.closest && e.target.closest(".hoja-sfs");
-    if (!h || h.closest(".hs-velo")) return;
+  /* ------------------------------- Vista previa a pantalla completa -----
+     23/09/2026: la Dirección pidió que todos los documentos se previsualicen
+     igual que el aviso de privacidad del alta: el documento a tamaño carta
+     sobre la pantalla, con «Cerrar» e «Imprimir o guardar PDF» arriba. Es
+     la única forma de abrir un documento; ningún módulo arma la suya.
+     `html` es el documento tal como se imprime (una .hoja-sfs, la .sne-hoja
+     de la solicitud SNE o cualquier .doc-imp). `opts.imprimir(cierra)`
+     sustituye la impresión directa cuando imprimir es además un acto que
+     se registra (la emisión de una constancia); `opts.textoImprimir` es
+     el rótulo de ese botón.                                              */
+  function verDocumento(html, titulo, opts) {
+    opts = opts || {};
+    var previo = document.activeElement;
     var velo = document.createElement("div");
     velo.className = "hs-velo";
-    velo.innerHTML = '<div class="hs-caja"><button type="button" class="btn btn-secundario btn-s hs-cerrar">Cerrar</button></div>';
-    var copia = h.cloneNode(true);
-    copia.removeAttribute("title");
-    velo.querySelector(".hs-caja").appendChild(copia);
-    document.body.appendChild(velo);
-    function cierra() { velo.remove(); document.removeEventListener("keydown", esc2); }
-    function esc2(ev) { if (ev.key === "Escape") cierra(); }
-    velo.addEventListener("click", function (ev) {
-      if (ev.target === velo || ev.target.classList.contains("hs-cerrar")) cierra();
+    velo.setAttribute("role", "dialog");
+    velo.setAttribute("aria-modal", "true");
+    velo.setAttribute("aria-label", titulo || "Documento");
+    velo.innerHTML = '<div class="hs-caja"><div class="hs-barra">' +
+        '<span class="hs-tit">' + esc(titulo || "Documento") + "</span>" +
+        '<span class="hs-acc">' +
+          '<button type="button" class="btn btn-secundario btn-s hs-cerrar">Cerrar</button>' +
+          '<button type="button" class="btn btn-primario btn-s hs-imp">' + icono("pdf") +
+            esc(opts.textoImprimir || "Imprimir o guardar PDF") + "</button></span></div>" +
+      html + "</div>";
+    Array.prototype.forEach.call(velo.querySelectorAll(".hoja-sfs"), function (h) {
+      h.removeAttribute("title");
     });
-    document.addEventListener("keydown", esc2);
-    velo.querySelector(".hs-cerrar").focus();
+    document.body.appendChild(velo);
+    paginar(velo);
+    function cierra() {
+      velo.remove();
+      document.removeEventListener("keydown", tecla);
+      if (previo && previo.focus) previo.focus({ preventScroll:true });
+    }
+    function tecla(ev) { if (ev.key === "Escape") cierra(); }
+    velo.addEventListener("click", function (ev) { if (ev.target === velo) cierra(); });
+    velo.querySelector(".hs-cerrar").onclick = cierra;
+    velo.querySelector(".hs-imp").onclick = function () {
+      if (opts.imprimir) opts.imprimir(cierra);
+      else imprimir(html, titulo);
+    };
+    document.addEventListener("keydown", tecla);
+    velo.querySelector(".hs-imp").focus();
+  }
+
+  /* Botonera estándar junto a una vista previa. Va dentro del contenedor
+     del documento (o de uno marcado con `data-doc-caja`) y actúa sobre el
+     documento que haya ahí, así la vista en vivo y lo que se abre o se
+     imprime nunca difieren.                                              */
+  function barraDoc(titulo, rotulo) {
+    return '<div class="doc-barra" data-doc-titulo="' + esc(titulo || "Documento") + '">' +
+      '<span class="doc-lbl">' + esc(rotulo || "Vista previa") + "</span>" +
+      '<span class="doc-acc">' +
+      '<button type="button" class="btn btn-secundario btn-s" data-doc="ver">' + icono("ojo") +
+        "Ver vista previa</button>" +
+      '<button type="button" class="btn btn-primario btn-s" data-doc="imprimir">' + icono("pdf") +
+        "Imprimir o guardar PDF</button></span></div>";
+  }
+  var DOC_SEL = ".hoja-sfs, .sne-hoja, .doc-imp";
+  function docDe(el) {
+    var caja = el.closest("[data-doc-caja]") || el.parentNode;
+    while (caja && caja !== document.body && !caja.querySelector(DOC_SEL)) caja = caja.parentNode;
+    return caja && caja.querySelector ? caja.querySelector(DOC_SEL) : null;
+  }
+  function tituloDe(el) {
+    var t = el.closest("[data-doc-titulo]");
+    return t ? t.getAttribute("data-doc-titulo") : "Documento";
+  }
+
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest) return;
+    /* Botones de la botonera estándar. */
+    var b = e.target.closest("[data-doc]");
+    if (b && !b.closest(".hs-velo")) {
+      var d = docDe(b);
+      if (!d) return;
+      var copia = d.cloneNode(true);
+      copia.removeAttribute("title");
+      if (b.getAttribute("data-doc") === "imprimir") imprimir(copia.outerHTML, tituloDe(b));
+      else verDocumento(copia.outerHTML, tituloDe(b));
+      return;
+    }
+    /* Clic sobre la hoja misma: el mismo visor. */
+    var h = e.target.closest(".hoja-sfs");
+    if (!h || h.closest(".hs-velo") || h.closest("#zonaImpresion")) return;
+    var c = h.cloneNode(true);
+    c.removeAttribute("title");
+    verDocumento(c.outerHTML, tituloDe(h));
   });
 
   /* Textos literales de los tres oficios de «Recursos y plantillas». Los
@@ -1339,7 +1576,8 @@
     sesion: sesion, iniciarSesion: iniciarSesion, accesoSede: accesoSede, sedesDe: sedesDe,
     sinDatos: sinDatos, datosPrueba: datosPrueba, vacioModulo: vacioModulo,
     zip: zip, descargar: descargar, imprimir: imprimir,
-    hojaSFS: hojaSFS, paginar: paginar, fechaLarga: fechaLarga, plantillaSFS: plantillaSFS,
+    hojaSFS: hojaSFS, hojaReporte: hojaReporte, paginar: paginar, verDocumento: verDocumento, barraDoc: barraDoc,
+    fotoPersona: fotoPersona, retrato: retrato, tieneFoto: tieneFoto, fechaLarga: fechaLarga, plantillaSFS: plantillaSFS,
     FIRMA_SFS: FIRMA_SFS,
     SEDES: SEDES, CUENTAS: CUENTAS, folioOficio: folioOficio, refBorrador: refBorrador,
     opciones: opciones, activarOtro: activarOtro, valorOtro: valorOtro, textoOtro: textoOtro,

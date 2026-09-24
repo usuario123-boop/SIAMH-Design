@@ -151,8 +151,8 @@
           <table class="tabla-datos">
             <thead><tr><th>Fecha</th><th>Institución</th><th>Motivo</th><th>Oficio</th><th>Estado</th></tr></thead>
             <tbody>
-              <tr><td>18/08/2026</td><td>IMSS-Bienestar</td><td>Control prenatal</td><td>SFS/0912/2026</td><td>Atendida</td></tr>
-              <tr><td>24/08/2026</td><td>Hospital General de Tapachula</td><td>Valoración por hipertensión</td><td>SFS/0947/2026</td><td>Cita programada</td></tr>
+              <tr><td>18/08/2026</td><td>IMSS-Bienestar</td><td>Control prenatal</td><td>SFS/SMH/0912/2026</td><td>Atendida</td></tr>
+              <tr><td>24/08/2026</td><td>Hospital General de Tapachula</td><td>Valoración por hipertensión</td><td>SFS/SMH/0947/2026</td><td>Cita programada</td></tr>
             </tbody>
           </table>
         </article>
@@ -207,7 +207,6 @@
       <div class="tarjeta">
         <div class="grafica-enc"><h3>Contacto</h3><button class="ver-tabla" type="button">Agregar medio</button></div>
         <div id="contactos"></div>
-        <div class="tarjeta-pie">Al actualizar un teléfono el anterior se conserva en el historial (RF03).</div>
       </div>
 
       <div class="tarjeta">
@@ -245,10 +244,11 @@
   }
   var ico = SIMH.icono, $ = function (s) { return document.querySelector(s); };
 
-  $("#expFoto").innerHTML       = ico("persona");
+  $("#expFoto").outerHTML = SIMH.fotoPersona("SIAMH-2026-TAP-0412", "Yolanda Esperanza Martínez Cruz", "exp-foto");
   $("#chipActivo").innerHTML    = ico("check") + "Expediente activo";
   $("#chipVuln").innerHTML      = ico("alerta") + "Embarazo";
   $("#btnConstancia").innerHTML = ico("doc") + "Generar constancia";
+  $("#btnConstancia").onclick = function () { location.href = "constancias.html?c=0412"; };
   $("#btnOficio").innerHTML     = ico("oficios") + "Emitir oficio";
   $("#btnModificar").innerHTML  = ico("candado") + "Solicitar modificación";
   $("#btnSubirDoc").innerHTML   = ico("descarga") + "Cargar documento";
@@ -371,7 +371,7 @@
   /* --------------------------------------------------------- Bitácora -- */
   var notas = [
     { f:"Hoy 11:09", a:"María Gómez Pérez", ar:"Registro · Tapachula", t:"Se entrega constancia de registro impresa. La persona confirma domicilio en Albergue Belén." },
-    { f:"Hoy 09:40", a:"Sistema", ar:"Automático", t:"Se generó el oficio SFS/0947/2026 de canalización al Hospital General de Tapachula." },
+    { f:"Hoy 09:40", a:"Sistema", ar:"Automático", t:"Se generó el oficio SFS/SMH/0947/2026 de canalización al Hospital General de Tapachula." },
     { f:"22/08/2026 16:20", a:"Luis A. Ramírez", ar:"Salud", t:"Atendida vía telefónica. Confirma asistencia a cita de control prenatal del 12/09." },
     { f:"18/08/2026 10:05", a:"Luis A. Ramírez", ar:"Salud", t:"Valoración inicial: embarazo de 22 semanas e hipertensión controlada. Se canaliza a IMSS-Bienestar." },
     { f:"24/08/2026 08:55", a:"María Gómez Pérez", ar:"Registro · Tapachula", t:"Alta del expediente. Se verifica sin coincidencias en la base histórica conciliada." }
@@ -404,8 +404,11 @@
     { v:"962 118 4472 · celular propio", f:"Desde 24/08/2026", act:true },
     { v:"962 105 9930 · celular de familiar", f:"Hasta 24/08/2026" },
     { v:"yolanda.mtz94@correo.com", f:"Desde 24/08/2026", act:true }
-  ].map(function (c) {
-    return '<div class="contacto-item' + (c.act ? "" : " previo") + '">' +
+  /* 23/09/2026: la Dirección pidió no mostrar los números anteriores
+     (tachados). Se siguen guardando —el historial no se sobrescribe, RF03—,
+     pero en la vista solo aparece el contacto vigente. */
+  ].filter(function (c) { return c.act; }).map(function (c) {
+    return '<div class="contacto-item">' +
       '<span class="c-val">' + c.v + "</span>" + '<span class="c-fecha">' + c.f + "</span></div>";
   }).join("");
 

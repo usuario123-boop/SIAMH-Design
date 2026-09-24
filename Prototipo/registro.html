@@ -629,26 +629,9 @@
   }
 
   $("#btnAvisoPriv").innerHTML = ico("pdf") + "Ver e imprimir aviso de privacidad";
-  $("#btnAvisoPriv").onclick = function () {
-    var velo = document.createElement("div");
-    velo.className = "hs-velo";
-    velo.setAttribute("role", "dialog");
-    velo.setAttribute("aria-modal", "true");
-    velo.setAttribute("aria-label", "Aviso de privacidad");
-    velo.innerHTML = '<div class="hs-caja"><div style="display:flex;gap:8px;justify-content:flex-end">' +
-      '<button type="button" class="btn btn-secundario btn-s" id="avCerrar">Cerrar</button>' +
-      '<button type="button" class="btn btn-primario btn-s" id="avImprimir">' + ico("pdf") + "Imprimir o guardar PDF</button></div>" +
-      hojaAviso() + "</div>";
-    document.body.appendChild(velo);
-    SIMH.paginar(velo);
-    function cierra() { velo.remove(); $("#btnAvisoPriv").focus(); document.removeEventListener("keydown", tecla); }
-    function tecla(e) { if (e.key === "Escape") cierra(); }
-    document.addEventListener("keydown", tecla);
-    velo.addEventListener("click", function (e) { if (e.target === velo) cierra(); });
-    $("#avCerrar").onclick = cierra;
-    $("#avImprimir").onclick = function () { SIMH.imprimir(hojaAviso(), "Aviso de privacidad"); };
-    $("#avImprimir").focus();
-  };
+  /* El visor es el común (SIMH.verDocumento): el aviso fue el modelo que la
+     Dirección pidió para todos los documentos (23/09/2026). */
+  $("#btnAvisoPriv").onclick = function () { SIMH.verDocumento(hojaAviso(), "Aviso de privacidad"); };
 
   $("#avisoTiempo").innerHTML = ico("reloj") +
     "<span><strong>Tiempo de captura: <span id='reloj'>00:00</span></strong>" +
@@ -1136,7 +1119,7 @@
       { i:"capacita",t:"Inscribir a un grupo de capacitación", s:"Valida CURP y constancia COMAR (RF13)" },
       { i:"inicio",  t:"Volver al panel estadístico",     s:"Indicadores del día y pendientes" }
     ].map(function (a) {
-      return '<a class="accion-sig" href="' + (a.i === "inicio" ? "index.html" : "#") + '">' + ico(a.i) +
+      return '<a class="accion-sig" href="' + (a.i === "inicio" ? "index.html" : a.i === "doc" ? "constancias.html" : "#") + '">' + ico(a.i) +
         "<span><b>" + a.t + '</b><span class="txt-min">' + a.s + "</span></span></a>";
     }).join("");
 
@@ -1218,7 +1201,7 @@
       "<span><strong>Expediente " + folioPrevio + " guardado</strong>" +
       "Puede continuar con la siguiente persona. " +
       '<a href="expedientes.html">Ver el expediente anterior</a> · ' +
-      '<a href="#" id="lnkConstancia">Imprimir su constancia</a></span>';
+      '<a href="constancias.html" id="lnkConstancia">Imprimir su constancia</a></span>';
 
     /* Contador de productividad de la ventanilla */
     $("#contadorSesion").classList.remove("oculto");

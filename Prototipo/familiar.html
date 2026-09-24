@@ -197,6 +197,28 @@
   /* ------------------------------------------------- Lista de grupos ---- */
   function pintarLista() {}
 
+  /* Constancia de integración del grupo familiar en hoja oficial, con la
+     vista a pantalla completa y la impresión comunes (23/09/2026). */
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest || !e.target.closest("#btnConsFam")) return;
+    var g = grupos[actual];
+    var tit = g.integrantes.find(function (m) { return m.titular; });
+    var p = g.fecha.split("/");
+    SIMH.verDocumento(SIMH.hojaReporte({
+      titulo: "CONSTANCIA DE INTEGRACIÓN FAMILIAR",
+      intro: "La Subsecretaría de Movilidad Humana de la Secretaría de la Frontera Sur hace constar que el grupo " +
+        "familiar con folio <b>" + esc(g.id) + "</b>, cuya persona titular es <b>" + esc(tit.n) + "</b>, " +
+        "originario de " + esc(g.origen) + ", quedó registrado en " + esc(g.mun) + " el " +
+        SIMH.fechaLarga(p[2] + "-" + p[1] + "-" + p[0]) + " con los siguientes integrantes. Esta constancia " +
+        "<b>no es un documento migratorio</b> ni acredita estancia regular en el país.",
+      secciones: [{ cols: ["Nombre", "Edad", "Parentesco", "Expediente", "Estatus migratorio"], num: [1],
+        anchos: ["32%", "8%", "14%", "24%", "22%"],
+        filas: g.integrantes.map(function (m) {
+          return [m.n, m.e, m.p, m.exp || "Sin expediente propio", m.est];
+        }) }]
+    }), "Constancia de integración familiar · " + g.id);
+  });
+
   /* ----------------------------------------------------- Detalle -------- */
   function pintarDetalle() {
     var g = grupos[actual];
@@ -236,7 +258,7 @@
           '<div class="flex gap-8">' +
             '<button class="btn btn-primario btn-s" type="button" data-acc="agregar">' + ico("mas") + 'Agregar integrante</button>' +
             '<button class="btn btn-secundario btn-s" type="button" data-acc="reasignar">' + ico("registro") + 'Reasignar titular</button>' +
-            '<button class="btn btn-secundario btn-s" type="button">' + ico("pdf") + 'Constancia</button>' +
+            '<button class="btn btn-secundario btn-s" type="button" id="btnConsFam">' + ico("pdf") + 'Constancia</button>' +
           '</div>' +
         '</div>' +
         '<div class="bca-controles">' +
@@ -373,7 +395,7 @@
             (m.nna === "Acompañado" ? "" : ico("alerta")) + "NNA " + m.nna + "</span>"
           : (m.cond ? '<span class="chip chip-neutro">' + m.cond + "</span>" : '<span class="txt-min">—</span>');
         return '<tr class="' + (m.titular ? "fila-titular" : "") + '">' +
-          '<td><span class="persona-celda"><span class="avatar-mini">' + m.i + "</span><span>" +
+          '<td><span class="persona-celda">' + SIMH.fotoPersona(m.exp || ("FAM-" + m.n), m.n, "avatar-mini", m.i) + "<span>" +
             '<span class="p-nom">' + esc(m.n) + (m.titular ? '<span class="badge-titular">Titular</span>' : "") + "</span>" +
             (m.exp ? '<span class="p-sub">' + m.exp + " · " + m.est + "</span>"
                    : '<span class="p-sub sin-exp">Sin expediente propio · ' + m.est + "</span>") +

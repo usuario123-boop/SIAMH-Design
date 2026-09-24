@@ -278,7 +278,7 @@
              {cod:"I10", t:"Hipertensión arterial", grupo:"Enfermedades crónicas no transmisibles",
               est:"Controlada", fecha:"12/08/2026", por:"Salud · L. Ramírez"} ],
       can:[ {fecha:"12/08/2026", inst:"Centro de Salud Municipal", motivo:"Control metabólico y surtido de metformina",
-             of:"SFS/0874/2026", cita:"20/08/2026", est:"No acudió"} ] },
+             of:"SFS/SMH/0874/2026", cita:"20/08/2026", est:"No acudió"} ] },
 
     { f:"SIAMH-2026-TAP-0409", n:"Óscar Danilo Hernández Reyes", ini:"OH", ed:35, pais:"El Salvador",
       mun:"Tapachula", curp:"HERO910930HNEXXX01", grupo:"—", grupoHref:"",
@@ -311,9 +311,9 @@
              {cod:"I10", t:"Hipertensión arterial", grupo:"Enfermedades crónicas no transmisibles",
               est:"Controlada", fecha:"18/08/2026", por:"Salud · L. Ramírez"} ],
       can:[ {fecha:"18/08/2026", inst:"IMSS-Bienestar", motivo:"Control prenatal",
-             of:"SFS/0912/2026", cita:"12/09/2026", est:"Atendida"},
+             of:"SFS/SMH/0912/2026", cita:"12/09/2026", est:"Atendida"},
             {fecha:"24/08/2026", inst:"Hospital General de Tapachula", motivo:"Valoración por hipertensión",
-             of:"SFS/0947/2026", cita:"03/09/2026", est:"Cita programada"} ] },
+             of:"SFS/SMH/0947/2026", cita:"03/09/2026", est:"Cita programada"} ] },
 
     { f:"SIAMH-2026-FCO-0094", n:"Yamilé Rodríguez Betancourt", ini:"YR", ed:29, pais:"Cuba",
       mun:"F. Comalapa", curp:"ROBY970712MNEXXX04", grupo:"—", grupoHref:"",
@@ -323,7 +323,7 @@
       cond:[ {cod:"F41", t:"Trastorno de ansiedad", grupo:"Salud mental y consumo de sustancias",
               est:"En tratamiento", fecha:"20/08/2026", por:"Salud · L. Ramírez"} ],
       can:[ {fecha:"20/08/2026", inst:"Jurisdicción Sanitaria VII · atención a víctimas",
-             motivo:"Atención psicológica por violencia de género", of:"SFS/0931/2026",
+             motivo:"Atención psicológica por violencia de género", of:"SFS/SMH/0931/2026",
              cita:"05/09/2026", est:"Cita programada"} ] },
 
     { f:"SIAMH-2026-TAP-0408", n:"Wilmer Josué Aguilar Paz", ini:"WA", ed:9, pais:"Honduras",
@@ -342,17 +342,15 @@
   ];
 
   var sel = 0, filtro = "todas", busca = "";
-  var oficioSec = 947;                       /* último folio emitido en la ficción */
 
   /* ------------------------------------------------------- Utilidades --- */
   function hoy() {
     var d = new Date(2026, 7, 25);            /* fecha fija del prototipo */
     return ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2) + "/" + d.getFullYear();
   }
-  function nuevoFolio() {
-    oficioSec += 1;
-    return "SFS/" + ("000" + oficioSec).slice(-4) + "/2026";
-  }
+  /* La serie de oficios es una sola (SIMH.folioOficio), con el formato
+     de «Recursos y plantillas»: SFS/SMH/####/2026. */
+  function nuevoFolio() { return SIMH.folioOficio(); }
   function chipUrg(p) {
     var u = URG[p.urg];
     return '<span class="chip ' + u.chip + '">' + ico(u.ico) + esc(u.txt) + "</span>";
@@ -406,7 +404,7 @@
     h += '<div class="banner-caso-activo">' +
       '<div class="bca-superior">' +
         '<div class="bca-persona">' +
-          '<div class="bca-foto">' + ico("persona") + '</div>' +
+          SIMH.fotoPersona(p.f, p.n, "bca-foto", p.ini) +
           '<div class="bca-datos">' +
             '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
               '<span class="bca-nombre">' + esc(p.n) + '</span>' +
@@ -599,7 +597,8 @@
           "Se descarga en PDF y se adjunta al expediente. El documento no incluye código QR: se valida por folio " +
           "y sello de la Secretaría.</div>" +
       "</div>" +
-      '<div><div class="etiqueta" style="margin-bottom:6px">Vista previa del oficio</div>' +
+      '<div>' +
+        SIMH.barraDoc("Oficio de canalización · " + p.n) +
         '<div class="oficio-hoja" id="hojaOficio"></div>' +
         '<div class="oficio-cap">La vista previa se actualiza conforme se llena el formulario.</div>' +
       "</div></div>" +
@@ -676,7 +675,6 @@
     caja.className = "";
     caja.innerHTML = SIMH.hojaSFS({
       sello: '<div class="o-sello bor">' + ico("editar") + "Borrador · el folio se asigna al firmar</div>",
-      folio: '<span class="o-pend">se asigna al firmar</span>',
       fecha: SIMH.fechaLarga("2026-08-25") + ".",
       asunto: tp.asunto,
       dest: dest,
@@ -864,7 +862,7 @@
     },
     renderItem: function(p, esActivo, idx) {
       return '<button type="button" class="drawer-item' + (esActivo ? ' activo' : '') + '" data-idx="' + idx + '">' +
-        '<div class="drawer-item-avatar">' + esc(p.n.charAt(0)) + '</div>' +
+        SIMH.fotoPersona(p.f, p.n, "drawer-item-avatar", p.ini) +
         '<div class="drawer-item-txt">' +
           '<span class="drawer-item-nom">' + esc(p.n) + '</span>' +
           '<span class="drawer-item-sub">Folio ' + esc(p.f) + ' · ' + p.ed + ' años · ' + esc(p.pais) + '</span>' +

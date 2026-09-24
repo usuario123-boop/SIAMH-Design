@@ -75,7 +75,8 @@ en el chrome, salen de `SIMH.sesion()`.
 **Modo sin datos de prueba.** Administración › Datos de prueba lo activa (`SIMH.sinDatos()`); cada
 módulo, justo después de `SIMH.chrome()`, pinta `SIMH.vacioModulo()` y termina. Una pantalla nueva
 debe hacer lo mismo. **Folios:** la serie de oficios es una sola (`SIMH.folioOficio()`,
-`SIMH.refBorrador()`); no escribir contadores locales.
+`SIMH.refBorrador()`); no escribir contadores locales. El formato es el de las plantillas de
+«Recursos y plantillas»: `SFS/SMH/####/2026`.
 
 **Documentos oficiales.** Toda vista previa de oficio se dibuja con `SIMH.hojaSFS()` (hoja carta con
 el membrete real de «Recursos y plantillas») y se pagina con `SIMH.paginar()` después de insertarla
@@ -83,7 +84,13 @@ en el DOM. Los oficios que tienen formato en la carpeta usan su texto literal (`
 No volver a `.oficio-hoja` para documentos nuevos. El Excel de Empleabilidad se arma con la
 plantilla original (`assets/js/plantilla-solicitantes.js`, generado del .xlsx; no editar a mano) y
 `SIMH.zip()`. Para imprimir o guardar PDF de cualquier documento se usa `SIMH.imprimir(html)`, que
-imprime solo el documento a tamaño carta. La Solicitud de Empleo SNE vive en
+imprime solo el documento a tamaño carta. **Toda vista previa se ve igual en todos los módulos**
+(pedido del 23/09/2026): junto al documento va `SIMH.barraDoc(título)` (Ver vista previa · Imprimir
+o guardar PDF) y la pantalla completa es `SIMH.verDocumento(html, título, opts)`, el mismo visor del
+aviso de privacidad; no armar visores propios. Un «PDF» de listado o reporte se arma con
+`SIMH.hojaReporte({ titulo, intro, secciones })` sobre la misma hoja oficial. Las personas llevan
+foto ficticia con `SIMH.fotoPersona(folio, nombre, claseAvatar, iniciales)` (hover y foco amplían).
+La Solicitud de Empleo SNE vive en
 `assets/js/solicitud-empleo.js` (`SNE.abrir`) y Empleabilidad le pasa lo precargado.
 
 ## Arquitectura
@@ -209,8 +216,9 @@ Estas se dedujeron corrigiendo el prototipo y están documentadas en `AVANCES.md
   usar como si lo fuera. Cada emisión o reimpresión lleva motivo de catálogo y queda en el historial
   con folio propio: una constancia reimpresa sin motivo no se distingue de una falsificada. Un
   expediente cerrado no ampara una constancia vigente.
-- **El historial de contacto no se sobrescribe**: los teléfonos anteriores se conservan tachados con
-  su vigencia (RF03).
+- **El historial de contacto no se sobrescribe** (RF03): los teléfonos anteriores se conservan en los
+  datos, pero desde el 23/09/2026 la vista muestra **solo el contacto vigente** (la Dirección pidió
+  quitar los números tachados).
 - **NNA clasificado como *Separado* o *No acompañado* obliga a oficio automático** a la Procuraduría
   Regional en 24 horas (RF06). Si un grupo familiar se queda sin persona adulta, sus NNA pasan a
   *No acompañados*.

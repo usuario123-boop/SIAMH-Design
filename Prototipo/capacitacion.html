@@ -148,7 +148,7 @@
   .panel-baja > h3{margin:0 0 3px;font-family:var(--f-texto);font-size:14.5px;font-weight:700;
     color:var(--guinda-900);text-transform:none;letter-spacing:0}
 
-  /* Temporadas, constancia enviada y simulador de oficios (22/09/2026) */
+  /* Temporadas y constancia enviada (22/09/2026) */
   .t-temp td{vertical-align:middle;font-size:13px;word-break:break-word}
   .t-temp th{white-space:normal}
   .t-temp .num{text-align:right;font-variant-numeric:tabular-nums}
@@ -158,19 +158,6 @@
   .msg-prev{white-space:pre-wrap;font-family:var(--f-texto);font-size:12.5px;line-height:1.5;color:var(--tinta);
     background:var(--blanco);border:1px solid var(--linea-suave);border-radius:var(--radio-s);
     padding:10px 12px;margin:10px 0 0;max-width:620px}
-  .grid-of{display:grid;grid-template-columns:1.1fr .9fr;gap:20px;align-items:start}
-  @media (max-width:1100px){.grid-of{grid-template-columns:1fr}}
-  .grid-of .oficio-hoja{font-size:10.5px}
-  .of-item{display:flex;align-items:center;gap:10px;padding:8px 16px;border-top:1px solid var(--linea-suave);flex-wrap:wrap}
-  .of-item.activo{background:var(--jade-050)}
-  .of-ver{display:flex;align-items:center;gap:12px;flex:1;min-width:260px;min-height:44px;background:none;border:0;
-    text-align:left;cursor:pointer;font-family:var(--f-texto);padding:0;color:var(--tinta)}
-  .of-fol{display:block;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;min-width:112px}
-  .of-asu{display:block;font-size:13px;font-weight:600;line-height:1.3}
-  .of-asu small{display:block;font-size:11.5px;font-weight:400;color:var(--gris);margin-top:2px}
-  .of-hoja{padding:0 16px 16px;background:var(--jade-050);max-width:none}
-  .of-hoja .oficio-hoja{max-width:560px;font-size:10.5px}
-
   .lbl-fijo{display:block;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
     color:var(--gris);margin-bottom:6px}
   .dato-fijo{display:flex;align-items:center;min-height:44px;font-size:14px;font-weight:700;color:var(--tinta)}
@@ -844,7 +831,7 @@
 
   function persona(x) {
     var ini = x.n.split(" ").slice(0, 2).map(function (w) { return w.charAt(0); }).join("");
-    return '<div class="persona-celda"><span class="avatar-mini">' + esc(ini) + "</span>" +
+    return '<div class="persona-celda">' + SIMH.fotoPersona("CAP-" + x.e, x.n, "avatar-mini", ini) +
       '<span><span class="p-nom"><a href="expediente-detalle.html">' + esc(x.n) + "</a>" +
         '<span class="nac" title="' + PAIS[x.nac] + '">' + x.nac + "</span></span>" +
       '<span class="p-folio">MH-2026-' + x.e +
@@ -1251,6 +1238,27 @@
       "Esta constancia no es un documento migratorio. Se verifica por folio y sello en la ventanilla.";
   }
 
+  /* La constancia de inscripción en hoja oficial (23/09/2026): la misma
+     vista previa a pantalla completa y la misma impresión que el resto de
+     los documentos, en vez de imprimir la pantalla entera. */
+  function hojaConstancia(g, x, env) {
+    return SIMH.hojaSFS({
+      encabezado: '<div class="hs-der"><b>Folio ' + esc(env.fol) + "</b><br>" +
+        "Tapachula de Córdova y Ordoñez, Chiapas.<br>" + SIMH.fechaLarga(env.t) + ".</div>",
+      titulo: "CONSTANCIA DE REGISTRO A CURSO DE CAPACITACIÓN",
+      cuerpo: [
+        "La Subsecretaría de Movilidad Humana de la Secretaría de la Frontera Sur hace constar que " +
+        "<b>" + esc(x.n) + "</b>, con expediente <b>MH-2026-" + esc(x.e) + "</b>, quedó registrada en el curso " +
+        "<b>«" + esc(g.curso) + "»</b> (grupo " + esc(g.id) + "), que se imparte en " + esc(g.sede) + ", " +
+        esc(g.aula) + ", del " + fecha(g.inicio) + " al " + fecha(g.fin) + ".",
+        "Esta constancia <b>no es un documento migratorio</b> ni acredita estancia regular en el país. " +
+        "Se verifica por folio y sello en la ventanilla de la Secretaría.",
+        "Se extiende la presente para los fines que a la persona interesada convengan."
+      ],
+      ccp: false
+    });
+  }
+
   function enviarConstancia(g, x) {
     var ct = contacto(x);
     consInsc += 1;
@@ -1272,8 +1280,8 @@
         '<div class="a-tx"><span class="a-t">Constancia ' + esc(env.fol) + " sin enviar: " + esc(x.n) +
           " no dejó teléfono ni correo</span>" +
           '<span class="a-n">Entrégasela impresa en la ventanilla, o captura un medio de contacto en su expediente y reenvíala.</span></div>' +
-        '<div class="a-acc"><button class="btn btn-secundario btn-s" type="button" id="btnImpCons">' + ico("pdf") +
-          "Imprimir constancia</button>" +
+        '<div class="a-acc"><button class="btn btn-secundario btn-s" type="button" id="btnImpCons">' + ico("ojo") +
+          "Ver e imprimir constancia</button>" +
           '<button class="btn btn-texto btn-s" type="button" id="btnCierraEnv">Cerrar</button></div></div>';
     }
     var enlace = env.medio === "whatsapp"
@@ -1289,138 +1297,6 @@
       '<div class="a-acc"><a class="btn btn-secundario btn-s" target="_blank" rel="noopener" href="' + esc(enlace) + '">' +
         (env.medio === "whatsapp" ? "Abrir en WhatsApp" : "Abrir en el correo") + "</a>" +
         '<button class="btn btn-texto btn-s" type="button" id="btnCierraEnv">Cerrar</button></div></div>';
-  }
-
-  /* ======================================================================
-     6 quater. Simulador de oficios institucionales (22/09/2026)
-     ------------------------------------------------------------------
-     Recorre el ciclo real de un oficio sin salir del grupo: borrador con
-     referencia interna (BOR-####) → a firma → firma del Director de Área,
-     que es cuando se asigna el folio consecutivo de la serie del sistema
-     (`SIMH.folioOficio`) → emitido. Un emitido no se borra: se cancela y
-     conserva su folio (RNF03). La firma es SIMULADA: en el sistema real es
-     un acto del Director, no un botón de la ventanilla.
-     ================================================================== */
-  var compOf = null;           /* borrador en redacción */
-  var ofVer = null;            /* ref del oficio cuya hoja se muestra */
-
-  var TIPOS_OF = {
-    apertura: { t:"Solicitud de apertura de grupo",
-      dest:function (g) { return "Dirección del plantel " + g.sede; },
-      cargo:"Director(a) del plantel",
-      asunto:function (g) { return "Solicitud de apertura del grupo " + g.id + " · " + g.curso; },
-      cuerpo:function (g) {
-        var t = temporada(g.temporada);
-        return "Por este conducto solicito la apertura del curso «" + g.curso + "» (clave " + g.clave +
-          ") en modalidad " + g.modalidad.toLowerCase() + ", dentro de la temporada " + (t ? t.t : "vigente") +
-          ", con inscripción del " + fecha(g.abre) + " al " + fecha(g.cierre) + " e inicio el " + fecha(g.inicio) +
-          ", para un cupo de " + g.cupo + " personas, con mayoría de personas en contexto de movilidad."; } },
-    aula: { t:"Solicitud de espacio o aula",
-      dest:function (g) { return "Coordinación administrativa · " + g.sede; },
-      cargo:"Coordinador(a) administrativo(a)",
-      asunto:function (g) { return "Solicitud de espacio para el grupo " + g.id; },
-      cuerpo:function (g) {
-        return "Solicito se asigne el espacio «" + g.aula + "» para impartir el curso «" + g.curso +
-          "» del " + fecha(g.inicio) + " al " + fecha(g.fin) + ", en " + plural(g.sesiones, "sesión", "sesiones") +
-          ", a cargo de " + g.instructor + "."; } },
-    lista: { t:"Envío de lista de participantes para acreditación",
-      dest:function (g) { return "Control escolar · " + g.sede; },
-      cargo:"Jefe(a) de departamento",
-      asunto:function (g) { return "Lista de participantes del grupo " + g.id + " para acreditación"; },
-      cuerpo:function (g) {
-        var r = resumen(g);
-        return "Remito la lista de " + plural(r.n, "persona inscrita", "personas inscritas") + " en el curso «" +
-          g.curso + "», de las cuales " + plural(r.listos, "cumple", "cumplen") +
-          " hoy la documentación y el mínimo de asistencia, para el trámite de acreditación que corresponde a esa institución."; } },
-    libre: { t:"Oficio libre",
-      dest:function () { return ""; }, cargo:"",
-      asunto:function () { return ""; }, cuerpo:function () { return ""; } }
-  };
-
-  var EST_OF = {
-    borrador: { t:"Borrador",  c:"chip-neutro", i:"editar" },
-    firma:    { t:"En firma",  c:"chip-rosa",   i:"reloj" },
-    emitido:  { t:"Emitido",   c:"chip-jade",   i:"check" },
-    cancelado:{ t:"Cancelado", c:"chip-guinda", i:"alerta" }
-  };
-
-  function nuevoComp(g, tipo) {
-    var T = TIPOS_OF[tipo];
-    return { tipo:tipo, dest:T.dest(g), cargo:T.cargo, asunto:T.asunto(g), cuerpo:T.cuerpo(g) };
-  }
-
-  /* Membrete y composición del formato oficial (22/09/2026). */
-  function hojaOf(o) {
-    var sello = o.est === "borrador" ? '<div class="o-sello bor">' + ico("editar") + "Borrador " + esc(o.ref) + " · sin folio, no circula</div>"
-              : o.est === "firma"    ? '<div class="o-sello fir">' + ico("reloj") + "En firma · sin folio todavía</div>"
-              : o.est === "cancelado"? '<div class="o-sello can">' + ico("alerta") + "Cancelado · el folio " + esc(o.folio) + " queda consumido</div>"
-              : "";
-    return SIMH.hojaSFS({
-      sello: sello,
-      folio: o.folio ? esc(o.folio) : '<span class="o-pend">se asigna al firmar</span>',
-      fecha: SIMH.fechaLarga(o.firmado || HOY) + ".",
-      asunto: esc(o.asunto || "— asunto —"),
-      dest: (o.cargo ? esc(o.cargo) + "<br>" : "") + esc(o.dest || "— destinatario —"),
-      cuerpo: [esc(o.cuerpo || "— cuerpo del oficio —"), "Sin otro particular, reciba un cordial saludo."]
-    });
-  }
-
-  function bloqueOficios(g) {
-    var lista = g.oficios || [];
-    var filas = lista.length ? lista.slice().reverse().map(function (o) {
-      var e = EST_OF[o.est];
-      var acc = o.est === "borrador" ? '<button class="btn btn-secundario btn-s" type="button" data-of="firma" data-ref="' + o.ref + '">' + ico("der") + "Enviar a firma</button>"
-              : o.est === "firma"    ? '<button class="btn btn-primario btn-s" type="button" data-of="firmar" data-ref="' + o.ref + '">' + ico("check") + "Simular firma del Director</button>"
-              : o.est === "emitido"  ? '<button class="btn btn-texto btn-s" type="button" data-of="cancelar" data-ref="' + o.ref + '">Cancelar oficio</button>'
-              : "";
-      return '<div class="of-item' + (ofVer === o.ref ? " activo" : "") + '">' +
-        '<button type="button" class="of-ver" data-verof="' + o.ref + '" aria-expanded="' + (ofVer === o.ref) + '">' +
-          '<span class="of-fol">' + esc(o.folio || o.ref) + "</span>" +
-          '<span class="of-asu">' + esc(o.asunto) + "<small>" + esc(TIPOS_OF[o.tipo].t) + " · " + esc(o.dest) +
-            (o.cancel ? " · cancelado: " + esc(o.cancel) : "") + "</small></span></button>" +
-        '<span class="chip ' + e.c + '">' + ico(e.i) + e.t + "</span>" + acc + "</div>" +
-        (ofVer === o.ref ? '<div class="of-hoja">' + hojaOf(o) + "</div>" : "");
-    }).join("") : '<div class="vacio" style="padding:16px">' + ico("oficios") + "Este grupo no tiene oficios todavía.</div>";
-
-    var comp = "";
-    if (compOf) {
-      comp = '<div class="panel-add" style="margin:0 16px 16px">' +
-        "<h3>Redactar oficio</h3>" +
-        '<div class="grid-of">' +
-          "<div>" +
-            '<div class="campo"><label for="ofTipo">Tipo de oficio</label><select id="ofTipo">' +
-              Object.keys(TIPOS_OF).map(function (k) {
-                return '<option value="' + k + '"' + (compOf.tipo === k ? " selected" : "") + ">" + esc(TIPOS_OF[k].t) + "</option>";
-              }).join("") + "</select></div>" +
-            '<div class="fila">' +
-              '<div class="campo"><label for="ofDest">Destinatario <span class="req">*</span></label>' +
-                '<input type="text" id="ofDest" value="' + esc(compOf.dest) + '"></div>' +
-              '<div class="campo"><label for="ofCargo">Cargo</label>' +
-                '<input type="text" id="ofCargo" value="' + esc(compOf.cargo) + '"></div>' +
-            "</div>" +
-            '<div class="campo"><label for="ofAsu">Asunto <span class="req">*</span></label>' +
-              '<input type="text" id="ofAsu" value="' + esc(compOf.asunto) + '"></div>' +
-            '<div class="campo"><label for="ofCue">Cuerpo del oficio <span class="req">*</span></label>' +
-              '<textarea id="ofCue" rows="6">' + esc(compOf.cuerpo) + "</textarea></div>" +
-            '<div class="aviso aviso-guinda" id="ofError" hidden></div>' +
-            '<div style="display:flex;gap:8px">' +
-              '<button class="btn btn-primario btn-s" type="button" id="btnGuardaOf">' + ico("guardar") + "Guardar borrador</button>" +
-              '<button class="btn btn-secundario btn-s" type="button" id="btnCancOf">Cancelar</button>' +
-            "</div>" +
-          "</div>" +
-          '<div><div class="lbl-fijo">Vista previa · en vivo</div><div id="ofPrev">' +
-            hojaOf({ est:"borrador", ref:"BOR-····", dest:compOf.dest, cargo:compOf.cargo,
-                     asunto:compOf.asunto, cuerpo:compOf.cuerpo }) + "</div>" +
-            '<div class="oficio-cap">La referencia BOR se asigna al guardar; el folio, solo al firmar.</div></div>' +
-        "</div></div>";
-    }
-
-    return '<div class="tarjeta" style="padding:0;margin-top:16px">' +
-      '<div class="tarjeta-enc" style="padding:15px 16px 12px;margin:0">' +
-        '<div><h3 class="sec-tit">Oficios del grupo · simulador</h3>' +
-          '<span class="txt-min">Borrador → firma → folio. La firma se simula para poder recorrer el ciclo completo.</span></div>' +
-        (compOf ? "" : '<button class="btn btn-secundario btn-s" type="button" id="btnNuevoOf">' + ico("mas") + "Redactar oficio</button>") +
-      "</div>" + comp + '<div class="of-lista">' + filas + "</div></div>";
   }
 
   function acuse() {
@@ -1472,7 +1348,7 @@
         '</div>' +
         '<div class="flex gap-8">' +
           '<button class="btn btn-secundario btn-s" type="button" onclick="alert(\'Generando lista de asistencia en formato XLSX...\')">' + ico("excel") + 'Lista de asistencia</button>' +
-          '<button class="btn btn-secundario btn-s" type="button" onclick="alert(\'Generando lista oficial para firma física en formato PDF...\')">' + ico("pdf") + 'Lista para firma</button>' +
+          '<button class="btn btn-secundario btn-s" type="button" id="btnListaFirma">' + ico("pdf") + 'Lista para firma</button>' +
         '</div>' +
       '</div>' +
       '<div class="bca-controles">' +
@@ -1502,8 +1378,7 @@
       (panelAdd ? panelAgregar(g, r) : "") +
       '<div style="margin-bottom:16px">' + bloqueRequisitos(g, r) + "</div>" +
       tablaParticipantes(g, r) +
-      (bajaDe ? panelBaja(g) : "") +
-      bloqueOficios(g);
+      (bajaDe ? panelBaja(g) : "");
 
     SIMH.paginar($("#detalle"));
     liga();
@@ -1549,8 +1424,28 @@
     /* ---------- Constancia de registro ---------- */
     var bce = $("#btnCierraEnv");
     if (bce) bce.onclick = function () { ultimoEnvio = null; pintaDetalle(); };
+    /* Lista para firma física: hoja oficial en el visor común (23/09/2026). */
+    var blf = $("#btnListaFirma");
+    if (blf) blf.onclick = function () {
+      var lista = activos(g);
+      SIMH.verDocumento(SIMH.hojaReporte({
+        titulo: "LISTA DE ASISTENCIA PARA FIRMA",
+        intro: "Curso <b>«" + esc(g.curso) + "»</b>, grupo " + esc(g.id) + ". Sede: " + esc(g.sede) +
+          " (" + esc(g.aula) + "), " + esc(g.mun) + ". Instructor: " + esc(g.instructor) + ". Del " +
+          fecha(g.inicio) + " al " + fecha(g.fin) + ". Fecha de la sesión: ____________________.",
+        secciones: [{ cols: ["#", "Nombre", "Expediente", "Nacionalidad", "Firma o huella"], num: [0],
+          anchos: ["6%", "34%", "18%", "15%", "27%"],
+          filas: lista.map(function (x, i) { return [i + 1, x.n, "MH-2026-" + x.e, x.nac, " "]; }) }],
+        nota: "Firma de la persona instructora: ______________________________"
+      }), "Lista para firma · grupo " + g.id);
+    };
+
     var bic = $("#btnImpCons");
-    if (bic) bic.onclick = function () { window.print(); };
+    if (bic) bic.onclick = function () {
+      var x = g.p.filter(function (q) { return q.e === ultimoEnvio.e; })[0];
+      var env = x.envios[x.envios.length - 1];
+      SIMH.verDocumento(hojaConstancia(g, x, env), "Constancia de registro " + env.fol + " · " + x.n);
+    };
     $$("[data-reenv]").forEach(function (b) {
       b.onclick = function () {
         var e = this.getAttribute("data-reenv");
@@ -1559,82 +1454,6 @@
         enviarConstancia(g, x);
         pintaDetalle();
         window.scrollTo({ top:0, behavior:"smooth" });
-      };
-    });
-
-    /* ---------- Simulador de oficios ---------- */
-    var bno = $("#btnNuevoOf");
-    if (bno) bno.onclick = function () { compOf = nuevoComp(g, "apertura"); pintaDetalle(); $("#ofDest").focus(); };
-    var bco = $("#btnCancOf");
-    if (bco) bco.onclick = function () { compOf = null; pintaDetalle(); };
-    var oti = $("#ofTipo");
-    if (oti) oti.onchange = function () { compOf = nuevoComp(g, this.value); pintaDetalle(); };
-    ["#ofDest", "#ofCargo", "#ofAsu", "#ofCue"].forEach(function (sel) {
-      var el = $(sel);
-      if (!el) return;
-      el.oninput = function () {
-        compOf.dest = $("#ofDest").value; compOf.cargo = $("#ofCargo").value;
-        compOf.asunto = $("#ofAsu").value; compOf.cuerpo = $("#ofCue").value;
-        $("#ofPrev").innerHTML = hojaOf({ est:"borrador", ref:"BOR-····", dest:compOf.dest, cargo:compOf.cargo,
-                                          asunto:compOf.asunto, cuerpo:compOf.cuerpo });
-        SIMH.paginar($("#ofPrev"));
-      };
-    });
-    var bgo = $("#btnGuardaOf");
-    if (bgo) bgo.onclick = function () {
-      if (!compOf.dest.trim() || !compOf.asunto.trim() || !compOf.cuerpo.trim()) {
-        var oe = $("#ofError");
-        oe.hidden = false;
-        oe.innerHTML = ico("alerta") + "<span><strong>Falta información</strong>El oficio necesita destinatario, asunto y cuerpo.</span>";
-        return;
-      }
-      var o = { ref:SIMH.refBorrador(), folio:null, est:"borrador", tipo:compOf.tipo,
-                dest:compOf.dest.trim(), cargo:compOf.cargo.trim(), asunto:compOf.asunto.trim(),
-                cuerpo:compOf.cuerpo.trim(), creado:HOY };
-      g.oficios = (g.oficios || []).concat(o);
-      compOf = null; ofVer = o.ref;
-      pintaDetalle();
-      if (SIMH.toast) SIMH.toast("Borrador " + o.ref + " guardado: todavía no tiene folio", "ok");
-    };
-    $$("[data-verof]").forEach(function (b) {
-      b.onclick = function () {
-        var r = this.getAttribute("data-verof");
-        ofVer = ofVer === r ? null : r;
-        pintaDetalle();
-      };
-    });
-    $$("[data-of]").forEach(function (b) {
-      b.onclick = function () {
-        var r = this.getAttribute("data-ref"), acc = this.getAttribute("data-of");
-        var o = (g.oficios || []).filter(function (q) { return q.ref === r; })[0];
-        if (!o) return;
-        if (acc === "firma") {
-          o.est = "firma";
-          if (SIMH.toast) SIMH.toast("Borrador " + o.ref + " enviado a firma del Director de Área", "info");
-        } else if (acc === "firmar") {
-          /* El folio nace aquí, no antes: la serie no deja huecos. */
-          o.folio = SIMH.folioOficio();
-          o.est = "emitido";
-          o.firmado = HOY;
-          try {
-            var ext = JSON.parse(localStorage.getItem("SIAMH_OFICIOS_EXTRA") || "[]");
-            ext.unshift({ id:"o_cap_" + o.ref, ref:o.ref, folio:o.folio, pl:"institucional", est:"emitido",
-              asunto:o.asunto, per:null, dest:{ inst:o.dest, cargo:o.cargo, mun:g.mun },
-              origen:"capacita", folioDep:"",
-              creado:{ por:SIMH.sesion().n, rol:SIMH.sesion().rolT, t:HOY + " 12:00" },
-              firmado:{ por:"Lic. Adriana Molina Sántiz", cargo:"Directora de Capacitación y Empleo", t:HOY + " 12:00" },
-              acusePlazo:suma(HOY, 10), datos:{ cuerpo:o.cuerpo } });
-            localStorage.setItem("SIAMH_OFICIOS_EXTRA", JSON.stringify(ext));
-          } catch (e) { /* sin persistencia: el oficio queda solo en esta pantalla */ }
-          if (SIMH.toast) SIMH.toast("Firmado: se asignó el folio " + o.folio, "ok");
-        } else if (acc === "cancelar") {
-          var m = prompt("Motivo de la cancelación (el folio " + o.folio + " queda consumido):");
-          if (!m || !m.trim()) return;
-          o.est = "cancelado";
-          o.cancel = m.trim();
-        }
-        ofVer = o.ref;
-        pintaDetalle();
       };
     });
 

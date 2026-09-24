@@ -1081,11 +1081,27 @@ h2[tabindex]:focus,h3[tabindex]:focus{outline:3px solid var(--jade);outline-offs
 .hs-cont .o-var{background:rgba(0,152,135,.14);border-radius:2px;color:#000}
 .hs-cont .o-pend{background:#FFF2A8;color:#000;font-style:normal}
 .hoja-sfs .o-sello{border:1px solid var(--linea);border-radius:6px}
-.hs-velo{position:fixed;inset:0;z-index:200;background:rgba(20,20,20,.55);overflow:auto;padding:24px 16px}
+.hs-velo{position:fixed;inset:0;z-index:250;background:rgba(20,20,20,.55);overflow:auto;padding:24px 16px}
 .hs-caja{max-width:816px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
-.hs-caja .hs-cerrar{align-self:flex-end}
 .hs-caja .hoja-sfs{cursor:default}
-@media print{.hs-velo{position:static;background:none;padding:0}.hs-cerrar{display:none}}
+/* Barra del visor (SIMH.verDocumento, 23/09/2026): la misma para todos los
+   documentos. Se queda arriba al recorrer las hojas. */
+.hs-barra{position:sticky;top:-24px;z-index:1;display:flex;align-items:center;justify-content:space-between;
+  gap:10px;flex-wrap:wrap;padding:10px 12px;background:var(--blanco);border:1px solid var(--linea);border-radius:var(--radio-s)}
+.hs-tit{font-size:13.5px;font-weight:700;color:var(--tinta);min-width:0}
+.hs-acc{display:flex;gap:8px;flex-wrap:wrap}
+.hs-caja .sne-hoja,.hs-caja .doc-imp{cursor:default}
+/* Los tonos del sello son translúcidos: sobre el velo oscuro se leían
+   transparentes. En el visor se apoyan en blanco. */
+.hs-caja .o-sello{background-color:var(--blanco);background-image:linear-gradient(var(--arena-050),var(--arena-050))}
+.hs-caja .o-sello.fir{background-image:linear-gradient(var(--rosa-050),var(--rosa-050))}
+.hs-caja .o-sello.can{background-image:linear-gradient(var(--guinda-050),var(--guinda-050))}
+@media print{.hs-velo{position:static;background:none;padding:0}.hs-barra{display:none}}
+
+/* Botonera estándar junto a cualquier vista previa (SIMH.barraDoc). */
+.doc-barra{display:flex;gap:8px 12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:0 0 8px}
+.doc-lbl{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gris)}
+.doc-acc{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
 
 /* Botón para plegar el visor o la lista (Canalizaciones, Constancias). La
    clase se usaba sin estar definida y el icono se dibujaba a 150 px. */
@@ -1125,6 +1141,7 @@ h2[tabindex]:focus,h3[tabindex]:focus{outline:3px solid var(--jade);outline-offs
 .sne-pag .sh{background:#fffbc2;color:#6b3a08;font-weight:700;text-align:center;font-size:1.35cqw;padding:.15cqw}
 .sne-pag .stit{background:#fffbc2;color:#6b3a08;font-weight:700;font-size:2.6cqw;text-align:center;vertical-align:middle;padding:.6cqw}
 .sne-pag .sfoto{background:#e8e8e8;color:#b0b0b0;text-align:center;vertical-align:middle;font-size:1cqw}
+.sne-pag .sfoto img{display:block;width:100%;height:100%;max-height:13cqw;object-fit:cover}
 .sne-pag .sfecha{display:flex;padding:.2cqw .45cqw;gap:0}
 .sne-pag .sfecha i{flex:1;font-style:normal;text-align:center;border-left:.08cqw solid #444;min-height:1.9cqw}
 .sne-pag .sfecha i:first-child{border-left:0}
@@ -1158,11 +1175,43 @@ h2[tabindex]:focus,h3[tabindex]:focus{outline:3px solid var(--jade);outline-offs
 .sne-sec{background:var(--blanco);border:1px solid var(--linea);border-radius:var(--radio-s);margin-bottom:10px}
 .sne-sec > summary{cursor:pointer;padding:11px 14px;font-weight:700;font-size:13.5px;display:flex;justify-content:space-between;gap:10px;min-height:44px;align-items:center}
 .sne-cta{font-size:12px;font-weight:400;color:var(--gris)}
+.sne-foto{padding:12px 14px}
+.sne-foto-in{display:flex;gap:14px;align-items:center}
+.sne-foto-in img,.sne-foto-vacia{width:64px;height:80px;flex:none;border-radius:var(--radio-s);border:1px solid var(--linea);object-fit:cover}
+.sne-foto-vacia{display:grid;place-items:center;text-align:center;font-size:11px;color:var(--gris);background:var(--hueso-claro);line-height:1.3;padding:4px}
+.sne-foto-t{font-weight:700;font-size:13.5px;margin-bottom:6px}
+.sne-foto-acc{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .sne-campos{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px 12px;padding:0 14px 12px}
 .sne-campos .sne-ancho{grid-column:1/-1}
 .sne-exp{display:inline-block;font-size:10.5px;font-weight:700;text-transform:none;letter-spacing:0;color:var(--jade-900);
   background:var(--jade-050);border-radius:8px;padding:0 6px;margin-left:4px}
 
+/* Reportes en hoja oficial (SIMH.hojaReporte, 23/09/2026). */
+.hs-cont .hs-sec{font-size:1em;font-weight:700;margin:.6em 0 .45em;text-transform:none;letter-spacing:0;color:#000}
+.hs-cont .hs-tabla{width:100%;border-collapse:collapse;table-layout:fixed;font-size:.74em;line-height:1.25;margin:0 0 .9em}
+.hs-tabla th,.hs-tabla td{border:.08em solid #555;padding:.28em .4em;text-align:left;vertical-align:top;word-break:break-word}
+.hs-tabla th{background:#E9E9E9;font-weight:700}
+.hs-tabla .num{text-align:right;font-variant-numeric:tabular-nums}
+.hs-tabla td.firma{height:2.4em}
+.hs-cont .hs-nota{font-size:.7em;line-height:1.35;color:#333;margin:0 0 .6em}
+@media print{#zonaImpresion .hs-tabla th{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+
 /* Campos para llenar del aviso de privacidad (hoja oficial). */
 .hs-cont .hs-campos{margin:0 0 1.2em;line-height:1.6}
 .hs-velo .hoja-sfs{cursor:default}
+
+/* ------------------- 28. Fotografía de la persona (SIMH.fotoPersona) ---- */
+/* 23/09/2026. Cualquier contenedor de avatar (avatar-mini, bca-foto,
+   drawer-item-avatar, exp-foto) acepta la foto; al pasar el cursor o al
+   enfocarla con el teclado se amplía en un globo flotante.               */
+.con-foto{overflow:hidden;padding:0;cursor:zoom-in;position:relative}
+.con-foto img{width:100%;height:100%;object-fit:cover;display:block}
+.con-foto:focus-visible{outline:3px solid var(--jade);outline-offset:2px}
+.foto-flot{position:fixed;z-index:300;width:180px;background:var(--blanco);border:1px solid var(--linea);
+  border-radius:var(--radio);padding:8px;box-shadow:0 8px 28px rgba(0,0,0,.18);pointer-events:none;
+  opacity:0;transform:scale(.96);transition:opacity .12s,transform .12s}
+.foto-flot.vis{opacity:1;transform:none}
+.foto-flot img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:6px}
+.foto-flot .ff-n{display:block;font-size:12.5px;font-weight:700;color:var(--tinta);line-height:1.3;
+  margin-top:7px;text-align:center}
+@media (prefers-reduced-motion:reduce){.foto-flot{transition:none}}

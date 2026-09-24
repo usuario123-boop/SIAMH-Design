@@ -132,7 +132,8 @@
     h += '<table class="st"><colgroup><col style="width:54%"><col style="width:20%"><col style="width:26%"></colgroup>' +
       '<tr><td class="stit" rowspan="1">SOLICITUD DE EMPLEO</td>' +
         '<td><span class="sl">Fecha</span><span class="sfecha"><i>' + fe[0] + "</i><i>" + fe[1] + "</i><i>" + fe[2] + '</i></span></td>' +
-        '<td class="sfoto" rowspan="4">Fotografía</td></tr>' +
+        '<td class="sfoto" rowspan="4">' + (estado && estado.datos.foto
+          ? '<img src="' + estado.datos.foto + '" alt="Fotografía">' : "Fotografía") + "</td></tr>" +
       '<tr><td rowspan="3"><span class="sl">Puesto que está solicitando:</span><span class="sv sgrande">' + v("puesto") + "</span></td>" +
         cel("Sueldo mensual deseado", "sueldoDes") + "</tr>" +
       "<tr>" + cel("Sueldo mensual autorizado", "sueldoAut") + "</tr>" +
@@ -283,8 +284,31 @@
     return '<input type="' + c.tipo + '"' + at + ' value="' + esc(val) + '">';
   }
 
+  /* Fotografía opcional (23/09/2026): se puede usar la del expediente,
+     subir otra o dejar la casilla en blanco, como en el formato impreso.
+     Va en `datos.foto`, así que se guarda con el resto de la solicitud. */
+  function bloqueFoto() {
+    var f = estado.datos.foto;
+    return '<div class="sne-sec sne-foto"><div class="sne-foto-in">' +
+      (f ? '<img src="' + f + '" alt="Fotografía de la solicitud">'
+         : '<span class="sne-foto-vacia">Sin fotografía</span>') +
+      '<div><div class="sne-foto-t">Fotografía <span class="sne-cta">(opcional)</span></div>' +
+      '<div class="sne-foto-acc">' +
+        (estado.fotoExp && f !== estado.fotoExp
+          ? '<button type="button" class="btn btn-secundario btn-s" data-foto="exp">Usar la del expediente</button>' : "") +
+        '<label class="btn btn-secundario btn-s" style="cursor:pointer">' + (f ? "Cambiar" : "Agregar") +
+          ' fotografía<input type="file" accept="image/*" data-foto="subir" hidden></label>' +
+        (f ? '<button type="button" class="btn btn-texto btn-s" data-foto="quitar">Quitar fotografía</button>' : "") +
+      "</div></div></div></div>";
+  }
+  function pintaFoto() {
+    var c = document.getElementById("sneFoto");
+    if (c) c.innerHTML = bloqueFoto();
+    repinta();
+  }
+
   function formulario() {
-    return SECCIONES.map(function (s, i) {
+    return '<div id="sneFoto">' + bloqueFoto() + "</div>" + SECCIONES.map(function (s, i) {
       var llenos = s.c.filter(function (c) { return estado.datos[c.id]; }).length;
       var sis = s.c.filter(function (c) { return estado.origen[c.id]; }).length;
       return '<details class="sne-sec"' + (i < 3 ? " open" : "") + "><summary>" + esc(s.t) +
@@ -303,7 +327,10 @@
 
   function abrir(opts) {
     estado = { datos: JSON.parse(JSON.stringify(opts.datos || {})), origen: opts.origen || {},
-               alGuardar: opts.alGuardar, titulo: opts.titulo || "" };
+               alGuardar: opts.alGuardar, titulo: opts.titulo || "", fotoExp: opts.foto || "" };
+    /* Si la solicitud ya se guardó, respeta lo que se eligió (con o sin
+       foto); si es nueva, arranca con la del expediente. */
+    if (estado.datos.foto === undefined) estado.datos.foto = estado.fotoExp;
     var velo = document.createElement("div");
     velo.className = "sne-velo";
     velo.id = "sneVelo";
@@ -323,7 +350,10 @@
           "</div></div>" +
         '<div class="sne-cuerpo">' +
           '<form class="sne-form" onsubmit="return false">' + formulario() + "</form>" +
-          '<div class="sne-visor"><div class="lbl-visor">Vista previa · 2 hojas carta</div><div id="snePrev"></div></div>' +
+          '<div class="sne-visor"><div class="doc-barra"><span class="doc-lbl">Vista previa · 2 hojas carta</span>' +
+            '<span class="doc-acc"><button class="btn btn-secundario btn-s" type="button" id="sneVer">' +
+            SIMH.icono("ojo") + "Ver vista previa</button></span></div>" +
+            '<div id="snePrev"></div></div>' +
         "</div></div>";
     document.body.appendChild(velo);
     document.body.style.overflow = "hidden";
@@ -335,7 +365,21 @@
       estado.datos[id] = e.target.value;
       repinta();
     });
+    velo.addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest("[data-foto]");
+      if (!b || b.tagName === "INPUT") return;
+      estado.datos.foto = b.getAttribute("data-foto") === "exp" ? estado.fotoExp : "";
+      pintaFoto();
+    });
     velo.addEventListener("change", function (e) {
+      if (e.target.getAttribute && e.target.getAttribute("data-foto") === "subir") {
+        var arch = e.target.files && e.target.files[0];
+        if (!arch) return;
+        var lec = new FileReader();
+        lec.onload = function () { estado.datos.foto = lec.result; pintaFoto(); };
+        lec.readAsDataURL(arch);
+        return;
+      }
       var id = e.target.getAttribute && e.target.getAttribute("data-sne");
       if (!id) return;
       estado.datos[id] = e.target.value;
@@ -347,16 +391,23 @@
       document.removeEventListener("keydown", tecla);
       if (opts.alCerrar) opts.alCerrar();
     }
-    function tecla(e) { if (e.key === "Escape") cerrar(); }
+    /* Con la vista a pantalla completa abierta, Escape cierra solo esa. */
+    function tecla(e) { if (e.key === "Escape" && !document.querySelector(".hs-velo")) cerrar(); }
     document.addEventListener("keydown", tecla);
     document.getElementById("sneCerrar").onclick = cerrar;
     document.getElementById("sneGuardar").onclick = function () {
       if (estado.alGuardar) estado.alGuardar(estado.datos);
       if (global.SIMH && SIMH.toast) SIMH.toast("Solicitud de empleo guardada en el expediente", "ok");
     };
-    document.getElementById("sneImprimir").onclick = function () {
+    function imprime() {
       if (estado.alGuardar) estado.alGuardar(estado.datos);
       SIMH.imprimir(hoja(estado.datos), "Solicitud de empleo · " + estado.titulo);
+    }
+    document.getElementById("sneImprimir").onclick = imprime;
+    /* La misma vista a pantalla completa que el resto de los documentos. */
+    document.getElementById("sneVer").onclick = function () {
+      SIMH.verDocumento(hoja(estado.datos), "Solicitud de empleo · " + estado.titulo,
+        { imprimir: function () { imprime(); } });
     };
     document.getElementById("sneCerrar").focus();
   }

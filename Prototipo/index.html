@@ -294,6 +294,7 @@
       { num:d.emp, lab:"Vinculaciones a empleo", var_:"En el periodo" },
       { num:d.con, lab:"Constancias emitidas",   var_:"En el periodo" }
     ];
+    ultimo = { d:d, kpis:kpis, uno:uno };
     $("#kpis").innerHTML = kpis.map(function (k) {
       return '<article class="kpi' + (k.critico ? " critico" : "") + '">' +
         '<span class="kpi-lab">' + k.lab + "</span>" +
@@ -412,6 +413,41 @@
      ================================================================== */
   $("#btnGlosa").innerHTML = ico("excel") + "Glosa mensual (Excel)";
   $("#btnPdf").innerHTML   = ico("pdf") + "PDF";
+  /* «PDF» del panel: las mismas cifras en hoja oficial, con el visor y la
+     impresión comunes (23/09/2026). Salen de `ultimo`, lo que la pantalla
+     acaba de pintar, para que el papel no pueda contradecir al panel.   */
+  var ultimo = null;
+  $("#btnPdf").onclick = function () {
+    if (!ultimo) return;
+    var d = ultimo.d;
+    function tabla(t, claves, vals) {
+      return { t:t, cols:[t.split(" ")[0] === "Registros" ? "Mes" : "Categoría", "Personas", "%"], num:[1, 2],
+        anchos:["60%", "22%", "18%"],
+        filas: claves.map(function (k, i) { return [k, n(vals[i]), SIMH.pct(vals[i], d.total)]; }) };
+    }
+    var secc = [
+      { t:"Indicadores", cols:["Indicador", "Cifra", "Nota"], num:[1], anchos:["42%", "18%", "40%"],
+        filas: [["Personas registradas", n(d.total), "Corte al 31 de agosto de 2026"]].concat(
+          ultimo.kpis.map(function (k) { return [k.lab, n(k.num), k.var_]; })) },
+      tabla("Registros por mes", MES, d.mes),
+      tabla("Rangos de edad", EDA, d.eda),
+      tabla("Estatus migratorio", EST, d.est),
+      tabla("Nacionalidades", NAC, d.nac),
+      tabla("Composición por género", GEN, d.gen)
+    ];
+    if (!ultimo.uno) {
+      secc.push({ t:"Atención por municipio", cols:["Municipio", "Personas", "%"], num:[1, 2],
+        anchos:["60%", "22%", "18%"],
+        filas: MUN.map(function (m) { return [m.k, n(m.total), SIMH.pct(m.total, d.total)]; }) });
+    }
+    SIMH.verDocumento(SIMH.hojaReporte({
+      titulo: "PANEL ESTADÍSTICO DE MOVILIDAD HUMANA",
+      intro: "Cifras " + (ultimo.uno ? "de los expedientes capturados en <b>" + SIMH.esc(fMun) + "</b>"
+                                     : "de los seis municipios de la franja fronteriza") +
+        ", con corte al 31 de agosto de 2026.",
+      secciones: secc
+    }), "Panel estadístico" + (ultimo.uno ? " · " + fMun : ""));
+  };
 
   pintaSelector();
   $("#filMun").addEventListener("change", function () {

@@ -1063,7 +1063,7 @@
     return '<div class="banner-caso-activo">' +
       '<div class="bca-superior">' +
         '<div class="bca-persona">' +
-          '<div class="bca-foto" style="font-size:16px;font-weight:700">' + esc(inic(p.n)) + '</div>' +
+          SIMH.fotoPersona("EMP-" + p.e, p.n, "bca-foto", inic(p.n)) +
           '<div class="bca-datos">' +
             '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
               '<span class="bca-nombre" id="tPersona" tabindex="-1">' + esc(p.n) + '</span>' +
@@ -2452,7 +2452,7 @@
     if (bsn) bsn.onclick = function () {
       if ($("#formCq")) guardaCuestionario(p);
       var pre = prefillSNE(p);
-      SNE.abrir({ titulo: p.n, datos: pre.datos, origen: pre.origen,
+      SNE.abrir({ titulo: p.n, datos: pre.datos, origen: pre.origen, foto: SIMH.retrato("EMP-" + p.e, p.n),
         alGuardar: function (d) { p.sne = JSON.parse(JSON.stringify(d)); },
         alCerrar: function () { var b = $("#btnSNE"); if (b) b.focus(); } });
     };
@@ -2670,7 +2670,7 @@
         : '<span class="chip chip-rosa">Sin colocación</span>'));
 
       return '<button type="button" class="drawer-item' + (esActivo ? ' activo' : '') + '" data-idx="' + idx + '">' +
-        '<div class="drawer-item-avatar">' + esc(inic(p.n)) + '</div>' +
+        SIMH.fotoPersona("EMP-" + p.e, p.n, "drawer-item-avatar", inic(p.n)) +
         '<div class="drawer-item-txt">' +
           '<span class="drawer-item-nom">' + esc(p.n) + '</span>' +
           '<span class="drawer-item-sub">Exp. ' + p.e + ' · ' + esc(p.perfil) + '</span>' +
@@ -2961,6 +2961,25 @@
     $("#xlsDescarga").focus();
   }
   $("#btnXls").onclick = abrePanelXls;
+
+  /* «Reporte de vinculación laboral» en hoja oficial, con el visor y la
+     impresión comunes (23/09/2026). Una fila por vinculación. */
+  $("#btnPdf").onclick = function () {
+    var filas = [];
+    PERSONAS.forEach(function (p) {
+      p.v.forEach(function (v) {
+        filas.push([p.n + " (" + p.e + ")", v.vac, v.emp, etapa(v).t, v.inicio ? fechaMx(v.inicio) : ""]);
+      });
+    });
+    var coloc = PERSONAS.filter(function (p) { return vigente(p); }).length;
+    SIMH.verDocumento(SIMH.hojaReporte({
+      titulo: "REPORTE DE VINCULACIÓN LABORAL",
+      intro: "Cartera de Empleabilidad: <b>" + PERSONAS.length + "</b> personas, <b>" + filas.length +
+        "</b> vinculaciones y <b>" + coloc + "</b> colocaciones vigentes.",
+      secciones: [{ cols: ["Persona", "Vacante", "Empresa", "Etapa", "Inicio de labores"],
+        anchos: ["24%", "20%", "25%", "17%", "14%"], filas: filas }]
+    }), "Reporte de vinculación laboral");
+  };
 })();
 </script>
 </body>

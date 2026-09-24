@@ -95,10 +95,6 @@
     </div>
   </section>
 
-  <p class="txt-min mt-16" style="max-width:820px">
-    Ningún registro se elimina: los expedientes solo cambian a <b>Cerrado</b> o
-    <b>Concluido por deceso</b> y todos los históricos persisten (RNF03).
-  </p>
   <p id="anuncioExp" class="sr-solo" role="status" aria-live="polite"></p>
 </main>
 
@@ -148,10 +144,26 @@
     {f:"SIAMH-2026-MOT-0061", n:"Rosalinda Gómez Vázquez",         i:"RG", e:63, p:"Guatemala", s:"Refugiado / Residente",  m:"Motozintla", g:"SIAMH-FAM-0327", a:"22/08/2026"}
   ];
 
+  /* «PDF» abre el listado filtrado en hoja oficial, con la vista a pantalla
+     completa y la impresión comunes (23/09/2026). */
+  var visibles = [];
+  document.getElementById("btnPdf").addEventListener("click", function () {
+    var mun = document.getElementById("filMun").value;
+    SIMH.verDocumento(SIMH.hojaReporte({
+      titulo: "LISTADO DE EXPEDIENTES",
+      intro: "Expedientes activos" + (mun ? " del municipio de <b>" + SIMH.esc(mun) + "</b>" : " de todos los municipios") +
+        ": <b>" + visibles.length + "</b> registros.",
+      secciones: [{ cols: ["Folio", "Nombre", "Edad", "Nacionalidad", "Estatus migratorio", "Municipio"],
+        num: [2], anchos: ["21%", "27%", "7%", "13%", "18%", "14%"],
+        filas: visibles.map(function (d) { return [d.f, d.n, d.e, d.p, d.s, d.m]; }) }]
+    }), "Listado de expedientes");
+  });
+
   function render(lista) {
+    visibles = lista;
     document.getElementById("filas").innerHTML = lista.map(function (d) {
       return '<tr>' +
-        '<td class="persona"><span class="persona-celda"><span class="avatar-mini">' + d.i + "</span><span>" +
+        '<td class="persona"><span class="persona-celda">' + SIMH.fotoPersona(d.f, d.n, "avatar-mini", d.i) + "<span>" +
           '<a class="p-nom" href="expediente-detalle.html" aria-label="Abrir expediente de ' + d.n + '">' + d.n + "</a>" +
           '<span class="folio">' + d.f + "</span>" +
           (d.nna ? '<br><span class="marca-nna">' + ico("alerta") + "NNA no acompañado</span>" : "") +
